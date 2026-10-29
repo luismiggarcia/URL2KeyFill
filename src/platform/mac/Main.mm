@@ -1,5 +1,6 @@
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
+#import <QuartzCore/QuartzCore.h>
 #include "browser/Browser.hpp"
 #include "output/Output.hpp"
 #include "include/cef_application_mac.h"
@@ -115,7 +116,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  NSMutableSet* identities=[NSMutableSet set];for(NSMutableDictionary* layer in [layers copy]){if([identities containsObject:layer[@"id"]]||[layer[@"id"] length]<1||[layer[@"id"] length]>80||[layer[@"name"] length]<1||[layer[@"name"] length]>80||identities.count>=16){[layers removeObjectIdenticalTo:layer];continue;}[identities addObject:layer[@"id"]];for(NSString* key in @[@"visible",@"muted"])if(![layer[key] isKindOfClass:NSNumber.class])layer[key]=@NO;if(![layer[@"gain"] isKindOfClass:NSNumber.class]||!std::isfinite([layer[@"gain"] doubleValue])||[layer[@"gain"] doubleValue]<0||[layer[@"gain"] doubleValue]>2)layer[@"gain"]=@1;}
  try{validate([self viewport]);}catch(...){prefs[@"browserSize"]=@"match";}
  if(![prefs[@"device"] isKindOfClass:NSString.class])prefs[@"device"]=@"";
- window=[[RackWindow alloc]initWithContentRect:NSMakeRect(0,0,1280,460) styleMask:NSWindowStyleMaskBorderless|NSWindowStyleMaskResizable backing:NSBackingStoreBuffered defer:NO];window.title=@"URL2KeyFill";window.delegate=self;window.minSize=NSMakeSize(1050,390);window.backgroundColor=[NSColor colorWithWhite:.15 alpha:1];[window center];
+ window=[[RackWindow alloc]initWithContentRect:NSMakeRect(0,0,1280,460) styleMask:NSWindowStyleMaskBorderless|NSWindowStyleMaskResizable backing:NSBackingStoreBuffered defer:NO];window.title=@"URL2KeyFill";window.delegate=self;window.minSize=NSMakeSize(1050,390);window.opaque=NO;window.backgroundColor=NSColor.clearColor;window.contentView.wantsLayer=YES;window.contentView.layer.cornerRadius=13;window.contentView.layer.masksToBounds=YES;[window center];
  WKWebViewConfiguration* configuration=[[WKWebViewConfiguration alloc]init];configuration.websiteDataStore=WKWebsiteDataStore.nonPersistentDataStore;[configuration.userContentController addScriptMessageHandler:self name:@"native"];web=[[WKWebView alloc]initWithFrame:window.contentView.bounds configuration:configuration];web.autoresizingMask=NSViewWidthSizable|NSViewHeightSizable;web.navigationDelegate=self;web.UIDelegate=self;[web setValue:@NO forKey:@"drawsBackground"];[window.contentView addSubview:web];
  preview=[[Preview alloc]initWithFrame:NSZeroRect];[window.contentView addSubview:preview];
  NSMenu* menu=[[NSMenu alloc]init];NSMenuItem* appItem=[[NSMenuItem alloc]init];NSMenu* appMenu=[[NSMenu alloc]init];[appMenu addItemWithTitle:@"Quit URL2KeyFill" action:@selector(terminate:) keyEquivalent:@"q"];appItem.submenu=appMenu;[menu addItem:appItem];NSMenuItem* editItem=[[NSMenuItem alloc]init];NSMenu* edit=[[NSMenu alloc]initWithTitle:@"Edit"];for(NSArray* e in @[@[@"Cut",@"cut:",@"x"],@[@"Copy",@"copy:",@"c"],@[@"Paste",@"paste:",@"v"],@[@"Select All",@"selectAll:",@"a"]])[edit addItemWithTitle:e[0] action:NSSelectorFromString(e[1]) keyEquivalent:e[2]];editItem.submenu=edit;[menu addItem:editItem];NSApp.mainMenu=menu;
@@ -137,6 +138,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  if([type isEqual:@"layout"]){double h=[data[@"heightWindow"] doubleValue];if(std::isfinite(h)&&h>=300&&h<2000){NSRect f=window.frame;double desired=std::min(h,NSScreen.mainScreen.visibleFrame.size.height-30);if(std::abs(f.size.height-desired)>2){f.origin.y+=f.size.height-desired;f.size.height=desired;[window setFrame:f display:YES];}}
   NSRect r=NSMakeRect([data[@"x"] doubleValue],window.contentView.bounds.size.height-[data[@"y"] doubleValue]-[data[@"height"] doubleValue],[data[@"width"] doubleValue],[data[@"height"] doubleValue]);if(r.size.width>=0&&r.size.width<2000&&r.size.height>=0&&r.size.height<2000)preview.frame=r;preview.hidden=![data[@"show"] boolValue];return;}
  if([type isEqual:@"drag"]){dragging=YES;dragScreen=NSEvent.mouseLocation;dragOrigin=window.frame.origin;return;}
+ if([type isEqual:@"requestQuit"]){[self requestQuit];return;}
  if([type isEqual:@"quit"]){[self quit];return;}
  if([type isEqual:@"monitor"]){preview->key=[data[@"key"] boolValue];[preview setNeedsDisplay:YES];return;}
  if([type isEqual:@"refresh"]){[self refresh];}
@@ -188,7 +190,7 @@ auto alpha=frame->pixels[80*frame->stride+110*4+3];if(alpha<120||alpha>135){std:
   else if(smokePhase==5&&status.completed>150){output->onAir(true);output->stop();smokeResult=0;std::cout<<"PASS SDI pause, resume and stop\n";[self quit];}
  }
 }
--(void)requestQuit{if(ready)[web evaluateJavaScript:@"window.confirmQuit()" completionHandler:nil];else{NSAlert* alert=[[NSAlert alloc]init];alert.messageText=@"Quit URL2KeyFill?";alert.informativeText=@"SDI output will stop.";[alert addButtonWithTitle:@"Cancel"];[alert addButtonWithTitle:@"Quit"];if([alert runModal]==NSAlertSecondButtonReturn)[self quit];}}
+-(void)requestQuit{if(!output||!output->status().running){[self quit];return;}if(ready)[web evaluateJavaScript:@"window.confirmQuit()" completionHandler:nil];else{NSAlert* alert=[[NSAlert alloc]init];alert.alertStyle=NSAlertStyleCritical;alert.messageText=@"WARNING — SDI OUTPUT ACTIVE";alert.informativeText=@"Quitting will immediately cut the SDI video and audio signal. This may interrupt a live broadcast. Are you sure you want to stop output and quit?";[alert addButtonWithTitle:@"Cancel"];[alert addButtonWithTitle:@"Stop output and quit"];if([alert runModal]==NSAlertSecondButtonReturn)[self quit];}}
 -(BOOL)windowShouldClose:(NSWindow*)sender{[self requestQuit];return NO;}
 -(void)quit{if(closing)return;try{[self save];}catch(const std::exception& e){std::cerr<<e.what()<<'\n';}closing=YES;output->stop();[web.configuration.userContentController removeScriptMessageHandlerForName:@"native"];for(auto& r:runtimes)r.second->browser->close();for(auto& r:retired)r->browser->close();}
 -(BOOL)applicationSupportsSecureRestorableState:(NSApplication*)app{return YES;}

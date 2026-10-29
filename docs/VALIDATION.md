@@ -1,3 +1,13 @@
+# Release 0.2.2 validation — 29/10/2026
+
+- Release arm64 build with the real DeckLink backend passed; bundle version 0.2.2, build 4.
+- Both CTest suites passed (2/2).
+- AppKit/WKWebView/CEF smoke test passed with normal desktop access: UI controls, transparent composition, visibility, persistence, audio capture and clean shutdown. The restricted-shell launch could not start (exit 134); the desktop-access run passed.
+- No-device integration test passed, including driver guidance and disabled PLAY.
+- FILL/KEY selection was checked for stopped, playing and paused states; active-output warning and delete confirmation were checked separately with mocked DOM elements.
+- User confirmed rounded window corners visually during this session. No new SDI output or receiver validation was performed for this release.
+- Ad-hoc signature verified with `codesign --verify --deep --strict`; Apple notarization remains pending.
+
 # Release 0.2.1 validation — 29/10/2026
 
 - Project-owned tracked text checked for remaining Portuguese; documentation and the built-in test page are now English.

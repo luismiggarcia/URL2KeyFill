@@ -11,3 +11,7 @@ The first version with complete source code in this history. Introduces the Stud
 ## 0.2.1
 
 English-only project documentation, built-in test page and remaining project-owned test/comment text. Application metadata identifies version 0.2.1. The macOS arm64 release supports Apple Silicon, including M1; it is not an Intel or Universal build. Video/audio behavior is unchanged from 0.2.0. The application is ad-hoc signed, not Apple notarized.
+
+## 0.2.2
+
+Rounded native window corners, including the footer, and window dragging from empty layer-list space. Quit immediately when SDI output is stopped; show a prominent interruption warning while output is active, including PAUSE. Rename IMAGE to FILL and keep FILL/KEY selection amber independently of PLAY. Release for macOS Apple Silicon (arm64), ad-hoc signed and not Apple notarized.
