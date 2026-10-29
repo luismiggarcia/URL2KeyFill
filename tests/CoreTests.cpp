@@ -16,7 +16,7 @@ int main(){try{
  auto scaled=resize(*f,{4,4});REQUIRE(scaled->pixels[3]==0);REQUIRE(scaled->pixels[scaled->stride+3]==128);REQUIRE(scaled->pixels[3*scaled->stride+3]==0);
  std::vector<uint8_t> out(12,77);toSDR(*f,out.data(),12,true);REQUIRE(out[2]==255&&out[3]==128&&out[7]==255&&out[11]==0);toSDR(*f,out.data(),12,false);for(auto p:out)REQUIRE(p==0);
  toSDR(*f,out.data(),12,true,true);REQUIRE(out[0]==128&&out[1]==255);rejects([&]{Frame::copy({2,1},data,3,0);});
- Settings s;s.url="https://example.com/?a=\"x\"&b=2";s.device="dispositivo 123";s.viewport={3840,2160};s.mode=42;
+ Settings s;s.url="https://example.com/?a=\"x\"&b=2";s.device="device 123";s.viewport={3840,2160};s.mode=42;
  auto path=std::filesystem::temp_directory_path()/"url2keyfill-test-settings.txt";s.save(path);auto restored=Settings::load(path);REQUIRE(restored.url==s.url&&restored.device==s.device&&restored.viewport==s.viewport&&restored.mode==42&&restored.rate.duration==1001);
  {std::ofstream file(path);file<<"invalid";}rejects([&]{Settings::load(path);});std::filesystem::remove(path);
  REQUIRE(!allowedUrl("file:///etc/passwd"));REQUIRE(!allowedUrl("javascript:alert(1)"));REQUIRE(allowedUrl("u2k://test/index.html"));

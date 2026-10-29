@@ -1,3 +1,11 @@
+# Release 0.2.1 validation — 29/10/2026
+
+- Project-owned tracked text checked for remaining Portuguese; documentation and the built-in test page are now English.
+- Release build and both CTest suites passed (2/2).
+- Packaged application passed the real AppKit/WKWebView/CEF smoke test, including layer composition, persistence, UI controls and 31,200 captured stereo audio samples. No SDI output was started for this release check.
+- Executable architecture: arm64; Mach-O minimum macOS version: 13.0. This is an Apple Silicon build, including M1, rather than a physical test on every supported Mac model.
+- Ad-hoc signature verified with `codesign --verify --deep --strict`. Apple notarization remains pending.
+
 # Validation update — 29/10/2026, Studio Rack 0.2
 
 - Installed version 0.2.0 in `~/Applications/URL2KeyFill.app`, preserving a hidden backup of the prior installed app. The installed copy passed the full non-SDI integration test and signature verification.
@@ -15,34 +23,34 @@ No receiver loopback or new screen capture was performed. SDK acceptance and loc
 
 ---
 
-# Validação — 28/10/2026
+# Historical validation — 2026-10-28
 
-## Resultados efetivos
+## Results before Studio Rack
 
-- Compilação completa Release arm64, CEF integrado e backend DeckLink ativado: passou.
-- CTest: 1/1 passou. Abrange definições, temporização racional, proporções, alfa, stride, propriedade de buffers, pipeline e política de URL.
-- Teste gráfico real `--smoke-test`: passou com código de saída 0, fora do sandbox da ferramenta de execução. O sandbox interno do Chromium permanece ativo.
-- CEF 1920 × 1080: píxeis transparentes, opacos e parcialmente transparentes, ordem BGRA e orientação passaram.
-- Viewport 640 × 480: ajuste proporcional para Full HD e margens transparentes passaram.
-- Viewport 3840 × 2160 reduzido para Full HD: passou. Não valida saída SDI UHD.
-- Persistência das definições, erro de carregamento com remoção da imagem e encerramento CEF completo: passaram.
-- Verificação da assinatura ad-hoc com `codesign --verify --deep --strict`: passou após remover metadados Finder adicionados pelo OneDrive. Estes metadados podem reaparecer na pasta sincronizada.
-- Consulta real ao driver com `decklink_probe`, fora do sandbox da ferramenta: «Sem equipamento de reprodução SDI compatível ligado.» Não foi iniciada saída física.
+- Full Release arm64 build with CEF and the DeckLink backend passed.
+- CTest: 1/1 passed, covering settings, rational timing, geometry, alpha, stride, buffer ownership, pipeline and URL policy.
+- The real graphical `--smoke-test` passed with exit code 0 outside the execution tool's shell sandbox. Chromium's internal sandbox remained enabled.
+- CEF 1920 × 1080 pixel checks passed for transparent, opaque and partially transparent pixels, BGRA order and orientation.
+- A 640 × 480 viewport fitted Full HD proportionally with transparent side margins.
+- A 3840 × 2160 viewport scaled to Full HD passed. This did not validate physical UHD SDI.
+- Settings persistence, load-error image clearing and complete CEF shutdown passed.
+- `codesign --verify --deep --strict` passed after removing Finder metadata added by OneDrive. Synchronization can reintroduce those attributes.
+- At the initial probe, the real driver reported no compatible SDI output device. No physical output was started during that probe.
 
-## Porta-chaves e dados do browser
+## Keychain and browser data
 
-O Chromium anterior tentou utilizar «Chromium Safe Storage». A configuração foi corrigida antes de repetir o teste: usa `use-mock-keychain` no macOS, com uma raiz temporária exclusiva e perfil em memória. Não utiliza o perfil pessoal do utilizador, não requer a palavra-passe do Porta-chaves e não guarda cookies ou autenticações entre execuções. O teste terminou sem o bloqueio anterior. Não foi feita uma auditoria de chamadas ao sistema; a conclusão assenta na configuração e no teste funcional.
+The earlier Chromium configuration attempted to access Chromium Safe Storage. Before retesting, the application was changed to use `use-mock-keychain`, an exclusive temporary root and an in-memory profile. It does not use a personal browser profile, require a keychain password or persist web cookies/authentication. The test then completed without the earlier blocking behavior. No system-call audit was performed; this conclusion is based on configuration and functional testing.
 
-Referência do parâmetro: [GoogleChrome chrome-launcher](https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md). O comportamento do perfil em memória está documentado nos headers CEF fixados, em `cef_types.h`, campos `cache_path` e `root_cache_path`.
+The flag is documented by [GoogleChrome chrome-launcher](https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md). In-memory profile behavior is described in the pinned CEF `cef_types.h` fields `cache_path` and `root_cache_path`.
 
-## Pendente de equipamento
+## Hardware recognition and 1080p60 enumeration
 
-Seguir `HARDWARE.md` para validar Fill/Key simultâneos no UltraStudio HD Mini, cor e níveis, sombras e contornos, frequências inteiras e fracionárias, sinal contínuo com página estática, retirar/voltar ao ar, reinício e reconexão. A pré-visualização não comprova estes pontos.
+After the BlackmagicIO and Network extensions were authorized, the SDK detected the UltraStudio HD Mini without a restart. The user supplied a photograph of the test image on an external monitor and confirmed image output. Physical Key output and switcher compositing remained unverified because the necessary receiving connections were unavailable.
 
-Saída física UHD e desempenho prolongado dependem de equipamento compatível. O host Windows ainda não está implementado. A aplicação não está validada para produção.
+Mode enumeration was corrected to query ordinary output and Keying independently. The attached device with driver 16.4 rejected BGRA/ARGB ordinary playback at 1080p50/59.94/60 but accepted them with `bmdSupportedVideoModeKeying`. The original filter discarded these modes before the Keying query. Rebuilding and querying the real device confirmed all three rates in the list, in BGRA and ARGB. This established enumeration support, not long-duration playback validation at every rate.
 
-## Atualização: equipamento reconhecido e modos 1080p60
+## Remaining acceptance work
 
-Após autorizar as extensões BlackmagicIO e Network, o SDK detetou o UltraStudio HD Mini sem reiniciar. O utilizador apresentou uma fotografia da página de teste num monitor externo e confirmou a saída de imagem. A saída Key física e a composição na mesa continuam pendentes por falta de ligação disponível.
+Follow HARDWARE.md to validate simultaneous Full HD Fill/Key, levels/color, shadows/edges, integer/fractional rates, static-page SDI continuity, pause/resume, restart and reconnection. Local preview does not prove these physical properties.
 
-Corrigida a enumeração: consultar reprodução normal e Keying independentemente. No equipamento ligado, o driver 16.4 rejeita BGRA/ARGB em reprodução normal a 1080p50/59,94/60, mas aceita esses formatos com bmdSupportedVideoModeKeying. O filtro anterior descartava-os antes desta segunda consulta. A aplicação recompilada e a consulta real confirmam agora os três modos na lista, em BGRA e ARGB. Isto valida a enumeração; a reprodução e estabilidade nesses modos ainda precisam de teste.
+Physical UHD and prolonged performance tests require compatible equipment. The Windows host remains unimplemented. The application is not certified for production.

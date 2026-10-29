@@ -1,5 +1,5 @@
-# Dependências locais
+# Local dependencies
 
-Consultar `docs/BUILD.md`. Extrair o CEF fixado para a pasta de nome original e o SDK oficial Desktop Video 16.0 para `DeckLinkSDK/`, contendo `Mac/include/DeckLinkAPI.h`.
+See `docs/BUILD.md`. Extract the pinned CEF distribution using its original directory name, and the official Desktop Video 16.0 SDK into `DeckLinkSDK/`, including `Mac/include/DeckLinkAPI.h`.
 
-As dependências foram obtidas separadamente e não devem ser adicionadas indiscriminadamente ao controlo de versões. Conservar todas as licenças do CEF/Chromium e a EULA Blackmagic. A aplicação não redistribui os headers do SDK dentro do bundle.
+Dependencies are obtained separately and must not be added indiscriminately to version control. Preserve all CEF/Chromium licenses and the Blackmagic EULA. SDK headers are not redistributed inside the application bundle.

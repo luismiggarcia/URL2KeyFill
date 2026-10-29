@@ -3,5 +3,5 @@ third_party/*
 !third_party/README.md
 .DS_Store
 
-# Cópias locais das aplicações e pacotes de publicação
+# Local application copies and release packages
 /releases/
