@@ -852,3 +852,59 @@ nas faixas ocultas. O teste nativo verifica a identificação PFL.
 O Luis confirmou que **ainda não há loopback nem captura conjunta A/V disponível**.
 A medição física do offset som/imagem permanece pendente; nem a baseline SDI nem o
 teste do monitor local serão apresentados como aceitação de sincronismo A/V.
+
+### 9.5 Baseline real de 30 min e regressão curta da nova build
+
+Baseline numa cópia isolada de `bc8ae57`, com o relógio/mapeamento antigos, 1080p25
+e PLAY de 1800 s. A série cobre 1800,0005 s entre pontos ativos, em 1749 intervalos.
+**Zero lacunas de origem, ausência de fonte, erros de API, recuperações e frames de
+vídeo atrasados/perdidos** nos contadores registados. Correram builds, testes e um
+smoke monitor/CEF noutra instância durante a medição. Uma consulta SDK durante o
+ensaio indicou perfil full duplex e referência desbloqueada; o estado da referência
+não foi registado continuamente, nem foi ensaiada captura simultânea.
+
+Após 5 s de warmup, headroom mínimo/médio/máximo por leitura: **55,25 / 57,79 /
+86,08 ms**, sendo a média aqui a média das médias intervalares. As médias intervalares
+ficaram entre **56,54 e 61,14 ms**; a regressão descritiva foi −3,62 ms/h. Incluindo
+preroll, os extremos foram 7,98–106,67 ms. Não aplicar a banda ±5 ms aos extremos
+brutos nem interpretar a regressão como medição isolada do cristal.
+
+**Consequência para 3.1:** neste arranque existiu margem efetiva apreciável; a hipótese
+de margem quase nula não descreve esta execução. O algoritmo continua sem margem de
+origem explícita/controlada; não garante o mesmo offset noutros arranques/modos.
+Antes de escolher J, contabilizar a margem existente e a idade dos PTS brutos, em vez
+de acrescentar cegamente 40 ms ao percurso. Estes contadores não medem offset A/V
+nem latência física.
+
+Nova build correspondente a `34e9637`, PLAY de 10 s por modo:
+
+| Modo | Lacunas de áudio / erros API / recuperações | Vídeo atrasado / perdido | Resultado |
+|---|---|---|---|
+| 1080p25 Fill/Key BGRA | 0 / 0 / 0 | 0 / 0 | Smoke passou |
+| 1080p50 Fill/Key BGRA | 0 / 0 / 0 | 0 / 1 | Perda já no primeiro intervalo (~1,07 s após setup), causa por identificar |
+| 1080p59,94 Fill/Key BGRA | 0 / 0 / 0 | 0 / 0 | Smoke passou |
+
+Os smokes passaram, mas os testes curtos não aprovam estabilidade prolongada,
+movimento nem sincronismo físico. Os 30 min da baseline anterior não são 30 min da
+nova build. Instrumentar a perda inicial a 50p antes de reduzir reservas.
+
+Evidência em `tools/audio-audit/data`: `application-headroom-p1-1800s.*`,
+`application-regression-*-10s.*` e `single-layer-scene-benchmark.json`: CSV, logs
+comprimidos, resumos, commits/binários e contexto de carga. Build, CTest 4/4, modelos,
+ThreadSanitizer e smoke nativo/monitor passaram. A verificação final
+`codesign --verify --deep --strict` passou após reaplicar o script de assinatura para
+remover metadados Finder/ResourceFork de empacotamento.
+
+### 9.6 Estado após esta parcela
+
+Concluídos nesta parcela: telemetria/baseline P1, PAUSE independente, base testável de
+agendamento/relógio, composição por eventos/percurso simples de vídeo, pedido de
+cadência CEF, lifecycle do monitor e indicações PFL/HIDDEN. O pedido CEF é limite de
+pintura, não sincronização de fase.
+
+Pendentes: ativação conjunta da timeline monótona/PTS bruto e margem explícita;
+continuidade de pacotes/recuperação temporal completa; reamostragem adaptativa;
+callback do monitor sem alocações/mutexes; rampas, OVER, MONO/faders e restantes itens
+do plano. Faltam regressão prolongada da nova build e investigação da perda inicial
+a 50p. A aceitação física A/V depende do equipamento que o Luis confirmou ainda não
+estar disponível. Não foi substituída a aplicação instalada.

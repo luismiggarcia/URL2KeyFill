@@ -1,0 +1,58 @@
+{
+  "source_commit": "34e9637",
+  "binary_sha256": "5b88a7efaba16da0854c81d1b3a96e9268d48f9eb0ac22557b71863a0932fe5a",
+  "play_seconds_per_mode": 10,
+  "exit_code_each": 0,
+  "reference_state": "Not sampled in these short runs",
+  "physical_av_capture": false,
+  "runs": {
+    "1080p25": {
+      "315BF6DF-5097-4333-9141-33FCE703B13F": {
+        "reported_span_s": 9.800676000000001,
+        "intervals": 11,
+        "missing_frames": 0,
+        "no_source_reads": 0,
+        "headroom_min_ms": 1.979167,
+        "headroom_max_ms": 100.666667,
+        "filtered_trend_ms_per_hour": -36.8045474899839,
+        "api_errors": 0,
+        "recoveries": 0,
+        "late_video": 0,
+        "dropped_video": 0
+      }
+    },
+    "1080p50": {
+      "E909C8A4-9490-4029-9916-99AD0C2623D8": {
+        "reported_span_s": 9.550127999999999,
+        "intervals": 11,
+        "missing_frames": 0,
+        "no_source_reads": 0,
+        "headroom_min_ms": 7.979167,
+        "headroom_max_ms": 46.666667,
+        "filtered_trend_ms_per_hour": 33.895309543083926,
+        "api_errors": 0,
+        "recoveries": 0,
+        "late_video": 0,
+        "dropped_video": 1
+      }
+    },
+    "1080p5994": {
+      "AD21D313-282F-4D7E-A707-58CEF0695350": {
+        "reported_span_s": 9.549741000000001,
+        "intervals": 11,
+        "missing_frames": 0,
+        "no_source_reads": 0,
+        "headroom_min_ms": 1.979167,
+        "headroom_max_ms": 45.25,
+        "filtered_trend_ms_per_hour": 53.36413618922887,
+        "api_errors": 0,
+        "recoveries": 0,
+        "late_video": 0,
+        "dropped_video": 0
+      }
+    }
+  },
+  "limitation": "50p: one video drop already present in the first reporting interval (~1.07 s after setup); startup investigation and prolonged candidate regression pending. Short-run slopes do not estimate crystal drift.",
+  "packaged_binary_sha256": "5b88a7efaba16da0854c81d1b3a96e9268d48f9eb0ac22557b71863a0932fe5a",
+  "packaging_signature_verified": true
+}

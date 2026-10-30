@@ -1,5 +1,21 @@
 # Audio timing implementation — 30/10/2026
 
+Hardware evidence:
+
+- Isolated `bc8ae57` baseline completed 1800 seconds of PLAY at 1080p25: zero missing
+  source frames, no-source reads, audio API errors, clock recoveries or video late/drop
+  events in the recorded counters. After five-second warmup, interval means ranged
+  56.54–61.14 ms; per-read extrema were 55.25–86.08 ms. Not an external A/V test.
+- Candidate `34e9637` passed ten-second PLAY smokes at 1080p25, 1080p50 and 1080p59.94
+  Fill/Key BGRA. Audio counters stayed zero; 50p had one video drop already in the
+  first reporting interval. Cause and extended candidate stability remain open.
+- Traces/logs and contextual JSON are in `tools/audio-audit/data`. The baseline
+  records the earlier binary, not the later video/monitor candidate.
+- Final ad-hoc signature verification passed after rerunning the existing signing
+  script to remove packaging metadata reintroduced by OneDrive/Finder.
+- Installed application was not replaced. Active media clock/source delay remain
+  unchanged; the uptime-clock foundation is not yet wired into the application.
+
 Additional implementation checks:
 
 - Event-driven composition and immutable single-layer reuse: CTest 4/4 passed,

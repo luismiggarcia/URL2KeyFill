@@ -133,3 +133,10 @@ clock measurement or physical A/V sync test. Each capture should contain a singl
 continuous PLAY session. Keep exact binary commit, mode, driver, reference state,
 load and elapsed recording time alongside the CSV. The initial interval can include
 preroll and has a different headroom distribution from steady playback.
+
+Recorded P1 evidence: `data/application-headroom-p1-1800s.*` contains the 30-minute
+`bc8ae57` baseline and context/hash JSON; all monitored fault counters were zero.
+`data/application-regression-*-10s.*` and the aggregate JSON cover candidate `34e9637`
+at 25/50/59.94p. Audio counters were zero; 50p had one video drop in the first
+reporting interval. These short runs do not establish prolonged candidate stability.
+No physical A/V capture was available. See audit §9.5 for interpretation.

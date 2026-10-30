@@ -1,0 +1,35 @@
+{
+  "code_commit": "bc8ae57",
+  "binary_sha256": "563475286da80c56f057c22aa46b963ff5485222b4ec9a2371f0e4e2e3333643",
+  "mode": "hardware smoke default 1080p25",
+  "play_seconds_requested": 1800,
+  "exit_code": 0,
+  "device": "UltraStudio HD Mini",
+  "reference": "Unlocked at one read-only query during run; not continuously logged",
+  "duplex": "SDK profile reports full duplex; no simultaneous capture attempted",
+  "load": "Development builds, unit tests, ThreadSanitizer and a separate local-monitor/CEF smoke ran during the recording",
+  "source": "Smoke built-in tone, one audible source after second layer hidden",
+  "physical_av_capture": false,
+  "summary": {
+    "BC0CE376-AF6C-40CD-A363-74314095E4EE": {
+      "reported_span_s": 1800.0005039999999,
+      "intervals": 1749,
+      "missing_frames": 0,
+      "no_source_reads": 0,
+      "headroom_min_ms": 7.979167,
+      "headroom_max_ms": 106.666667,
+      "filtered_trend_ms_per_hour": -3.6165265017592416,
+      "api_errors": 0,
+      "recoveries": 0,
+      "late_video": 0,
+      "dropped_video": 0
+    }
+  },
+  "steady_after_5s": {
+    "min_ms": 55.25,
+    "mean_interval_means_ms": 57.79419894724771,
+    "max_ms": 86.083333,
+    "interval_mean_min_ms": 56.542424,
+    "interval_mean_max_ms": 61.14429
+  }
+}

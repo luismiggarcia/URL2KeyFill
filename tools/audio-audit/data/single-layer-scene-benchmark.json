@@ -1,0 +1,11 @@
+{
+  "baseline_commit": "bc8ae57",
+  "candidate_commit": "34e9637",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+  "flags": "-std=c++20 -O2 -pthread",
+  "iterations_per_size": 100,
+  "source": "tools/scene_bench.cpp",
+  "before": "1920x1080 ms/frame=4.16357 alias=0 checksum=6400\n3840x2160 ms/frame=15.4141 alias=0 checksum=6400\n",
+  "after": "1920x1080 ms/frame=0.00014083 alias=1 checksum=6400\n3840x2160 ms/frame=7e-05 alias=1 checksum=6400\n",
+  "scope": "Single-layer composition only; full pixel equality checked outside timed section; not application CPU or end-to-end latency."
+}
