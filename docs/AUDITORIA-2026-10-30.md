@@ -795,3 +795,17 @@ intervalo. Não é aceitação de estabilidade. CSV em
 `tools/audio-audit/data/application-headroom-p1-short.csv.gz`. O headroom inicial
 inclui preroll; a inclinação de um ensaio tão curto não é estimativa útil da deriva.
 É necessário o registo de 30 min antes de alterar o mapeamento temporal.
+
+### 9.2 Preparação testável da próxima fase
+
+A aritmética de cursor/bloco/origem passa a estar em `AudioSchedule`, usada pelo
+callback DeckLink e pelo simulador de deriva, mantendo o mapeamento atual. Os testes
+cobrem avanço parcial/zero e recuperação do cursor. Acrescentado também o adaptador
+`MediaClock`: uptime macOS em unidades de amostra, conversão sem overflow intermédio
+e deteção testável de alteração entre uptime e relógio que inclui suspensão.
+
+O adaptador de relógio ainda **não está ligado ao percurso da aplicação**; a mudança
+de domínio e margem será feita em conjunto após fechar a baseline. Os testes do
+core, a build completa e os modelos passaram; os resultados de deriva/jitter do
+modelo mantêm-se após partilhar o agendador. A baseline de 30 min está a executar a
+cópia isolada do commit `bc8ae57`, sem incorporar estas alterações.

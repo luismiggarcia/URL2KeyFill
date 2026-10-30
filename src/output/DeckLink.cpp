@@ -1,4 +1,5 @@
 #include "Output.hpp"
+#include "core/AudioSchedule.hpp"
 #include "DeckLinkAPI.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <algorithm>
@@ -53,13 +54,13 @@ public:
 };
 class AudioCallback final:public IDeckLinkAudioOutputCallback {
  std::atomic<ULONG> refs_{1};IDeckLinkOutput* output_;std::shared_ptr<AudioMixer> mixer_;std::mutex mutex_;
- int64_t cursor_=0,epoch_;uint32_t target_;bool accepting_=true;
+ AudioSchedule schedule_;bool accepting_=true;
 public:
  std::atomic<uint64_t> frames{0},errors{0},recoveries{0};std::atomic<bool> failed{false};
  std::atomic<bool> programActive{true};std::atomic<uint32_t> bufferedFrames{0};
- uint32_t targetFrames()const{return target_;}
+ uint32_t targetFrames()const{return schedule_.target();}
  AudioCallback(IDeckLinkOutput* o,std::shared_ptr<AudioMixer> m,const Mode& mode):output_(o),mixer_(std::move(m)){
-  output_->AddRef();target_=uint32_t(std::clamp<int64_t>((3*mode.rate.duration*48000+mode.rate.scale-1)/mode.rate.scale,1440,12000));epoch_=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()*48;
+  output_->AddRef();const auto target=uint32_t(std::clamp<int64_t>((3*mode.rate.duration*48000+mode.rate.scale-1)/mode.rate.scale,1440,12000));const auto epoch=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()*48;schedule_=AudioSchedule(epoch-target,target);
  }
  ~AudioCallback(){output_->Release();}
  HRESULT QueryInterface(REFIID iid,LPVOID* p)override{if(!p)return E_INVALIDARG;*p=nullptr;const auto unknown=CFUUIDGetUUIDBytes(IUnknownUUID);if(!std::memcmp(&iid,&unknown,sizeof(iid))||!std::memcmp(&iid,&IID_IDeckLinkAudioOutputCallback,sizeof(iid))){*p=static_cast<IDeckLinkAudioOutputCallback*>(this);AddRef();return S_OK;}return E_NOINTERFACE;}
@@ -68,11 +69,11 @@ public:
  HRESULT RenderAudioSamples(bool)override{
   std::lock_guard<std::mutex> lock(mutex_);if(!accepting_)return S_OK;
   uint32_t buffered=0;if(output_->GetBufferedAudioSampleFrameCount(&buffered)!=S_OK){++errors;failed=true;return E_FAIL;}
-  BMDTimeValue time=0;double speed=0;if(output_->GetScheduledStreamTime(48000,&time,&speed)==S_OK&&time>cursor_){cursor_=time;++recoveries;}
-  try{for(int block=0;buffered<target_&&block<24;block++){
-   uint32_t count=std::min<uint32_t>(1024,target_-buffered),written=0;auto pcm=mixer_->mix(epoch_+cursor_-target_,count,programActive);
-   if(output_->ScheduleAudioSamples(pcm.data(),count,cursor_,48000,&written)!=S_OK){++errors;failed=true;return E_FAIL;}
-   if(!written)break;cursor_+=written;buffered+=written;frames+=written;
+  BMDTimeValue time=0;double speed=0;if(output_->GetScheduledStreamTime(48000,&time,&speed)==S_OK&&schedule_.catchUp(time))++recoveries;
+  try{for(int block=0;buffered<schedule_.target()&&block<24;block++){
+   uint32_t count=schedule_.blockSize(buffered),written=0;auto pcm=mixer_->mix(schedule_.readStart(),count,programActive);
+   if(output_->ScheduleAudioSamples(pcm.data(),count,schedule_.cursor(),48000,&written)!=S_OK){++errors;failed=true;return E_FAIL;}
+   if(!written)break;schedule_.advance(written);buffered+=written;frames+=written;
   }}catch(...){++errors;failed=true;return E_FAIL;}bufferedFrames=buffered;return S_OK;
  }
 };

@@ -8,7 +8,7 @@ application build; the tracked sources are never modified.
 |---|---|
 | `run-models.sh` | Compiles and runs `mixer_checks` and the `drift_sim` scenarios quoted in the audit. Needs only the Command Line Tools (~10 s). |
 | `mixer_checks.cpp` | Current behaviour behind A1, A4, A6, A7 and A8, using the real `AudioLane`/`AudioMixer`. |
-| `drift_sim.cpp` | Deterministic model of `AudioCallback` (exact arithmetic from `DeckLink.cpp`) with configurable device clock error, start margin, callback period and measured packet lateness. Prints the proposed "source headroom" diagnostic. |
+| `drift_sim.cpp` | Deterministic model using the same `AudioSchedule` cursor/block arithmetic as `DeckLink.cpp`, with configurable device clock error, start margin, callback period and measured packet lateness. Prints the proposed "source headroom" diagnostic. |
 | `build-instrumented.sh` | Builds a copy of the application whose CEF audio handler logs every packet (raw and adjusted PTS plus four clocks). Reuses an existing configured `build/` tree. |
 | `instrument.py` | The patch applied to the *copied* `Browser.hpp` by `build-instrumented.sh`. |
 | `capture-trace.sh` | Runs the instrumented copy with a throwaway home and temporary directory, then stops it. A window opens for the duration. |

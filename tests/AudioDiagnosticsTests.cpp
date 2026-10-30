@@ -1,9 +1,26 @@
 #include "core/Scene.hpp"
+#include "core/AudioSchedule.hpp"
+#include "core/MediaClock.hpp"
 #include <iostream>
 #include <stdexcept>
 using namespace u2k;
 #define REQUIRE(x) do{if(!(x))throw std::runtime_error(#x);}while(0)
 int main(){try{
+ REQUIRE(samplesFromNanoseconds(1'000'000'000)==48000);
+ REQUIRE(samplesFromNanoseconds(9'000'000'000'000'000'000LL)==432'000'000'000'000LL);
+ REQUIRE(mediaSampleTime()>0);
+ ClockGapDetector gaps;
+ REQUIRE(!gaps.observe({100,500,0}));REQUIRE(!gaps.observe({1000,1400,0}));
+ REQUIRE(gaps.observe({1000,1'000'001'400,0}));
+ REQUIRE(!gaps.observe({2000,1'000'002'400,0}));
+ REQUIRE(!gaps.observe({3000,2'000'003'400,100'000'000}));
+ REQUIRE(!gaps.observe({4000,1'000'004'400,0}));
+ AudioSchedule schedule(48000-5760,5760);
+ REQUIRE(schedule.readStart()==42240);REQUIRE(schedule.blockSize(0)==1024);
+ REQUIRE(schedule.blockSize(5700)==60);REQUIRE(schedule.blockSize(5760)==0);
+ schedule.advance(400);REQUIRE(schedule.readStart()==42640);REQUIRE(schedule.cursor()==400);
+ REQUIRE(!schedule.catchUp(399));REQUIRE(schedule.catchUp(1000));REQUIRE(schedule.readStart()==43240);
+ schedule.advance(0);REQUIRE(schedule.cursor()==1000);
  // Silence is covered audio; meters/monitor must not affect SDI diagnostics.
  auto lane=std::make_shared<AudioLane>();float silent[480]={};const float* data[]={silent,silent};
  lane->push(data,480,2,1000);std::vector<float> out(960,0);

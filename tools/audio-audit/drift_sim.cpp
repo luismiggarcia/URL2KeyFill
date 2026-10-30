@@ -9,6 +9,7 @@
 //   --trace     per-packet arrival lateness taken from an analyze_trace.py-compatible trace
 //               (cycled); otherwise a constant 1.4 ms, the median of the first audit trace
 #include "core/Scene.hpp"
+#include "core/AudioSchedule.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -46,7 +47,7 @@ int main(int argc,char** argv){
     const int64_t base=1'800'000'000'000;             // epoch_ in ms; packets start 1 s earlier
     // DeckLink.cpp: three video frames, clamped to 30-250 ms.
     const int64_t target=std::clamp<int64_t>(int64_t(std::ceil(3*48000/fps)),1440,12000);
-    const int64_t epoch=base*48;int64_t cursor=0,packet=0;
+    const int64_t epoch=base*48;int64_t packet=0;AudioSchedule schedule(epoch-target,uint32_t(target));
     std::printf("device %+g ppm, margin %g ms, callback %g ms, target %lld samples, lateness %s\n",ppm,margin,callbackMs,(long long)target,trace?trace:"1.4 ms");
     std::printf("%10s %12s %16s %16s\n","time (s)","missing %","min headroom ms","max headroom ms");
     uint64_t missing=0,total=0;double minHead=1e9,maxHead=-1e9,next=seconds/reports;
@@ -55,17 +56,17 @@ int main(int argc,char** argv){
         const double now=base+margin+t*1000;      // Mac clock, ms
         while(arrival(packet)<=now){lane->push(data,480,2,base-1000+packet*10);++packet;}
         const int64_t played=int64_t(t*48000*(1+ppm*1e-6));
-        if(played>cursor)cursor=played;          // DeckLink.cpp underrun resynchronisation
-        int64_t buffered=cursor-played;
+        schedule.catchUp(played);              // Shared DeckLink scheduling arithmetic
+        int64_t buffered=schedule.cursor()-played;
         for(int block=0;buffered<target&&block<24;block++){
-            const uint32_t count=uint32_t(std::min<int64_t>(1024,target-buffered));
-            const auto pcm=mixer.mix(epoch+cursor-target,count);
+            const uint32_t count=schedule.blockSize(uint32_t(buffered));
+            const auto pcm=mixer.mix(schedule.readStart(),count);
             for(size_t i=0;i<pcm.size();i+=2){++total;missing+=pcm[i]==0;}
-            cursor+=count;buffered+=count;
+            schedule.advance(count);buffered+=count;
         }
         // Proposed diagnostic: newest received sample minus the end of the request.
         int64_t newestEnd=(base-1000+(packet-1)*10)*48+480;
-        double head=(newestEnd-(epoch+cursor-target))/48.;
+        double head=(newestEnd-schedule.readStart())/48.;
         minHead=std::min(minHead,head);maxHead=std::max(maxHead,head);
         if(t>=next||t+callbackMs/1000>seconds){
             std::printf("%10.0f %12.3f %16.2f %16.2f\n",t,total?100.*missing/total:0,minHead,maxHead);
