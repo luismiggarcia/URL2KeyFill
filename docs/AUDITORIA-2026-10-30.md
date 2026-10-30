@@ -6,6 +6,8 @@ roteamento de áudio. Sem hardware DeckLink ligado durante a auditoria
 física não foi testada; o comportamento do callback DeckLink foi analisado no código e
 simulado com as classes reais do mixer.
 
+> **Correção do auditor:** a frase acima está errada. A UltraStudio HD Mini estava ligada; o `decklink_probe` foi executado dentro do sandbox da shell, que esconde o driver. Fora do sandbox o dispositivo é detetado e foi medido — ver §8.
+
 > **Como ler as respostas inline:** o texto original da auditoria foi preservado; os blocos “Resposta da revisão” registam a verificação independente, as ressalvas e as soluções revistas. Nos pontos A1–A10 e V1–T1, as linhas das tabelas foram apresentadas como entradas individuais para colocar a resposta imediatamente junto de cada achado.
 
 ## 1. O que foi verificado
@@ -31,6 +33,8 @@ apenas no scratchpad da sessão.
 > - A análise de riscos de Core Audio é estática; não demonstra cortes efetivamente audíveis ou falha com todos os dispositivos.
 
 > **Evidência reproduzível (acrescentada a 30/10):** os traces, o simulador e o analisador estão em [tools/audio-audit](../tools/audio-audit/README.md). `run-models.sh` reproduz em ~10 s as verificações do mixer e os cenários de deriva sem CEF nem hardware. Foi capturado um segundo trace de 120 s (11 743 pacotes) com o PTS bruto e quatro relógios. Os números das secções 3.1–3.3 abaixo foram revistos com esta evidência.
+
+> **Segunda revisão — reprodução da resposta do auditor (30/10):** executei `run-models.sh` com as fontes atuais e o analisador sobre o trace comprimido de 120 s. Os checks do mixer passaram e os números publicados de jitter/deriva foram reproduzidos. O trace contém efetivamente 11 743 pacotes, mas cobre **117,4 s entre o primeiro e o último**, dentro de uma captura nominal de 120 s. As ressalvas anteriores sobre falta de acesso aos dados ficam ultrapassadas por esta evidência; a validação física SDI e a margem real de arranque continuam em aberto. As novas correções não tornam válidos os números antigos que foram conservados acima: em caso de conflito, prevalece a evidência reproduzível, com as precisões seguintes.
 
 ## 2. Mapa do roteamento de áudio
 
@@ -138,6 +142,8 @@ observado de ~16 ms) produz um buraco.
 
 > **Evidência reproduzível — 3.1:** o trace de 120 s confirma a regularidade (Δpts = 10 ms em todos os pacotes, sem sobreposições nem lacunas). A chegada face ao início do pacote dá p50 0,95 ms e p99 1,60 ms, mas houve um pacote 30,7 ms atrasado; com 20 ms de margem ainda falham 2 pacotes, com 40 ms nenhum. No simulador com estes atrasos medidos e relógios perfeitos: margem 0,5 ms → 0,178 % de amostras em falta; 2 ms → 0,024 %; 40 ms → 0 %. Os 40 ms continuam a ser um valor de ensaio: dois traces de 1–2 min num Mac sem carga não chegam para dimensionar o pior caso.
 
+> **Segunda revisão — 3.1:** valores reproduzidos: p50 0,95 ms, p99 1,60 ms, máximo 30,70 ms; 4 pacotes acima de 2 ms, 2 acima de 20 ms e nenhum acima de 40 ms, **relativamente aos PTS ajustados pela aplicação**. O modelo reproduz 0,178%, 0,024% e 0% de amostras em falta para margens de 0,5/2/40 ms. “Pacotes tardios” no analisador é um indicador de chegada; não é uma contagem observada de underruns DeckLink. O simulador assume escrita integral, callbacks instantâneos e buffer consumido exatamente pelo relógio modelado: não simula custo/concorrência, FIFO físico, escritas parciais ou prazos do driver. É adequado para demonstrar o mecanismo e comparar cenários, não para prever a taxa física de cortes.
+
 ### 3.2 [CRÍTICO] Sem compensação da deriva entre o relógio DeckLink e o do Mac
 
 O CEF produz 48 000 amostras por segundo do Mac; o DeckLink consome 48 000 por segundo
@@ -162,6 +168,10 @@ adaptativa, insert/drop, ressincronização) que corrija isto. O contador
 >
 > **Correção à proposta 3 (§ Proposta):** "interpolação linear chega" está errado. Com a fase fracionária a variar lentamente, a resposta da interpolação linear aos 20 kHz oscila entre 0 e cerca de −11,7 dB (−2 dB aos 10 kHz): os agudos ficam modulados. É preciso um reamostrador polifásico/sinc de razão variável.
 
+> **Segunda revisão — qualidade do reamostrador:** concordo com a retirada da recomendação de interpolação linear. Para 48 kHz e fase fracionária 0,5, a resposta em amplitude é `|cos(πf/48000)|`: −11,74 dB a 20 kHz e −2,01 dB a 10 kHz, conforme os valores do auditor. Uma razão muito próxima de 1 apenas torna lenta a variação da fase, não elimina esta atenuação. Recomenda-se reamostragem de qualidade com razão variável, estado contínuo e atraso de grupo conhecido; polifásico/sinc é uma opção adequada. Contabilizar esse atraso no ajuste A/V, incluindo no percurso de uma fonte.
+
+> **Segunda revisão — 3.2:** a correção do erro de fase do primeiro simulador é pertinente e os novos resultados são reproduzíveis. Há uma precisão necessária: `missing` e `total` são repostos depois de cada impressão. Assim, **4,542% é a perda no intervalo 150–300 s; 40,652% no intervalo 450–600 s; 87,430% no intervalo 750–900 s**. Não são percentagens acumuladas desde PLAY nem valores instantâneos aos 5/10/15 min. No caso lento, 99,791% refere-se à oitava hora. Os ~80 s são o limiar analítico aproximado para margem 3 ms e atraso constante 1,4 ms, não uma medição do HD Mini. A inclinação da margem é útil para diagnóstico, mas deve ser estimada por regressão/janelas e com incerteza: a 20 ppm o efeito é apenas 1,2 ms/min, sobre jitter e quantização. O sinal também importa: dispositivo mais rápido faz a margem descer; mais lento faz subir. Duas horas são um ensaio diagnóstico razoável para este cenário, sem garantia universal de detetar qualquer deriva.
+
 ### 3.3 [ALTO] Base de tempo em `system_clock` (relógio de parede)
 
 `Browser.hpp:36` calcula o offset do CEF com `system_clock` no início de cada stream;
@@ -185,6 +195,10 @@ relógio de parede.
 > **Resposta da revisão — domínio dos timestamps CEF:** O header CEF incluído no projeto documenta PTS em epoch; a [documentação CEF](https://cef-builds.spotifycdn.com/docs/142.0/classCefAudioHandler.html) repete esse contrato. O [código upstream do capturador](https://github.com/chromiumembedded/cef/blob/master/libcef/browser/audio_capturer.cc) calcula o valor a partir de `base::TimeTicks`. Isto corrobora a necessidade de validar a implementação real e não confiar só no comentário. O upstream consultado não é prova da origem numérica exata do binário fixado `g4fa4ab5`; não se deve assumir sem validação que `steady_clock::time_since_epoch()` coincide numericamente com os PTS.
 
 > **Evidência reproduzível — domínio dos PTS (resolve a ressalva):** no trace de 120 s, `mach_absolute_time − PTS bruto` fica entre 21,0 e 22,0 ms (truncagem a 1 ms), com −6,6 ppm de diferença de ritmo, dentro da quantização. O binário fixado carimba os pacotes em `mach_absolute_time` (uptime, que para durante a suspensão), cerca de 21,5 ms antes de chegarem ao handler. O `steady_clock` do libc++ coincide com `mach_continuous_time` (inclui suspensão) e afastava-se dos PTS em 24 452 s, o sono acumulado desde o arranque. A revisão tinha razão: a proposta 1 ("`steady_clock` / `mach_absolute_time`, o mesmo domínio") estava errada quanto ao `steady_clock`. A timeline comum deve usar `mach_absolute_time` (ou `CLOCK_UPTIME_RAW`), ou calibrar o offset explicitamente, e tratar o acordar da suspensão como descontinuidade.
+
+> **Segunda revisão — PTS e orçamento de latência:** a evidência sustenta que os PTS brutos acompanham o domínio uptime neste sistema e confirma que `steady_clock` não é substituição numérica direta. Porém, **“fica entre 21,0 e 22,0 ms” confunde percentis com limites**: o analisador publica p1/p99; calculei mínimo **20,982 ms**, mediana **21,496 ms** e máximo **51,338 ms** para chegada em `mach_absolute_time` menos PTS bruto. A origem comum é consistente com o trace, mas o diferencial inclui idade de captura/entrega e quantização; não deve ser tratado integralmente como erro de relógio a subtrair.
+>
+> **Consequência para a solução:** o offset atual ancora o primeiro PTS à chegada do primeiro pacote e remove da timeline aproximadamente 21 ms de idade inicial nesta captura. Passar a usar PTS bruto no domínio uptime preserva essa idade: as margens medidas sobre PTS ajustados deixam de ter o mesmo significado. Os **40 ms ajustados não equivalem a 40 ms brutos**; o máximo bruto observado é ~51,3 ms. Isto não obriga automaticamente a escolher uma margem maior: obriga a definir se J é a idade total de leitura ou uma reserva adicional sobre a idade de captura e a medir novamente disponibilidade e A/V. Para várias layers, evitar ancorar cada uma ao seu primeiro callback, pois o jitter inicial pode introduzir offsets relativos distintos. Tratar suspensão/retoma como descontinuidade e validar a conversão de relógios no sistema suportado.
 
 ### Proposta para 3.1–3.3 (prioridade 1)
 
@@ -452,3 +466,291 @@ restrito ao catálogo e migração/validação do `session.json`.
 Nota: a documentação do projeto está toda em inglês (desde a 0.2.1); este relatório
 está em português por ser dirigido ao Luis. Se for para ficar versionado, convém
 traduzi-lo.
+
+## 7. Plano detalhado de implementação — proposta para validação do auditor
+
+**Estado: proposta, ainda não implementada.** Esta secção consolida as respostas inline e substitui a ordem indicativa da secção 6 para execução futura. Não aprova os 40 ms como configuração final, não assume oscilação de ±20 ppm no HD Mini e não considera o monitor local prova do sincronismo SDI. A validação deve incidir primeiro nos contratos temporais, depois nos resultados de cada fase.
+
+### 7.1 Objetivos, âmbito e regras de execução
+
+1. Impedir crescimento ilimitado do desfasamento e corrigir cortes causados por indisponibilidade de amostras, deriva ou recuperação incorreta.
+2. Reduzir latência nos casos comuns sem perder a correção de relógios, o roteamento, o controlo de níveis ou a qualidade de áudio.
+3. Separar três resultados: atraso total, offset A/V e continuidade. Cada um terá métricas e critérios próprios.
+4. Manter o código portátil no core; relógios macOS, CEF, DeckLink e AVAudioEngine ficam em adaptadores. Não introduzir dependências macOS nos testes determinísticos.
+5. Executar em alterações pequenas e verificáveis, com resultado anterior/posterior no mesmo cenário. As alterações já em curso no gerador AV, documentação e host devem ser inventariadas e preservadas; os testes têm de identificar o commit e eventuais alterações locais.
+6. Não incluir nesta intervenção Windows, interlaced, novos formatos SDI, notarização ou reconstrução geral da UI. V2 e V5 só mudam comportamento se a validação específica justificar.
+
+### 7.2 Contrato temporal a aprovar antes de programar
+
+**Unidades e relógios.** Introduzir tipos explícitos para tempo monótono do host, posição inteira de amostra, fase fracionária de leitura e tempo racional de vídeo. Conversões centralizadas, com precisão superior a milissegundos e sem multiplicar epochs de parede por 48. `system_clock` fica apenas para datas legíveis nos logs. No macOS, o adaptador usa uptime compatível com os PTS medidos; não assume igualdade numérica com `steady_clock`.
+
+**PTS CEF.** Na versão fixada, converter o PTS bruto para a timeline comum preservando a idade de captura. Não ancorar cada stream à chegada do seu primeiro pacote. Registar domínio/versão, validar intervalos e tratar reinício, mudança de domínio e suspensão como eventos explícitos. Um contrato CEF futuro diferente exige adaptador/teste próprio, não a heurística silenciosa de 60 s. A quantização de 1 ms é tratada como incerteza de timestamp, não como jitter de produção de amostras.
+
+**Relação origem/apresentação.** Definir `H(s)` como o instante host estimado em que a amostra de saída `s` será apresentada pelo dispositivo. O conteúdo a ler é `C(s) = H(s) − L`, onde `L` é o atraso de conteúdo pretendido nessa referência. Se o agendamento lê para um instante aproximadamente `D` no futuro, a idade da origem no momento da leitura é aproximadamente `J = L − D`. Consequentemente, reduzir D pode reduzir L mantendo J; aumentar D sem aumentar L reduz a margem de origem. Usar esta equação como referência, não manter implicitamente `epoch + cursor − target`.
+
+**Orçamento de latência.** Distinguir `D` (antecedência/reserva de agendamento), `J` (idade da origem à leitura, incluindo a idade preservada pelos PTS brutos) e o offset relativo de vídeo/áudio. Registar ainda atraso de grupo do reamostrador, processamento/conversões e latência residual do hardware/recetor. A associação entre tempo de stream e apresentação física tem de ser calibrada; não assumir que a chamada SDK revela o instante elétrico exato. A idade ~21,5 ms do trace atual não se soma duas vezes nem desaparece por ajuste do primeiro callback.
+
+**Offset A/V.** Definir sinal: `ΔAV = instante do som − instante do flash`; positivo significa som atrasado. A compensação deve selecionar imagem/áudio compatíveis com a apresentação pretendida. Como `OnPaint` não fornece PTS multimédia, timestamp de chegada apenas limita/mede a idade; a calibração flash/impulso é obrigatória e a incerteza do gerador/captura deve acompanhar o resultado. Não prometer sincronismo exato entre conteúdos independentes de páginas distintas.
+
+**Recuperação e estados.** Distinguir STOP, preroll, PLAY, PAUSE, recuperação e falha de dispositivo. PAUSE mantém o stream SDI e faz fade para silêncio/transparência; STOP liberta o dispositivo sem deixar o monitor bloqueado. Reinício de stream invalida a sua geração anterior, não as restantes fontes. Sleep/wake e saltos de relógio do dispositivo invalidam mapeamentos e iniciam recuperação controlada.
+
+**Decisões para o auditor:** validar estas definições, o tratamento de PTS brutos e a estratégia de medição antes de aceitar quaisquer valores por defeito de latência.
+
+### 7.3 Fase 0 — baseline, evidência e testes de referência
+
+**Ficheiros:** `tools/audio-audit/*`, `tests/SceneTests.cpp`, `tests/CoreTests.cpp`, `CMakeLists.txt`, `docs/VALIDATION.md`.
+
+- Reexecutar checks existentes e os dois traces; guardar comandos, compilador, commit, configuração, hash dos traces e resumo dos resultados. Identificar claramente build instrumentada e build normal.
+- Distinguir no output do simulador perdas por janela, acumuladas, maior sequência de amostras em falta e tempo da primeira falha. Acrescentar verificações automáticas de resultados, em vez de depender só da leitura de stdout.
+- Extrair o cálculo de agendamento para um componente testável usado também pelo backend. O simulador passa a exercitar essa lógica, evitando manter uma cópia que possa divergir de `DeckLink.cpp`.
+- Parametrizar relógio, fase/período de callback, packetização, atraso de chegada, capacidade de histórico e resposta do dispositivo. Incluir callbacks tardios, buffer real reportado, escritas parciais/zero, falha de API e pausas no consumidor.
+- Medir baseline físico quando houver hardware: 25p/50p e modos fracionários suportados, uma fonte, múltiplas fontes, carga de UI e de composição. Usar a mesma cadeia de captura para A/V e registar a sua resolução temporal.
+
+**Saída para revisão:** relatório reproduzível que distingue medições, simulações e critérios ainda não executados. Sem hardware, esta fase pode concluir a parte determinística, deixando a baseline física explicitamente pendente.
+
+### 7.4 Fase 1 — telemetria e correções de estado/carga
+
+**Casos:** A1, A9/A10 parcialmente, V3, T1. **Ficheiros:** `Scene.*`, `Output.hpp`, `DeckLink.cpp`, `Main.mm`, `interface.html`.
+
+- Acrescentar por fonte geração do stream, primeiro/último sample disponível, fim efetivo recebido, cobertura da janela pedida e lacunas. Métricas por destino: margem de origem, profundidade agendada, tempo máximo/percentis de preparação e contadores separados de underrun, recuperação, expiração normal, descarte por capacidade e erro de API.
+- Atualizar contadores no percurso crítico sem logs de disco, formatação ou alocação. Agregar/exportar fora dos callbacks com frequência limitada. Timestamp de chegada deve ser capturado antes de trabalho de instrumentação; comparar overhead com build normal.
+- Corrigir A1: tirar a propriedade de PAUSE do mixer partilhado. A saída controla o silêncio SDI; monitor OUTPUT segue o programa durante PLAY/PAUSE e volta a poder ouvir a mistura após STOP, respeitando master mute. PFL continua independente. Tornar esta política explícita nos testes/UI.
+- Corrigir `outputExpected` segundo o roteamento efetivo, incluindo ganhos e canais de entrada/saída. Não classificar ausência de fonte ou cancelamento entre fontes como perda de buffer.
+- Separar `configureAudio` de configuração de imagem. Nome, ganho, canais, mute e monitor não incrementam revisão visual sem necessidade; ordem/visibilidade/tamanho alteram imagem quando aplicável.
+- Separar estado transitório de estado persistente. Gravação com debounce inicial de 500 ms, uma escrita consolidada e flush no encerramento normal; reportar falha de gravação e documentar a janela de alterações potencialmente perdida em crash.
+
+**Aceitação:** PAUSE→STOP→monitor e STOP→PLAY repetidos sem estado preso; UI de áudio não provoca novas composições por si só; rajada de fader não gera uma escrita por evento; métricas distinguem silêncio legítimo de falta de cobertura; nenhuma alteração de reserva temporal nesta fase.
+
+### 7.5 Fase 2 — timeline comum, continuidade e recuperação
+
+**Casos:** 3.3, A8, A9. **Componentes propostos:** `MediaClock`/adaptador macOS e `AudioTimeline` no core; integração em `Browser.hpp`, `Scene.*`, `DeckLink.cpp`, `Main.mm`.
+
+- Introduzir relógio injetável e mapeamento host/stream com amostras de medição e incerteza. Substituir o uso de relógio de parede no áudio, medidores e monitor; preservar o relógio de parede apenas nos logs humanos.
+- Converter PTS bruto e construir posição contínua por contagem de samples, ancorada ao timestamp de captura. Pequena variação compatível com quantização não cria sobreposição/lacuna artificial. Definir limiar de descontinuidade a partir da quantização e duração de pacote, coberto por testes.
+- Descartar duplicados, aparar sobreposição reconhecida e representar lacunas reais como ausência de dados. Uma regressão grande/reinício cria nova geração; contadores separados para cada situação.
+- Em underrun de dispositivo, selecionar um instante futuro com folga, recalcular o mapeamento de conteúdo e recuperar com transição curta. Não saltar simplesmente para o tempo já decorrido nem aumentar a latência a cada recuperação.
+- Em suspensão/desligação, parar ou reconstruir o percurso conforme a disponibilidade do dispositivo; limpar blocos de gerações inválidas e reconstruir preroll antes de retomar.
+
+**Aceitação:** relógio de parede avança/recua sem deslocar áudio; streams iniciados em momentos diferentes mantêm timestamps no mesmo domínio; duplicados não duplicam amplitude; lacunas não são escondidas pelo contador contínuo; recuperações repetidas mantêm orçamento limitado. Testar incluindo offset uptime/continuous muito grande.
+
+### 7.6 Fase 3 — percurso de áudio previsível e simplificação automática
+
+**Casos:** A3 e redução de processamento. **Ficheiros:** `Scene.*`, `Browser.*`, `DeckLink.cpp`, `Main.mm`; novos componentes de buffers conforme necessário.
+
+- Fixar limites de fontes, tamanho máximo de bloco e capacidade de armazenamento; pré-alocar buffers. Configuração e lifetime das fontes são preparados fora dos callbacks, com publicação de snapshots e libertação fora da thread de áudio.
+- Definir propriedade das filas antes da implementação: entrada CEF por stream → preparação/fan-out → buffers independentes de SDI e monitor. SPSC só quando existir exatamente um produtor e um consumidor; não partilhar uma fila consumível entre os dois destinos. Medidores usam estatísticas/snapshots, não drenam áudio de programa.
+- O callback Core Audio só copia blocos preparados ou escreve silêncio; não aloca, não toma mutexes e não destrói objetos cujo lifetime possa bloquear. No SDI, cumprir o mesmo objetivo no trabalho de preparação; chamadas necessárias à API do driver ficam identificadas e medidas.
+- Se a preparação usar worker, selecionar blocos e capacidade pelo prazo de consumo, medir a reserva adicional e incluí-la no orçamento. Evitar criar mais uma fila de 100 ms por conveniência.
+- Implementar três percursos automáticos: silêncio, uma fonte estéreo neutra e mistura geral. A via neutra evita soma/copias/multiplicações desnecessárias, mas conserva continuidade, conversão PCM segura, métricas e correção de relógio.
+- Transições de percurso ocorrem na fronteira adequada e preservam fase/estado do reamostrador. Mudanças de ganho não reiniciam o cursor. O mecanismo de deriva não é desativado apenas por existir uma fonte.
+
+**Aceitação:** instrumentação sem alocações/mutexes da aplicação no render callback após arranque; buffers limitados sob pressão; falhas de preparação produzem silêncio contado, sem acesso inválido; ganho de CPU medido contra baseline; percurso neutro e geral equivalentes a ganho unitário, com mesma timeline. Usar sanitizers em testes próprios de concorrência quando compatíveis, separadamente dos ensaios de desempenho.
+
+### 7.7 Fase 4 — margem de origem e compensação adaptativa de deriva
+
+**Casos:** 3.1, 3.2 e recuperação A9. **Componentes:** mapeamento temporal, controlador de deriva, reamostrador, agendador e diagnósticos.
+
+- Introduzir separadamente margem J, reserva D e atraso L segundo 7.2. A capacidade de histórico tem de cobrir a maior leitura permitida, atraso do filtro e tolerância de recuperação; ter capacidade não implica preenchê-la integralmente.
+- Estimar taxa do dispositivo a partir de tempo de stream/hardware versus host. Consultas SDK fora da thread crítica sempre que possível; filtrar ruído e rejeitar medições de arranque/recuperação. Não inferir taxa exclusivamente da chegada de um pacote CEF.
+- Controlar fase/margem lentamente em torno do alvo e corrigir a razão de amostras com reamostrador de razão variável. Limites de razão, slew rate, constantes do filtro e banda morta ficam explícitos e testáveis; ±100 ppm será um cenário de ensaio, não uma suposição universal de hardware.
+- Aplicar uma relação temporal coerente às fontes alinhadas no mesmo domínio. Estado de interpolação e fase é por stream/consumidor conforme necessário; não fazer cada layer perseguir independentemente o jitter do seu último callback.
+- Selecionar implementação de reamostragem após comparar qualidade, atraso de grupo, CPU, suporte de razão variável, licença e integração. Validar resposta em frequência/aliasing e continuidade na mudança de razão; não adotar interpolação linear como solução final.
+- Fora da faixa corrigível ou após salto grande, sinalizar recuperação e reconstruir o alinhamento de forma limitada, com fade e contagem. Proibir inserção/remoção abrupta recorrente de samples como controlador normal.
+- Iniciar ajuste de J com dados medidos sobre **PTS bruto** e carga representativa. Não converter o máximo de dois traces curtos em garantia; registar folga, falhas e latência observada para cada valor ensaiado.
+
+**Aceitação determinística proposta:** 8 h simuladas por cenário, deriva 0/±20/±100 ppm e varrimento gradual; dentro do envelope de chegada/capacidade configurado, nenhuma amostra esperada em falta após aquisição e erro de margem limitado sem crescimento secular. Testar também fora do envelope e exigir recuperação contada/limitada, em vez de prometer continuidade impossível. Controlador deve estabilizar sem modular audivelmente o sinal nem perseguir os degraus de 10 ms dos pacotes.
+
+### 7.8 Fase 5 — vídeo, alinhamento A/V e perfil de baixa latência
+
+**Casos:** V1 e percursos simples de vídeo. **Ficheiros:** `Core.*`, `Scene.*`, `Browser.*`, `DeckLink.cpp`, `Main.mm`, testes de composição/agendamento.
+
+- Acrescentar metadados de chegada, origem e geração aos frames; composição propaga idade de fontes e instante de produção. Não chamar PTS multimédia ao timestamp de chegada. Aliases no percurso simples não alteram a identidade da fonte indevidamente.
+- Uma única imagem visível, sem transformação e no tamanho correto: publicar a referência imutável em vez de compor sobre transparente. Zero fontes: frame transparente reutilizável. Várias fontes: manter source-over atual.
+- Acionar composição por novos frames/configuração, coalescendo notificações e sem perder a última atualização. Eliminar a espera fixa de polling sem criar espera ativa ou composição ilimitada sob rajadas.
+- Adequar cadência CEF ao modo SDI e avaliar external begin frame com antecedência suficiente para renderização. Modos fracionários mantêm agendamento racional; arredondar o parâmetro CEF, se a API exigir inteiro, não será apresentado como sincronismo exato.
+- Selecionar imagem para o instante de conteúdo pretendido. Se for necessária história, usar fila limitada e medir memória em HD/UHD; definir política para imagem tardia (repetir última adequada e contar), nunca bloquear o callback à espera do CEF.
+- Calibrar offset A/V no recetor com flash/impulso e comparar início/fim de ensaio. Identificar previamente o piso de erro do gerador browser e da quantização de vídeo.
+- Só depois ensaiar redução de três para duas frames de reserva, com áudio/vídeo coordenados; uma frame é experiência posterior condicionada aos prazos medidos. Manter perfil conservador explícito; não aumentar/reduzir filas silenciosamente durante PLAY sem política e telemetria de transição.
+
+**Aceitação proposta para validação do auditor:** offset A/V residual dentro de ±1 frame de saída, com incerteza declarada e sem deriva secular; variação início/fim inferior a uma frame no ensaio prolongado. São limites iniciais de projeto, não uma norma ou resultado já demonstrado. O perfil reduzido só é aceite se diminuir latência física medida, mantendo continuidade e contadores dentro dos critérios acordados. Se a cadeia de teste não resolver estes limites, melhorar a medição antes de aprovar.
+
+### 7.9 Fase 6 — monitor local, transições e clareza dos níveis
+
+**Casos:** A2, A3, A4, A5, A6, A7 e V4. **Ficheiros:** `Main.mm`, `Scene.*`, `interface.html` e testes dirigidos.
+
+- Reestruturar criação/reconfiguração do AVAudioEngine num controlador serializado; observar mudanças de configuração, reconstruir formatos/ligações quando necessário e tratar erro sem impedir nova tentativa. Remover observadores e parar o motor quando não há destino monitorizado ou no encerramento.
+- Usar host/sample time válido do callback para relacionar consumo local com timeline; substituir os 100 ms fixos por reserva dimensionada. A deriva do dispositivo local é independente da DeckLink e tem controlo próprio. Testar mudança de formato/taxa e não assumir que todos os destinos têm latência semelhante.
+- Distinguir escuta PFL e escuta de programa; mostrar origem e estado. Se o vídeo local não acompanhar o mesmo instante, não apresentar a escuta como monitor A/V sincronizado. AirPlay exige medição/política própria e não condiciona o perfil SDI.
+- Aplicar rampas configuradas inicialmente entre 5–20 ms a ganho/mute/visibilidade/PAUSE, sem lookahead. Comandos de UI são snapshots coerentes por bloco; ganhos suavizados por sample. Definir efeito de ações sucessivas antes de terminar a rampa.
+- MONO da layer: média com dois canais ativos, duplicação unitária de um canal ativo e silêncio com nenhum. Manter L/R de OUTPUT como canais de saída e documentar a diferença.
+- Medir pico/RMS antes de saturar, conservar estatísticas de origem e acrescentar OVER pós-ganho/output com retenção inicial proposta de 2 s. Contar clipping em amostras intercaladas e explicitar a unidade. Saturação PCM permanece; limitador com lookahead não faz parte do percurso obrigatório.
+- Exibir PFL, layer oculta/fora de programa e canais efetivamente ativos. Faders em dB com posição −∞ e reset 0 dB, preservando compatibilidade de ganhos gravados em amplitude.
+
+**Aceitação:** troca entre destinos disponíveis e retoma após falha/suspensão sem reiniciar app; motor parado quando sem escuta; monitor não consome SDI; MONO/canais verificados por matriz de casos; OVER acusa excesso real; rampas contínuas sem saltos adicionais nos testes de sinal. Ensaios de auscultadores, saída interna e AirPlay são registados separadamente conforme equipamento disponível.
+
+### 7.10 Fase 7 — cor, navegação e documentação
+
+**Casos:** V2, V5, D1 e conclusão T1.
+
+- V2: preservar conversão atual até comparação de cinzentos, primárias e alpha no waveform/recetor. Se houver necessidade comprovada, acrescentar opção de transferência claramente definida, mantendo desmultiplicação/ordem de canais e compatibilidade de sessões. Testar BGRA/ARGB e alpha parcial; não confundir transferência com legal/full range do dispositivo.
+- V5: testes CEF com frame principal e subframes HTTP(S), data, blob e srcdoc. Só alterar a política necessária aos casos reais aprovados; manter isolamento da interface nativa e as restantes restrições. Resultado “não reproduzido” é válido e não força mudança.
+- Atualizar README, ARCHITECTURE, VERSIONS, VALIDATION, HARDWARE e BACKLOG para comportamento efetivo, métricas, perfis, limites e testes executados. Não reescrever nomes de commits publicados.
+- Integrar no CTest os testes temporais/core e regressões; separar smoke gráfico, teste SDK, teste de escuta e aceitação física. Atualizar instruções do gerador AV conforme a versão efetivamente usada.
+
+**Aceitação:** documentação descreve implementação final; cada alegação tem teste/evidência ou pendência explícita. Mudanças de cor/navegação têm revisão própria e não bloqueiam correções de temporização já validadas.
+
+### 7.11 Matriz de testes e critérios de saída
+
+| Grupo | Cenários mínimos | Evidência exigida |
+|---|---|---|
+| Timeline | Offset inicial grande, reinício de stream, quantização de PTS, relógio de parede ±1 h, suspensão/retoma | Posições e gerações esperadas; nenhum uso residual de parede para temporização de média |
+| Pacotes | Regular, duplicado, sobreposição parcial, fora de ordem, lacuna, stream silencioso, ausência de stream | Cobertura, amplitude, contadores e política de recuperação corretos |
+| Deriva | 0, ±20, ±100 ppm; mudança gradual e salto fora da faixa; diferentes fases de callback | Margem/razão/erro ao longo do tempo; aquisição e falhas claramente delimitadas |
+| Driver simulado | Callback atrasado, FIFO reportado diferente do previsto, escrita parcial/zero, erro, perda de dispositivo | Cursor só avança pelo efetivamente escrito; sem perder/duplicar conteúdo por avanço incorreto |
+| Roteamento | 0/1/várias fontes; ganhos/canais/MONO/master; PFL; PAUSE→STOP→PLAY; mudança entre percursos | PCM/níveis esperados, timeline contínua e estado independente por destino |
+| Concorrência | CEF+SDI+monitor+medidores, edição de ganho, reload/remoção, fila cheia | Sem corrida/use-after-free/deadlock; armazenamento limitado e falhas contadas |
+| Desempenho | Uma fonte, várias fontes, UI ativa, HD e UHD se suportado | CPU, memória, preparação p50/p99/máximo, prazos e latência antes/depois; callbacks sem trabalho proibido |
+| Cadência | 25/50 e fracionárias suportadas; animação e imagem estática | Idade/repetição/drop por frame, agendamento racional e resposta a imagem tardia |
+| Físico curto | Cada modo/perfil proposto, flash+impulso, canais/fase, PAUSE/reload, monitor disponível | Captura externa com taxa/resolução, offset A/V e latência total medidos |
+| Físico prolongado | 2 h para diagnóstico inicial; pelo menos 8 h no modo principal, e 2 h nos restantes modos/perfis candidatos | Séries temporais, nenhuma perda inesperada dentro do envelope acordado, sem crescimento de offset/memória; limitações de cobertura declaradas |
+
+Oito horas simuladas ou físicas não provam todos os equipamentos e cargas: o relatório final tem de identificar o envelope suportado. A aceitação de estabilidade exige zero underruns inesperados e zero recuperações não provocadas nesse envelope; testes de falha intencional exigem recuperação conforme a política, não contadores a zero. Os limites de CPU/memória e prazo de preparação serão fixados após baseline na máquina de referência, antes de escolher o perfil de baixa latência.
+
+### 7.12 Entregas e pontos de validação do auditor
+
+| Entrega | Conteúdo | Condição para avançar |
+|---|---|---|
+| P0 | Baseline, contrato temporal 7.2, plano de captura e critérios numéricos propostos | Auditor valida significado de D/J/L, PTS bruto, sinal A/V e limites de medição |
+| P1 | Telemetria, A1/A10, separação áudio/imagem/persistência | Testes de estado/carga aprovados; baseline preservada |
+| P2 | Relógio comum, continuidade e recuperação; harness partilhado | Testes de domínios/descontinuidades e driver simulado aprovados |
+| P3 | Buffers/callbacks previsíveis e percursos simples | Equivalência funcional, lifetime e ganho medido; latência adicional contabilizada |
+| P4 | Margem explícita, controlador e reamostrador | Deriva simulada/qualidade aprovadas; parâmetros e atraso documentados |
+| P5 | Cadência, alinhamento A/V e perfis SDI | Medição externa curta aprovada antes de ensaio prolongado |
+| P6 | Monitor, rampas, MONO, OVER/PFL/faders | Matriz de áudio/estados e testes locais aprovados |
+| P7 | Cor/navegação quando justificadas, documentação e aceitação prolongada | Evidência final por requisito, pendências e perfis efetivamente aprovados |
+
+Cada entrega deve conter: alterações por ficheiro, relação com os IDs da auditoria, comandos e resultados, comparação com baseline, parâmetros por defeito, riscos/limitações e forma de regressar ao estado anterior. A ordem é de dependências: P6 pode ser preparada após P3, mas o monitor final depende da timeline/deriva; P5 depende de P4. Redução de reserva e mudança de cor não devem ser misturadas na mesma entrega.
+
+**Checklist para a resposta do auditor:**
+
+- [ ] Aprovar/corrigir o contrato PTS/host/dispositivo e a equação D/J/L.
+- [ ] Aprovar política de PAUSE/STOP, PFL, ausência de fonte e recuperação.
+- [ ] Validar escolha/qualidade/atraso do reamostrador e envelope de deriva antes de o integrar.
+- [ ] Aprovar medição flash/impulso e tolerâncias A/V propostas, incluindo incerteza do browser e da captura.
+- [ ] Validar capacidades/limites de filas e a arquitetura de produtores/consumidores.
+- [ ] Aprovar seleção automática do percurso simples e critérios de equivalência.
+- [ ] Definir máquina, modos, carga, cadeia SDI e limites de desempenho de referência após baseline.
+- [ ] Aprovar os perfis e valores finais D/J/L apenas com evidência; 40 ms não fica aprovado por este plano.
+- [ ] Rever evidência por entrega e declarar separadamente aprovação de código e aceitação física.
+
+O plano fica pronto para comentário do auditor nesta secção. A implementação e os ensaios físicos ainda não foram executados no âmbito deste plano.
+
+## 8. Medição no HD Mini e recomendações finais do auditor
+
+**Estado: parecer final.** O auditor não volta a validar entregas. Esta secção responde à
+checklist do §7.12 e define o que passa a ser autoverificação de quem implementar. A
+aceitação física continua a ser decisão do Luis.
+
+### 8.1 Relógio do HD Mini medido (30/10/2026)
+
+Ferramenta `tools/audio-audit/decklink_clock.cpp`: preto transparente e silêncio digital
+nas saídas SDI, regressão do tempo do dispositivo contra `mach_absolute_time`. Dados
+brutos em `tools/audio-audit/data/hdmini-clock-*.csv.gz`; resumo em
+[tools/audio-audit](../tools/audio-audit/README.md). Estado do REF IN não registado.
+
+| Execução | Relógio de stream | Relógio de hardware | Consumo de áudio | Frames atrasados / perdidos |
+|---|---|---|---|---|
+| 1080p25 BGRA, 600 s | +0,42 ppm | +0,42 ppm | +0,42 ppm | 0 / 0 em 14 999 |
+| 1080p50 BGRA Fill/Key, 300 s | +0,28 ppm | +0,28 ppm | +0,28 ppm | 0 / 0 em 14 998 |
+
+Resíduos dos ajustes abaixo de 0,07 ms. Os ajustes por minuto desceram de +0,51 para
++0,28 ppm em 15 min (aquecimento do oscilador, compatível). O áudio é consumido ao
+ritmo exato do vídeo. Sinal positivo: o dispositivo é mais rápido que o Mac e o
+mapeamento atual perde margem para a frente a 1,0–1,5 ms por hora. Simulação com
++0,42 ppm e o trace de atrasos de 120 s: com 3 ms de margem inicial, 1,7 % de amostras
+em falta às 3 h e 20 % às 6 h; com 5 ms, 1 % às 4 h e 9,5 % às 6 h.
+
+**Leitura dos riscos com esta medição:**
+
+1. **3.1 é o risco imediato:** sem margem de origem, um único pacote atrasado (houve um
+   de 30,7 ms) abre um buraco desde o primeiro minuto.
+2. **3.3 pesa mais que a deriva da placa:** o `system_clock` afastou-se 3–12 ppm do
+   relógio monótono, até 30 vezes o erro do HD Mini.
+3. **3.2 é real mas lento nesta unidade:** horas, não minutos. Continua obrigatório
+   para sessões longas, outras unidades e qualquer instalação em genlock, onde o
+   dispositivo segue a referência e não o seu cristal.
+
+### 8.2 Respostas à checklist do §7.12
+
+| Item | Parecer |
+|---|---|
+| Contrato PTS/host/dispositivo e equação D/J/L (§7.2) | **Aprovado.** Nota: ancorar no PTS bruto sobe o piso de latência ~21,5 ms face à ancoragem atual na chegada; é o preço de pôr todas as layers no mesmo domínio e deve constar do orçamento. Domínio do host: `mach_absolute_time`, nunca `steady_clock`. |
+| PAUSE/STOP, PFL, ausência de fonte, recuperação | **Aprovado como em §7.4/§7.9.** PAUSE pertence à saída SDI; Monitor OUTPUT segue o programa e volta a ouvir a mistura após STOP; PFL independente e rotulado. |
+| Reamostrador e envelope de deriva | **Aprovado com critérios:** razão variável contínua (polifásico/sinc próprio, ou speexdsp/libsamplerate, ambas BSD — preferir a que não obrigue a alterar o empacotamento). Aceitação: ondulação ≤ 0,1 dB até 18 kHz, rejeição de imagens/aliasing ≥ 80 dB, atraso de grupo contabilizado em L, sem modulação audível ao variar a razão. Envelope de ensaio ±100 ppm; o medido é < 1 ppm. Interpolação linear rejeitada. |
+| Medição A/V flash+impulso e tolerâncias | **Aprovado:** ±1 frame de saída como limite inicial, com incerteza declarada. Verificar primeiro se o SDI IN do HD Mini permite loopback com captura e reprodução simultâneas; se não, usar um único dispositivo de captura externo para som e imagem. |
+| Capacidades das filas e produtores/consumidores | **Aprovado.** Requisito adicional: nenhuma falha ou bloqueio do monitor local pode atrasar a preparação SDI. |
+| Percursos simples automáticos | **Aprovado só para o vídeo** (uma layer visível publicada diretamente; composição acionada por eventos). A via neutra de áudio fica adiada: o ganho de CPU é desprezável e duplica a superfície de teste. |
+| Máquina, modos e limites de referência | **Definido:** este MacBook Apple Silicon + UltraStudio HD Mini; modos principais 1080p25 e 1080p50, mais 1080p59,94 para taxas fracionárias. Limites de CPU/memória fixados na baseline da P0. |
+| Valores D/J/L | **Valores de partida, não finais:** D = 3 frames (atual); J = 40 ms (cobre o pior atraso medido, 30,7 ms, mais a quantização). Ajustar com o headroom registado sob carga real. |
+| Evidência por entrega | Sem retorno ao auditor, cada entrega exige: `tools/audio-audit/run-models.sh` e CTest a passar; um registo de headroom de ≥ 30 min no HD Mini; comparação com a baseline; e a declaração separada de aprovação de código e de aceitação física (esta última do Luis). |
+
+### 8.3 Recomendações finais
+
+1. **Antecipar a correção de menor custo e maior efeito.** Logo depois da P1, implementar
+   juntos o relógio monótono (`mach_absolute_time`, PTS bruto) e a margem J explícita.
+   Com J = 40 ms e a deriva medida (1,5 ms/h), a margem para pacotes típicos (p99 1,6 ms)
+   dura ~25 h e a margem para atrasos excecionais como o de 30,7 ms dura ~6 h. Resolve
+   3.1 e 3.3 já, para sessões dentro desse horizonte, enquanto o controlo de deriva da P4
+   é construído e validado sem pressa.
+2. **Medir o δ real dentro da aplicação** antes de mexer nas filas: instrumentar o
+   `AudioCallback` para registar o fim da janela pedida face ao último pacote recebido.
+   É a métrica "source headroom" da P1, e confirma no próprio código o que hoje é
+   simulação.
+3. **Repetir a medição de relógio** com a referência usada em produção (genlock ligado,
+   se existir) e após pelo menos 30 min de aquecimento. Os +0,3–0,5 ppm valem só para
+   esta unidade, neste estado.
+4. **Corrigir o V1 (cadência CEF a 60 fps)** cedo: a produção é a 25/50p e o judder vê-se
+   no ar, independentemente do áudio.
+5. **Fazer os ensaios longos com os contadores certos:** zero underruns e zero
+   recuperações não provocadas, com o headroom estável dentro de ±5 ms ao longo de 8 h
+   no modo principal. "Amostras não nulas" deixa de ser critério de aceitação.
+6. **Correr as ferramentas DeckLink, a app e as verificações de ambiente fora do sandbox
+   da shell.** Dentro dele o driver e partes de `/tmp` ficam invisíveis: deu
+   "nenhum dispositivo" e "CMake ausente" nesta auditoria, ambos falsos.
+7. **Concluir com a atualização da documentação em inglês** (D1). Este relatório fica
+   em português como registo da auditoria.
+8. **Instalar o CMake de forma permanente antes da P0.** Verificado a 30/10: `cmake` e
+   `ctest` não estão no PATH; a única cópia é
+   `/private/tmp/cmake-3.31.6-macos-universal/CMake.app` (3.31.6, funcional), e o
+   `build/CMakeCache.txt` e o `build/Makefile` apontam para ela. O macOS limpa `/tmp`
+   no arranque e periodicamente: quando essa cópia desaparecer, qualquer alteração ao
+   `CMakeLists.txt` (as fases criam ficheiros novos e testes CTest) parte a build.
+   Instalar o CMake 3.31.6 indicado no `docs/BUILD.md`, confirmar o SHA-256 que lá está,
+   colocá-lo num local persistente com `cmake`/`ctest` no PATH, e reconfigurar `build/`
+   com o comando do `BUILD.md` para o cache passar a apontar para o novo caminho.
+9. **Disciplina de commits durante a implementação:**
+   - Fazer commit deste relatório (incluindo o §7) e de `tools/audio-audit` antes de
+     começar, num commit só de documentação/evidência.
+   - Implementar num branch próprio (ex.: `development/v0.5-audio-timing`) criado a
+     partir desse commit, não em `development/v0.2`.
+   - Antes de cada entrega, verificar com `git status` que não há trabalho alheio por
+     fazer commit nos ficheiros a alterar; trabalho paralelo vai em commit separado, com
+     a sua própria mensagem, nunca misturado com a entrega.
+   - Um commit (ou série curta) por entrega P0–P7, com os IDs da auditoria na mensagem
+     (ex.: "P1: A1, A10, V3 …"), testes e `run-models.sh` a passar antes do commit, e
+     redução de reservas ou mudanças de cor nunca no mesmo commit que correções de
+     temporização.
+   - Mensagens com autoria do Luis, sem `Co-Authored-By` de IA, terminadas com a linha
+     `AI-Assisted Code`.
+
+> **Correções do auditor a afirmações feitas durante esta sessão:**
+>
+> - "O CMake não está instalado / foi limpo de `/tmp`": **errado em parte.** A cópia
+>   em `/private/tmp` existe e funciona; não estava visível porque a verificação correu
+>   dentro do sandbox da shell, o mesmo efeito que escondeu o HD Mini. O problema real é
+>   o da recomendação 8: não está no PATH e vive num diretório temporário.
+> - "Há trabalho alheio por fazer commit em `Main.mm` e `interface.html`": **resolvido.**
+>   Esse trabalho entrou nos commits `d1cf52f` e `952c948`. Por fazer commit ficam apenas
+>   este relatório (§7 e §8) e as alterações em `tools/audio-audit`.
+
+Com estas emendas, o plano do §7 fica aprovado pelo auditor para execução.
