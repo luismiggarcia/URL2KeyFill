@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt-PT">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>URL2KeyFill · Diagnóstico AV</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;font:14px system-ui;color:#e9f4ff}canvas{display:block;width:100%;height:100%}aside{position:absolute;left:3%;right:3%;top:3%;padding:16px 20px;background:#071321ed;border:1px solid #66839c;border-radius:12px}header{display:flex;justify-content:space-between;gap:20px;align-items:center}h1{font-size:20px;margin:0}p{margin:7px 0;color:#b7cbdc;font-size:12px}.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}label{display:flex;gap:6px;align-items:center}button,select,input{font:inherit}button,select{background:#193247;color:white;border:1px solid #698398;border-radius:5px;padding:6px}button{cursor:pointer}output{font-variant-numeric:tabular-nums}#status{color:#77e3c0}#stats{font:12px ui-monospace,monospace;margin-top:10px}body.clean aside{display:none}@media(max-height:500px){aside{padding:8px}p{display:none}.controls{margin-top:6px}}
+</style>
+<canvas id="picture" aria-label="Padrão de teste de vídeo com movimento, cor, transparência e sincronismo"></canvas>
+<aside><header><h1>URL2KeyFill / Diagnóstico AV</h1><strong id="status" role="status">A iniciar…</strong></header>
+<p>Gerador local · sem rede · áudio estéreo discreto · Espaço: som · H: painel · F: ecrã inteiro</p>
+<div class="controls">
+<label>Imagem <select id="pattern"><option value="dashboard">Diagnóstico</option><option value="bars">Barras RGB</option><option value="gray">Escala de cinzentos</option><option value="grid">Grelha / geometria</option><option value="alpha">Transparência / key</option><option value="sync">Sincronismo AV</option></select></label>
+<label>Som <select id="signal"><option value="sequence">Sequência L / R / estéreo / fase</option><option value="stereo">1 kHz · L + R</option><option value="left">1 kHz · só L</option><option value="right">1 kHz · só R</option><option value="phase">1 kHz · oposição de fase</option><option value="sweep">Varrimento 20 Hz–20 kHz</option><option value="sync">Impulso AV · 1 Hz</option><option value="silence">Silêncio digital</option></select></label>
+<label>Nível <select id="level"><option value="-30">−30 dBFS</option><option value="-24">−24 dBFS</option><option value="-18" selected>−18 dBFS</option><option value="-12">−12 dBFS</option><option value="-6">−6 dBFS</option></select></label>
+<button id="toggle">Ativar som</button><button id="reset">Reiniciar ciclo</button><button id="report">Exportar relatório</button>
+</div><div id="stats"></div>
+<p>Nível = pico digital da sinusóide (RMS convencional: pico − 3,01 dB). As barras são RGB de referência, não barras SMPTE certificadas. FPS e intervalos medem o browser, não a saída SDI. Confirmar canais, perdas e atraso AV no recetor. Oposição de fase cancela em mono.</p></aside>
+<script>
+'use strict';
+(()=>{
+const $=id=>document.getElementById(id),canvas=$('picture'),g=canvas.getContext('2d'),colors=['#fff','#ff0','#0ff','#0f0','#f0f','#f00','#00f','#000'];
+let ctx,source,epoch=0,enabled=true,error='',frames=0,last=0,intervals=[],fps=0,maxGap=0,statsAt=0,audioStart=0,modeAt=0;
+const rate=48000,duration=16;
+function sample(t,mode,amp,channel){
+ let active=mode,local=t;
+ if(mode==='sequence'){active=['left','right','stereo','phase'][Math.floor(t/4)%4];local=t%4;}
+ if(active==='silence'||active==='left'&&channel===1||active==='right'&&channel===0)return 0;
+ let v;
+ if(active==='sync'){const u=t%1;v=u<.04?Math.sin(2*Math.PI*1000*u)*Math.min(1,u/.002,(.04-u)/.002):0;}
+ else if(active==='sweep'){const k=Math.log(1000)/duration;v=Math.sin(2*Math.PI*20*(Math.exp(k*t)-1)/k)*Math.min(1,t/.01,(duration-t)/.01);}
+ else{const fade=Math.min(1,local/.005,(mode==='sequence'?4-local:duration-t)/.005);v=Math.sin(2*Math.PI*1000*t)*Math.max(0,fade);}
+ return amp*v*(active==='phase'&&channel===1?-1:1);
+}
+function rebuild(){
+ if(!ctx)return;
+ if(source){source.stop();source.disconnect();source=null;}
+ const mode=$('signal').value,amp=10**(Number($('level').value)/20),buffer=ctx.createBuffer(2,rate*duration,rate);
+ for(let c=0;c<2;c++){const data=buffer.getChannelData(c);for(let i=0;i<data.length;i++)data[i]=sample(i/rate,mode,amp,c);}
+ source=ctx.createBufferSource();source.buffer=buffer;source.loop=true;source.connect(ctx.destination);audioStart=ctx.currentTime+.08;source.start(audioStart);epoch=performance.now()+80;modeAt=Date.now();
+}
+async function start(){try{if(!ctx){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)throw Error('Web Audio indisponível');ctx=new Audio({sampleRate:rate});ctx.destination.channelCount=2;ctx.destination.channelCountMode='explicit';rebuild();}await ctx.resume();enabled=true;error='';}catch(e){error=e.message;}updateStatus();}
+function updateStatus(){$('status').textContent=error||(!ctx?'Áudio indisponível':ctx.state==='running'?'Áudio ativo · estéreo':ctx.state==='suspended'?(enabled?'Clicar em Ativar som':'Áudio suspenso'):ctx.state);$('toggle').textContent=ctx&&ctx.state==='running'?'Suspender som':'Ativar som';}
+$('toggle').onclick=async()=>{if(ctx&&ctx.state==='running'){await ctx.suspend();enabled=false;updateStatus();}else await start();};
+$('reset').onclick=()=>{rebuild();intervals=[];maxGap=0;};
+for(const id of ['signal','level'])$(id).onchange=rebuild;
+$('pattern').onchange=()=>{if($('pattern').value==='sync'){$('signal').value='sync';rebuild();}};
+function time(){return ctx?Math.max(0,ctx.currentTime-audioStart)%duration:Math.max(0,(performance.now()-epoch)/1000)%duration;}
+function text(s,x,y,size=24,color='#fff'){g.fillStyle=color;g.font=`${size}px ui-monospace,monospace`;g.fillText(s,x,y);}
+function bars(x,y,w,h){colors.forEach((c,i)=>{g.fillStyle=c;g.fillRect(x+i*w/8,y,w/8+1,h);});}
+function gray(x,y,w,h){for(let i=0;i<16;i++){g.fillStyle=`rgb(${i*17},${i*17},${i*17})`;g.fillRect(x+i*w/16,y,w/16+1,h);}}
+function alpha(x,y,w,h){for(let i=0;i<=4;i++){g.fillStyle=`rgba(255,255,255,${i/4})`;g.fillRect(x+i*w/5,y,w/5-4,h);text(`${i*25}%`,x+i*w/5+8,y+h-12,18,'#ffb454');}}
+function grid(w,h){g.strokeStyle='#6e8da7';g.lineWidth=1;for(let x=0;x<=w;x+=w/16){g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke();}for(let y=0;y<=h;y+=h/9){g.beginPath();g.moveTo(0,y);g.lineTo(w,y);g.stroke();}g.strokeStyle='#fff';g.beginPath();g.arc(w/2,h/2,Math.min(w,h)*.3,0,Math.PI*2);g.stroke();}
+function draw(now){
+ const w=canvas.width,h=canvas.height,t=time(),p=$('pattern').value;
+ g.clearRect(0,0,w,h);if(p!=='alpha'){g.fillStyle='#081421';g.fillRect(0,0,w,h);}
+ const top=document.body.classList.contains('clean')?h*.08:Math.max(h*.30,230*devicePixelRatio),height=Math.max(40,h-top-h*.1);
+ if(p==='dashboard'){bars(w*.04,top,w*.92,height*.27);gray(w*.04,top+height*.30,w*.92,height*.14);alpha(w*.04,top+height*.49,w*.55,height*.24);
+ // Alternating single-pixel vertical lines reveal resampling at native resolution.
+ for(let x=Math.floor(w*.64);x<w*.96;x++){g.fillStyle=x%2?'#fff':'#000';g.fillRect(x,top+height*.49,1,height*.24);}
+ }else if(p==='bars')bars(0,top,w,h-top);else if(p==='gray')gray(0,top,w,h-top);else if(p==='alpha')alpha(w*.04,top,w*.92,height*.7);else if(p==='grid')grid(w,h);
+ const sync=p==='sync'||$('signal').value==='sync',flash=t%1<.04;
+ if(sync){g.fillStyle=flash?'#fff':'#172a3c';g.fillRect(w*.4,top,w*.2,height*.55);text('FLASH + IMPULSO · 1 Hz',w*.04,top+height*.76,Math.max(16,w/55));}
+ else{g.fillStyle='#ffb454';g.fillRect(w*.04+(w*.88)*(t%4/4),top+height*.83,w*.04,Math.max(8,height*.06));}
+ const active=$('signal').value==='sequence'?['SÓ L','SÓ R','L + R','L − R / FASE'][Math.floor(t/4)]:$('signal').selectedOptions[0].text;
+ text(`${t.toFixed(3).padStart(6,'0')} s   |   ${active}`,w*.04,h*.965,Math.max(14,w/65));
+ g.strokeStyle='#fff';g.lineWidth=2;g.strokeRect(2,2,w-4,h-4);g.strokeStyle='#ffb454';g.setLineDash([8,8]);g.strokeRect(w*.05,h*.05,w*.9,h*.9);g.setLineDash([]);
+ frames++;if(last){const gap=now-last;intervals.push(gap);if(intervals.length>120)intervals.shift();maxGap=Math.max(maxGap,gap);}last=now;
+ if(now-statsAt>500){fps=intervals.length?1000/(intervals.reduce((a,b)=>a+b,0)/intervals.length):0;$('stats').textContent=`${w} × ${h} px · ${fps.toFixed(1)} FPS rAF · maior intervalo ${maxGap.toFixed(1)} ms · ${ctx?ctx.sampleRate:'—'} Hz · ciclo 16 s · frame ${frames}`;statsAt=now;updateStatus();}
+ requestAnimationFrame(draw);
+}
+function resize(){canvas.width=Math.max(1,Math.round(innerWidth*devicePixelRatio));canvas.height=Math.max(1,Math.round(innerHeight*devicePixelRatio));}addEventListener('resize',resize);resize();
+$('report').onclick=()=>{const report={generator:'URL2KeyFill AV Test',timestamp:new Date().toISOString(),pattern:$('pattern').value,signal:$('signal').value,peakDBFS:Number($('level').value),audioState:ctx?.state||'unavailable',sampleRate:ctx?.sampleRate,baseLatency:ctx?.baseLatency,outputLatency:ctx?.outputLatency,canvas:{width:canvas.width,height:canvas.height,dpr:devicePixelRatio},rafFPS:fps,maxRafIntervalMs:maxGap,frames,signalChangedAt:modeAt,userAgent:navigator.userAgent,error,note:'Generator/browser observations only. No SDI, receiver, loudness, distortion or physical AV latency measurement.'};const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='URL2KeyFill-AV-report.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+addEventListener('keydown',e=>{if(/INPUT|SELECT|BUTTON/.test(e.target.tagName))return;if(e.code==='Space'){e.preventDefault();$('toggle').click();}if(e.key.toLowerCase()==='h')document.body.classList.toggle('clean');if(e.key.toLowerCase()==='f'){const action=document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();action?.catch(e=>{error=e.message;});}});
+addEventListener('pointerdown',()=>{if(enabled&&ctx?.state==='suspended')ctx.resume().catch(()=>{});});
+window.avTest={get context(){return ctx;},sample,time};epoch=performance.now();start();requestAnimationFrame(draw);
+})();
+</script>
+</html>
