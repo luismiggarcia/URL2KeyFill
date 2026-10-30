@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(URL2KeyFill VERSION 3.0.0 LANGUAGES CXX)
+project(URL2KeyFill VERSION 3.0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(U2K_BUILD_APP "Build native macOS application with real CEF" OFF)
