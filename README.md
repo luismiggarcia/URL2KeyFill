@@ -43,6 +43,7 @@ In EDIT LAYER, the URL list uses the same appearance as the other settings lists
 
 The application scans its bundled `assets` directory at startup. Each subfolder forms a group; each HTML file appears by filename without the `.html` extension, with underscores replaced by spaces in both group and file names. The root `interface.html` is not a graphic example. Add new examples under `assets/<group>/<filename>.html` and rebuild the application to include them; no source-code list needs editing.
 
+- `assets/Diagnostics/AV_Test.html`: standalone video/audio diagnostic generator; see [AV test guide](docs/AV-TEST.md).
 - `assets/Transparency/Basic_Test.html`: original transparency and motion test with an embedded stereo sound loop; the left channel retains the moving tone synchronized with the red rectangle; the right channel plays one click per second, alternating between two levels 12 dB apart. The complete loop is eight seconds.
 - `assets/Lower_Third/Animated_10_sec_cycle.html`: a multi-part lower third on a transparent background. It starts entering at 3 seconds, starts exiting at 8 seconds, and repeats on a 10-second timeline (next entry at 13 seconds). RELOAD restarts the timeline.
 
