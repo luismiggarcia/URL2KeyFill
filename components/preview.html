@@ -1,0 +1,15 @@
+<!doctype html><html lang="pt-PT"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Colecção de controlos</title>
+<style>body{background:#25282c;color:#eef1f5;font:14px system-ui;margin:24px}h1{font-size:22px}h2{font-size:16px;font-weight:500}main{display:flex;flex-wrap:wrap;gap:20px}section{background:#1e252d;padding:24px;max-width:100%;box-sizing:border-box}gain-slider{max-width:100%}.pair{display:flex;align-items:center;gap:24px}output{display:block;margin-top:16px;font-variant-numeric:tabular-nums;color:#b7c2cf}button{padding:8px;margin:0 0 20px}</style>
+<h1>Colecção de controlos autónomos</h1><p><a href="studio-button/preview.html" style="color:#edc06b">Ver botões com LED, quadrados e de acção →</a></p><p>Sinal simulado · sem ligação à aplicação</p><button id="play">Animar sinal</button><main>
+<section><h2>Slider horizontal</h2><gain-slider id="horizontal" label="Ganho horizontal"></gain-slider><output id="h-value">0,0 dB</output></section>
+<section><h2>Fader vertical</h2><gain-slider id="vertical" orientation="vertical" label="Ganho vertical"></gain-slider><output id="v-value">0,0 dB</output></section>
+<section><h2>Mostrador vertical</h2><audio-level-meter id="vertical-meter"></audio-level-meter></section>
+<section style="background:#141b23"><h2>Medidor horizontal</h2><audio-level-meter id="horizontal-meter" orientation="horizontal"></audio-level-meter><h2>Medidor compacto</h2><audio-level-meter id="compact-meter" compact></audio-level-meter></section></main>
+<script type="module">
+import './gain-slider/gain-slider.js';import './audio-level-meter/audio-level-meter.js';
+const h=document.querySelector('#horizontal'),v=document.querySelector('#vertical');let running=false,time=0;
+const format=s=>s.value===0?'−∞ dB':s.decibels.toFixed(1).replace('.',',')+' dB';
+function draw(){const base=[-21+7*Math.sin(time),-12+9*Math.sin(time*1.3)];for(const [id,gain] of [['vertical-meter',v.decibels],['horizontal-meter',h.decibels],['compact-meter',h.decibels]])document.getElementById(id).levels=base.map(db=>db+gain);}
+for(const [slider,id] of [[h,'h-value'],[v,'v-value']])slider.addEventListener('input',()=>{document.getElementById(id).value=format(slider);draw()});
+document.querySelector('#play').onclick=e=>{running=!running;e.target.textContent=running?'Pausar sinal':'Animar sinal'};let last=0;function frame(t){if(running&&t-last>70){time=t/1000;draw();last=t}requestAnimationFrame(frame)}draw();requestAnimationFrame(frame);
+</script></html>

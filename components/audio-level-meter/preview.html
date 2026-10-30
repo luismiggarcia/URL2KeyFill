@@ -1,0 +1,17 @@
+<!doctype html><html lang="pt-PT"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Controlo de áudio isolado</title>
+<style>body{font:14px system-ui;background:#25282c;color:#eef1f5;margin:24px}main{display:flex;flex-wrap:wrap;gap:20px;align-items:start}section{padding:20px}h2{font-size:14px;font-weight:500}button{padding:8px;margin-bottom:20px}small{display:block;margin-bottom:16px;color:#b7c2cf}</style>
+<h1>Medidor de áudio</h1><button id="animate">Animar</button><button id="mute">Mute</button><button id="silence">Silêncio</button><main>
+<section style="background:linear-gradient(115deg,#34373b,#25282c,#303438)"><h2>Painel principal</h2><audio-level-meter></audio-level-meter></section>
+<section style="background:linear-gradient(#414850,#303840)"><h2>Botão do layer</h2><audio-level-meter compact></audio-level-meter></section>
+<section style="background:#1e252d"><h2>Gaveta do layer</h2><audio-level-meter orientation="horizontal"></audio-level-meter></section>
+<section style="background:#1e252d"><h2>Áudio · layer</h2><audio-level-meter></audio-level-meter></section>
+<section style="background:#141b23"><h2>Áudio · output</h2><audio-level-meter></audio-level-meter></section></main>
+<script type="module">
+import './audio-level-meter.js';
+const meters=[...document.querySelectorAll('audio-level-meter')];let running=false,silent=false;
+const update=(t=0)=>meters.forEach(m=>m.levels=silent?[-Infinity,-Infinity]:[-21+8*Math.sin(t/700),-12+10*Math.sin(t/900)]);
+document.querySelector('#animate').onclick=e=>{running=!running;e.target.textContent=running?'Pausar':'Animar'};
+document.querySelector('#mute').onclick=()=>meters.forEach(m=>m.toggleAttribute('muted'));
+document.querySelector('#silence').onclick=e=>{silent=!silent;e.target.textContent=silent?'Repor sinal':'Silêncio';update()};
+let last=0;function frame(t){if(running&&t-last>70){update(t);last=t}requestAnimationFrame(frame)}update();requestAnimationFrame(frame);
+</script></html>
