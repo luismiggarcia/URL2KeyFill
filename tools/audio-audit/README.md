@@ -140,3 +140,22 @@ Recorded P1 evidence: `data/application-headroom-p1-1800s.*` contains the 30-min
 at 25/50/59.94p. Audio counters were zero; 50p had one video drop in the first
 reporting interval. These short runs do not establish prolonged candidate stability.
 No physical A/V capture was available. See audit §9.5 for interpretation.
+
+## Raw-clock candidate (P2)
+
+The candidate in `build-audio-timing/` uses raw uptime PTS and a provisional 60 ms
+source-age budget, independent of the three-frame device reserve. Override for
+measurement only with `U2K_AUDIO_SOURCE_AGE_MS=10..200`. This is not a physical
+output-latency control or an approved production default. Acquisition/correction
+fields and the observed read age are in the extended CSV schema. Ignore acquisition
+intervals when evaluating stable phase; retain all fault/padding counters.
+
+Current instrumented traces keep raw PTS in both PTS columns. Analyse them with
+`analyze_trace.py trace.log --pts-domain uptime`; historical adjusted traces still
+use the default wall domain. `drift_sim --source-age-ms 60 --pts-domain raw` replays
+capture age from the nine-column trace. `--calibrate-clock 1`, `--fifo-frames` and
+`--startup-stall-ms` exercise the shared phase acquisition. The model's
+`--max-missing-percent 0` turns source coverage failures into a failing exit status.
+
+The source clock has not yet gained adaptive rate compensation. Initial phase
+calibration does not establish prolonged drift correction or physical lip sync.

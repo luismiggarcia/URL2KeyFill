@@ -32,7 +32,7 @@ def ppm(a, b):
     """Rate of clock a against clock b, both in microseconds, first to last packet."""
     return ((a[-1] - a[0]) - (b[-1] - b[0])) / (b[-1] - b[0]) * 1e6
 
-def report(lane, packets, margins):
+def report(lane, packets, margins, domain):
     first, last = packets[0], packets[-1]
     span = (last['steady'] - first['steady']) / 1e6
     print(f"Lane {lane}: {len(packets)} packets over {span:.1f} s, frames {sorted({p['n'] for p in packets})}, channels {sorted({p['ch'] for p in packets})}")
@@ -44,10 +44,12 @@ def report(lane, packets, margins):
         overlaps += start < end
         gaps += start > end
     print(f"  48 kHz continuity: {overlaps} overlaps, {gaps} gaps")
-    # The application maps the first packet to its arrival time; this is the headroom an
-    # SDI read ending at "now" sees for each later packet.
-    lateness = [p['system'] / 1000 - p['pts'] for p in packets]
-    print("  Arrival after adjusted packet start (ms): p50 %.2f  p99 %.2f  max %.2f" % (pct(lateness, .5), pct(lateness, .99), max(lateness)))
+    # Historical traces used a first-arrival wall-clock offset. Current traces
+    # preserve raw uptime PTS; choose the matching domain explicitly.
+    if domain == 'uptime' and first['mach'] is None:
+        raise SystemExit('Uptime PTS analysis requires a nine-column trace')
+    lateness = [(p['mach'] if domain == 'uptime' else p['system']) / 1000 - p['pts'] for p in packets]
+    print("  Arrival after packet start (ms; selected domain): p50 %.2f  p99 %.2f  max %.2f" % (pct(lateness, .5), pct(lateness, .99), max(lateness)))
     arrivals = [(b['steady'] - a['steady']) / 1000 for a, b in zip(packets, packets[1:])]
     print("  Inter-arrival (ms): p1 %.2f  p50 %.2f  p99 %.2f  max %.2f" % (pct(arrivals, .01), pct(arrivals, .5), pct(arrivals, .99), max(arrivals)))
     print("  Packets arriving after an SDI read ending at now-margin first needs them:")
@@ -68,7 +70,8 @@ def report(lane, packets, margins):
 parser = argparse.ArgumentParser()
 parser.add_argument('trace')
 parser.add_argument('--jitter-margins', default='0,1,2,5,10,20,40')
+parser.add_argument('--pts-domain', choices=['wall', 'uptime'], default='wall')
 args = parser.parse_args()
 margins = [float(x) for x in args.jitter_margins.split(',')]
 for lane, packets in load(args.trace).items():
-    report(lane, packets, margins)
+    report(lane, packets, margins, args.pts_domain)

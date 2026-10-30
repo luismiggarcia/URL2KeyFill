@@ -6,14 +6,15 @@
 #include <condition_variable>
 namespace u2k {
 struct AudioLevels {float rmsLeft=0,rmsRight=0,peakLeft=0,peakRight=0;};
-struct AudioPacket {int64_t start=0;std::vector<float> samples;bool expectedForOutput=false;};
+struct AudioPacket {int64_t start=0;std::vector<float> samples;bool expectedForOutput=false;size_t offset=0;size_t frames()const{return samples.size()/2-offset;}};
 struct AudioReadWindow {
     uint64_t reads=0,missing=0,noSource=0,headroomCount=0;
     int64_t headroomMin=INT64_MAX,headroomMax=INT64_MIN,headroomSum=0;
 };
 class AudioLane {
     std::mutex mutex_;std::deque<AudioPacket> packets_,meterPackets_;
-    bool sourceSeen_=false;
+    bool sourceSeen_=false;int64_t firstSample_=0;
+    bool timelineReady_=false;int64_t nextSample_=0,lastRawStart_=0;int lastFrames_=0;
     AudioReadWindow readWindow_;
     std::atomic<float> peakLeft_{0},peakRight_{0};
     void sum(int64_t,size_t,float,std::vector<float>&,bool prune,bool mono,bool left=true,bool right=true);
@@ -21,8 +22,9 @@ public:
     std::atomic<uint64_t> received{0},discarded{0},nonZero{0},unusedExpired{0},outputOverruns{0};
     std::atomic<bool> outputExpected{false};
     std::atomic<int64_t> latestTimestamp{0};
+    std::atomic<uint64_t> generation{0},duplicatePackets{0},reorderedPackets{0},trimmedFrames{0},timestampAdjustments{0},timestampGapFrames{0},stalePackets{0};
     // SDI reads only: missing frames describe coverage, not signal amplitude.
-    std::atomic<uint64_t> outputReads{0},missingFrames{0},noSourceReads{0};
+    std::atomic<uint64_t> outputReads{0},missingFrames{0},noSourceReads{0},preSourcePaddingFrames{0};
     std::atomic<int64_t> sourceHeadroom{0};
     // Reporting only; called outside audio callbacks, resets the interval statistics.
     AudioReadWindow takeReadWindow();

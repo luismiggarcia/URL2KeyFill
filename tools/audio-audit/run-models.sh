@@ -20,3 +20,12 @@ echo; echo "== 3.2 Device 20 ppm fast (margin 3 ms, constant 1.4 ms lateness)"
 "$out/drift_sim" --ppm 20 --margin 3 --seconds 900 --reports 6
 echo; echo "== 3.2 Device 20 ppm slow, 8 h (500 ms history exhausted)"
 "$out/drift_sim" --ppm -20 --margin 3 --seconds 28800 --reports 8
+
+echo; echo "== Raw PTS: 60 ms source age, zero start margin, measured capture age"
+"$out/drift_sim" --margin 0 --source-age-ms 60 --pts-domain raw --seconds 117 --reports 1 --trace "$trace" --max-missing-percent 0
+
+echo; echo "== Calibrated raw PTS: 80 ms startup offset, 480-frame hardware FIFO"
+"$out/drift_sim" --margin 80 --source-age-ms 60 --pts-domain raw --calibrate-clock 1 --fifo-frames 480 --seconds 117 --reports 1 --trace "$trace" --max-missing-percent 0
+
+echo; echo "== Startup clock acquisition: 80 ms device stall, raw source timestamps"
+"$out/drift_sim" --margin 0 --source-age-ms 60 --pts-domain raw --calibrate-clock 1 --startup-stall-ms 80 --seconds 117 --reports 1 --trace "$trace" --max-missing-percent 0

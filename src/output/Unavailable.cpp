@@ -8,6 +8,7 @@ public:
  void start(const std::string&,const Mode&,const LatestFrame&)override{throw std::runtime_error("DeckLink backend was not built: SDK 16.0 is missing.");}
  void onAir(bool)override{}
  void audio(std::shared_ptr<AudioMixer>)override{}
+ void audioSourceAge(uint32_t)override{}
  void stop()override{}
  OutputStatus status()const override{return {false,false,0,0,0,"Preview only — DeckLink backend not built."};}
 };

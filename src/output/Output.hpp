@@ -4,7 +4,7 @@
 namespace u2k {
 struct Mode {uint32_t id=0,pixelFormat=0;std::string name;Size size;Rate rate;bool keying=false,fillOnlySupported=true;};
 struct Device {std::string id,name;std::vector<Mode> modes;};
-struct OutputStatus {bool running=false,onAir=false;uint64_t completed=0,late=0,dropped=0;std::string message;uint64_t audioFrames=0,audioErrors=0,audioRecoveries=0;uint32_t audioBuffered=0,audioTarget=0;};
+struct OutputStatus {bool running=false,onAir=false;uint64_t completed=0,late=0,dropped=0;std::string message;uint64_t audioFrames=0,audioErrors=0,audioRecoveries=0;uint32_t audioBuffered=0,audioTarget=0,audioSourceAge=0;int64_t audioReadAge=INT64_MIN;bool audioClockCalibrated=false;int64_t audioStartupShift=0,audioStreamQueuePhase=0;};
 class Output {
 public:
     virtual ~Output()=default;
@@ -12,6 +12,7 @@ public:
     virtual void start(const std::string& device,const Mode&,const LatestFrame&)=0;
     virtual void onAir(bool)=0;
     virtual void audio(std::shared_ptr<AudioMixer>)=0;
+    virtual void audioSourceAge(uint32_t samples)=0;
     virtual void stop()=0;
     virtual OutputStatus status() const=0;
 };

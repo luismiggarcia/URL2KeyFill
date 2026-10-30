@@ -15,7 +15,6 @@ class Browser final: public CefClient, public CefRenderHandler, public CefLifeSp
     LatestFrame& frames_;
     std::shared_ptr<AudioLane> audio_;
     std::atomic<int> channels_{2};
-    int64_t audioOffset_=0;bool audioClockReady_=false;
     std::string pendingUrl_;
     Size size_;
     int frameRate_=60;
@@ -33,8 +32,10 @@ public:
     uint64_t paints()const{return sequence_;}
     CefRefPtr<CefAudioHandler> GetAudioHandler()override{return this;}
     bool GetAudioParameters(CefRefPtr<CefBrowser>,CefAudioParameters& p)override{p.sample_rate=48000;p.channel_layout=CEF_CHANNEL_LAYOUT_STEREO;p.frames_per_buffer=480;return true;}
-    void OnAudioStreamStarted(CefRefPtr<CefBrowser>,const CefAudioParameters&,int channels)override{channels_=channels;audioClockReady_=false;audio_->clear();}
-    void OnAudioStreamPacket(CefRefPtr<CefBrowser>,const float** data,int frames,int64_t pts)override{if(!audioClockReady_){const auto now=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();audioOffset_=std::abs(now-pts)>60000?now-pts:0;audioClockReady_=true;}audio_->push(data,frames,channels_.load(),pts+audioOffset_);}
+    void OnAudioStreamStarted(CefRefPtr<CefBrowser>,const CefAudioParameters&,int channels)override{channels_=channels;audio_->clear();}
+    // Pinned CEF emits uptime milliseconds (confirmed by the four-clock traces).
+    // Preserve capture age and the common domain across independently started layers.
+    void OnAudioStreamPacket(CefRefPtr<CefBrowser>,const float** data,int frames,int64_t pts)override{audio_->push(data,frames,channels_.load(),pts);}
     void OnAudioStreamStopped(CefRefPtr<CefBrowser>)override{audio_->clear();}
     void OnAudioStreamError(CefRefPtr<CefBrowser>,const CefString&)override{audio_->clear();}
     void create(const std::string&);

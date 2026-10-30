@@ -41,6 +41,17 @@ def summarise(rows, warmup):
             recoveries=max(int(r['recoveries']) for r in data),
             late_video=max(int(r['late_video']) for r in data),
             dropped_video=max(int(r['dropped_video']) for r in data))
+        for field in ['duplicate_packets','reordered_packets','trimmed_frames','timestamp_adjustments','timestamp_gap_frames','stale_packets','clock_resets','pre_source_padding_frames']:
+            if field in data[0]:
+                result[layer][field] = max(int(r[field]) for r in data)
+        ages = [float(r['last_read_age_ms']) for r in data if r.get('last_read_age_ms')]
+        if ages:
+            result[layer]['last_read_age_min_ms'] = min(ages)
+            result[layer]['last_read_age_max_ms'] = max(ages)
+        calibrated = [float(r['last_read_age_ms']) for r in data if r.get('clock_calibrated') == '1' and r.get('last_read_age_ms') and float(r['elapsed_s']) >= first + warmup]
+        if calibrated:
+            result[layer]['calibrated_read_age_min_ms'] = min(calibrated)
+            result[layer]['calibrated_read_age_max_ms'] = max(calibrated)
     return result
 
 
@@ -50,4 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--warmup-seconds', type=float, default=5)
     args = parser.parse_args()
     with open(args.trace) as stream:
-        print(json.dumps(summarise(csv.DictReader(stream), args.warmup_seconds), indent=2))
+        summary = summarise(csv.DictReader(stream), args.warmup_seconds)
+        if not summary:
+            parser.error('No active source reads: this recording cannot establish audio timing')
+        print(json.dumps(summary, indent=2))

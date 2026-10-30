@@ -908,3 +908,55 @@ callback do monitor sem alocações/mutexes; rampas, OVER, MONO/faders e restant
 do plano. Faltam regressão prolongada da nova build e investigação da perda inicial
 a 50p. A aceitação física A/V depende do equipamento que o Luis confirmou ainda não
 estar disponível. Não foi substituída a aplicação instalada.
+
+## 10. P2 — relógio comum, aquisição de fase e continuidade de pacotes
+
+### 10.1 Implementação do passo
+
+- CEF entrega agora os PTS brutos, sem offset por layer nem heurística de 60 s.
+  SDI, monitor e medidores usam `mediaSampleTime()` no domínio uptime validado.
+- A idade de origem é independente da fila SDI: valor provisório **60 ms sobre PTS
+  brutos**, ajustável para ensaio por `U2K_AUDIO_SOURCE_AGE_MS` (10–200 ms). Os 40 ms
+  sobre timestamps ajustados não cobriam o máximo bruto observado de ~51,3 ms.
+- Não se fixa definitivamente o mapeamento no primeiro callback. A aquisição espera
+  pelo consumo de duas reservas e quatro observações coerentes de host/fila, rejeita
+  consultas com duração >1 ms e só então ancora a origem. A alteração de fase é
+  suavizada por crossfade de 240 samples (5 ms), sem acrescentar lookahead.
+- Preroll tem horizonte limitado. Fila vazia com cursor ultrapassado pede recuperação
+  para um instante futuro e nova aquisição. A posição consumida da fila é a referência
+  de preparação; a fase face ao stream SDK é registada separadamente e não é uma
+  medição física A/V. Correção contínua de taxa ainda não está implementada.
+- Suspensão detetada pela diferença uptime/continuous limpa históricos e pára PLAY;
+  o monitor é reconstruído. A deteção é testada com relógios injetados; não se suspendeu
+  fisicamente o Mac nesta validação.
+- Duplicados são descartados, packets antigos não apagam o histórico, variações de
+  timestamp até 1 ms seguem um contador contínuo e sobreposições maiores são aparadas.
+  Lacunas maiores continuam explícitas. Cada clear invalida a geração anterior,
+  incluindo cópias de packets que ainda estavam em curso.
+- Correções para trás podem usar o histórico retido, sem duplicar amostras. Padding
+  anterior ao primeiro sample de um stream é contado separadamente das lacunas reais.
+- Falha ao ativar um dispositivo ocupado termina o smoke com limpeza normal. O backend
+  só desativa os recursos que conseguiu ativar, evitando desativar a saída de outro dono.
+
+### 10.2 Resultados intercalares e critério de fecho
+
+Os primeiros ensaios expuseram idades de leitura de ~74–149 ms apesar do offset de
+60 ms. Calibrar no primeiro callback não resolveu o problema. A medição adicional
+mostrou fase stream/fila praticamente alinhada no regime estável, não uma diferença
+permanente comprovada do SDK. Era necessário aguardar a estabilização do arranque.
+
+Com aquisição, os três smokes de 10 s passaram, com zero lacunas de áudio, erros,
+recuperações ou perdas de vídeo nesses ensaios. Após calibração, as leituras ficaram
+próximas de 60 ms; antes dela permanece uma fase de aquisição explícita. Estes números
+são idade da janela pedida no callback, não latência física de saída.
+
+Build isolada em `build-audio-timing/URL2KeyFill.app`; CTest 4/4 e modelos com PTS
+brutos passaram, incluindo fase inicial de 80 ms, FIFO modelado e uma paragem
+transitória do relógio no arranque. Os testes de publicação/clear/leitura concorrentes
+passaram sob ThreadSanitizer e AddressSanitizer/UBSan. A baseline de 30 min da nova
+candidata é o próximo critério de fecho deste passo; não se reutiliza a baseline P1.
+
+Falta depois: compensação adaptativa de deriva, callback local previsível, qualidade
+de mistura/níveis e alinhamento A/V final. Não há captura conjunta disponível para
+aceitação física e a aplicação instalada não foi substituída. Alterações novas na
+pasta `components/` feitas em paralelo não fazem parte deste passo.

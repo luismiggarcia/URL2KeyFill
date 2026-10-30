@@ -16,6 +16,29 @@ int main(){try{
  REQUIRE(!gaps.observe({3000,2'000'003'400,100'000'000}));
  REQUIRE(!gaps.observe({4000,1'000'004'400,0}));
  AudioSchedule schedule(48000-5760,5760);
+ // The source offset is independent of the size of the device preroll queue.
+ for(uint32_t target:{2880u,5760u}){
+  auto raw=AudioSchedule::fromHostAnchor(480000,target,2880);raw.advance(target);
+  REQUIRE(raw.readStart()==480000-2880);
+ }
+ auto aligned=AudioSchedule::fromHostAnchor(1000000,5760,2880);aligned.advance(5760);
+ REQUIRE(aligned.calibrate(1003360,0,2880)==3360);REQUIRE(aligned.readStart()==1003360-2880);
+ REQUIRE(aligned.bufferedSpan(100,0)==5760); // Bound preroll writes before the device starts.
+ REQUIRE(aligned.recover(6000,480));REQUIRE(aligned.cursor()==6480);
+ REQUIRE(aligned.bufferedSpan(0,6000)==480);
+ aligned.advance(5760-480);REQUIRE(aligned.readStart()==1003360+6000-2880);
+ REQUIRE(audioTransitionWeight(0,240)==0);REQUIRE(audioTransitionWeight(239,240)==1);
+ REQUIRE(audioTransitionWeight(17,240)<audioTransitionWeight(18,240));
+ // Calibrate against drained audio position, independent of video stream phase.
+ auto queue=AudioSchedule::fromHostAnchor(1000000,5760,2880);queue.advance(12000);
+ queue.calibrateQueue(1100000,4000,2880);queue.advance(5760-4000);
+ REQUIRE(queue.readStart()==1100000-2880);
+ ClockPhaseAcquisition acquisition;acquisition.reset(1000);
+ REQUIRE(!acquisition.observe(1000000,0,1));REQUIRE(!acquisition.observe(1000100,100,1));
+ REQUIRE(!acquisition.observe(1000200,200,1));REQUIRE(!acquisition.observe(1000300,300,1));
+ REQUIRE(!acquisition.observe(1007000,1000,1)); // Startup offset changed: reacquire.
+ REQUIRE(!acquisition.observe(1007100,1100,1));REQUIRE(!acquisition.observe(1007200,1200,1));
+ REQUIRE(acquisition.observe(1007300,1300,1));
  REQUIRE(schedule.readStart()==42240);REQUIRE(schedule.blockSize(0)==1024);
  REQUIRE(schedule.blockSize(5700)==60);REQUIRE(schedule.blockSize(5760)==0);
  schedule.advance(400);REQUIRE(schedule.readStart()==42640);REQUIRE(schedule.cursor()==400);
@@ -32,9 +55,9 @@ int main(){try{
  // Overlapping packets count coverage once, even though the current mixer sums them.
  auto overlap=std::make_shared<AudioLane>();overlap->push(data,480,2,1000);overlap->push(data,480,2,1005);
  out.assign(1440,0);overlap->mix(48000,720,1,out);REQUIRE(overlap->missingFrames==0);
- // No retained packet: missing coverage, no invented numeric headroom.
- out.assign(960,0);overlap->mix(96000,480,1,out);REQUIRE(overlap->missingFrames==480);REQUIRE(overlap->sourceHeadroom==INT64_MIN);
- overlap->clear();overlap->mix(96000,480,1,out);REQUIRE(overlap->missingFrames==480);REQUIRE(overlap->noSourceReads==1);
+ // Old retained history does not cover a later window: report the real deficit.
+ out.assign(960,0);overlap->mix(96000,480,1,out);REQUIRE(overlap->missingFrames==480);REQUIRE(overlap->sourceHeadroom==-47760);
+ overlap->clear();overlap->mix(96000,480,1,out);REQUIRE(overlap->missingFrames==480);REQUIRE(overlap->noSourceReads==1);REQUIRE(overlap->sourceHeadroom==INT64_MIN);
  // Route expectation includes cross-channel and mono behaviour.
  REQUIRE(!audioRouteEnabled(false,true,false,false,false,true));
  REQUIRE(audioRouteEnabled(true,true,false,false,false,true));
@@ -50,6 +73,40 @@ int main(){try{
  auto w=lane->takeReadWindow();REQUIRE(w.reads==3);REQUIRE(w.missing==480);
  REQUIRE(w.headroomCount==3);REQUIRE(w.headroomMin==0);REQUIRE(w.headroomMax==960);
  REQUIRE(lane->takeReadWindow().reads==0);REQUIRE(lane->missingFrames==480);
+ // Duplicates and old packets must not amplify sound or erase valid history.
+ auto continuous=std::make_shared<AudioLane>();float tone[480];std::fill_n(tone,480,.25f);const float* stereo[]={tone,tone};
+ continuous->push(stereo,480,2,1000);continuous->push(stereo,480,2,1000);
+ out.assign(960,0);continuous->sample(48000,480,1,out);REQUIRE(out[0]==.25f);REQUIRE(continuous->duplicatePackets==1);
+ continuous->push(stereo,480,2,990);REQUIRE(continuous->reorderedPackets==1);
+ out.assign(960,0);continuous->sample(48000,480,1,out);REQUIRE(out[0]==.25f);
+ // One millisecond of timestamp quantisation preserves the sample counter.
+ continuous->push(stereo,480,2,1009);REQUIRE(continuous->timestampAdjustments==1);
+ out.assign(1920,0);continuous->sample(48000,960,1,out);for(auto v:out)REQUIRE(v==.25f);
+ continuous->clear();continuous->push(stereo,480,2,1000);continuous->push(stereo,480,2,1005);
+ REQUIRE(continuous->trimmedFrames==240);out.assign(1440,0);continuous->sample(48000,720,1,out);for(auto v:out)REQUIRE(v==.25f);
+ continuous->push(stereo,480,2,1020);REQUIRE(continuous->timestampGapFrames==240);
+ out.assign(2400,0);continuous->mix(48000,1200,1,out);REQUIRE(continuous->missingFrames==240);
+ // A new generation can restart timestamps; sub-ms equal stamps are not duplicates.
+ const auto generation=continuous->generation.load();continuous->clear();REQUIRE(continuous->generation==generation+1);
+ continuous->push(stereo,3,2,0);continuous->push(stereo,3,2,0);
+ out.assign(12,0);continuous->sample(0,6,1,out);for(auto v:out)REQUIRE(v==.25f);
+ // Preroll before a stream existed is silence padding, not lost stream data.
+ AudioLane fresh;fresh.push(stereo,480,2,1000);out.assign(40,0);fresh.mix(47990,20,1,out);
+ REQUIRE(fresh.preSourcePaddingFrames==10);REQUIRE(fresh.missingFrames==0);
+ // A backward startup correction can read retained data without inventing a gap.
+ AudioLane rewind;rewind.push(stereo,480,2,1000);rewind.push(stereo,480,2,1010);
+ out.assign(960,0);rewind.mix(48480,480,1,out);out.assign(960,0);rewind.mix(48000,480,1,out);
+ for(auto v:out)REQUIRE(v==.25f);REQUIRE(rewind.missingFrames==0);
+ float ramp[480];for(int i=0;i<480;++i)ramp[i]=.2f+float(i)/1000;const float* rampStereo[]={ramp,ramp};
+ AudioLane trimmed;trimmed.push(stereo,480,2,1000);trimmed.push(rampStereo,480,2,1005);
+ out.assign(480,0);trimmed.sample(48480,240,1,out);REQUIRE(out[0]==ramp[240]);REQUIRE(out[478]==ramp[479]);
+ AudioLane invalid;invalid.push(stereo,480,2,-1);invalid.push(stereo,480,2,INT64_MAX);REQUIRE(invalid.received==0);
+ // Exercise clear/publication/read interleaving with immutable source buffers.
+ AudioLane concurrent;std::atomic<bool> start{false},finished{false};
+ std::thread producer([&]{while(!start.load())std::this_thread::yield();for(int i=0;i<500;++i)concurrent.push(stereo,480,2,1000+i*10);finished=true;});
+ std::thread reader([&]{std::vector<float> buffer(960);while(!start.load())std::this_thread::yield();while(!finished.load()){std::fill(buffer.begin(),buffer.end(),0);concurrent.mix(48000,480,1,buffer);concurrent.takeReadWindow();}});
+ start=true;for(int i=0;i<500;++i)concurrent.clear();producer.join();reader.join();concurrent.clear();
+ REQUIRE(concurrent.sourceLevels(48000,480).peakLeft==0);
  std::cout<<"PASS: source coverage, headroom, silent packets, overlap, monitor isolation and effective routing\n";
  return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

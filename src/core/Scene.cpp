@@ -5,47 +5,67 @@
 #include <stdexcept>
 namespace u2k {
 void AudioLane::push(const float* const* data,int n,int channels,int64_t pts){
- if(pts>INT64_MAX/48||pts<INT64_MIN/48)return;
+ if(pts<0||pts>(INT64_MAX-48048)/48)return;
  if(!data||n<1||n>48000||channels<1||channels>8)return;
- AudioPacket p;p.expectedForOutput=outputExpected.load(std::memory_order_relaxed);p.start=pts*48;latestTimestamp=p.start;p.samples.resize(size_t(n)*2);uint64_t signal=0;float peaks[2]={0,0};
+ const auto capturedGeneration=generation.load(std::memory_order_acquire);
+ AudioPacket p;p.expectedForOutput=outputExpected.load(std::memory_order_relaxed);p.start=pts*48;p.samples.resize(size_t(n)*2);uint64_t signal=0;float peaks[2]={0,0};
  for(int i=0;i<n;i++)for(int c=0;c<2;c++){float v=data[std::min(c,channels-1)][i];v=std::isfinite(v)?v:0;p.samples[i*2+c]=v;peaks[c]=std::max(peaks[c],std::abs(v));if(std::abs(v)>.00001f)++signal;}
  // Capture source peaks before gain/mute; reading a meter never consumes audio packets.
  auto retain=[](std::atomic<float>& target,float value){float old=target.load(std::memory_order_relaxed);while(old<value&&!target.compare_exchange_weak(old,value,std::memory_order_relaxed)){};};
- retain(peakLeft_,peaks[0]);retain(peakRight_,peaks[1]);
- nonZero+=signal;
- std::lock_guard<std::mutex> lock(mutex_);if(!packets_.empty()&&p.start<packets_.back().start){packets_.clear();meterPackets_.clear();}
+ received+=n;
+ std::lock_guard<std::mutex> lock(mutex_);
+ if(generation.load(std::memory_order_relaxed)!=capturedGeneration){++stalePackets;return;}
+ const auto rawStart=p.start;
+ if(timelineReady_){
+  // Identical millisecond stamps can be legitimate for sub-millisecond packets.
+  if(rawStart==lastRawStart_&&n==lastFrames_&&n>=48){++duplicatePackets;return;}
+  if(rawStart<lastRawStart_){++reorderedPackets;return;}
+  const auto delta=rawStart-nextSample_;
+  if(delta>=-48&&delta<=48){p.start=nextSample_;if(delta)++timestampAdjustments;}
+  else if(delta<0){
+   const auto overlap=uint64_t(nextSample_-rawStart);trimmedFrames+=std::min<uint64_t>(overlap,uint64_t(n));
+   lastRawStart_=rawStart;lastFrames_=n;
+   if(overlap>=uint64_t(n))return;
+   p.offset=size_t(overlap);p.start=nextSample_;
+  }else timestampGapFrames+=uint64_t(delta);
+ }
+ timelineReady_=true;lastRawStart_=rawStart;lastFrames_=n;nextSample_=p.start+int64_t(p.frames());latestTimestamp=p.start;
+ retain(peakLeft_,peaks[0]);retain(peakRight_,peaks[1]);nonZero+=signal;
  meterPackets_.push_back(p);
  while(meterPackets_.size()>64||(!meterPackets_.empty()&&meterPackets_.back().start-meterPackets_.front().start>24000))meterPackets_.pop_front();
- packets_.push_back(std::move(p));sourceSeen_=true;received+=n;
+ if(!sourceSeen_)firstSample_=p.start;packets_.push_back(std::move(p));sourceSeen_=true;
  while(packets_.size()>64||(!packets_.empty()&&packets_.back().start-packets_.front().start>24000)){
   if(packets_.front().expectedForOutput&&outputExpected.load(std::memory_order_relaxed))++outputOverruns;else ++unusedExpired;
   packets_.pop_front();++discarded;
  }
 }
 std::pair<float,float> AudioLane::takePeaks(){return {peakLeft_.exchange(0,std::memory_order_relaxed),peakRight_.exchange(0,std::memory_order_relaxed)};}
-void AudioLane::clear(){std::lock_guard<std::mutex> lock(mutex_);packets_.clear();meterPackets_.clear();sourceSeen_=false;sourceHeadroom=INT64_MIN;peakLeft_=0;peakRight_=0;}
+void AudioLane::clear(){std::lock_guard<std::mutex> lock(mutex_);++generation;packets_.clear();meterPackets_.clear();sourceSeen_=false;timelineReady_=false;sourceHeadroom=INT64_MIN;peakLeft_=0;peakRight_=0;}
 AudioReadWindow AudioLane::takeReadWindow(){std::lock_guard<std::mutex> lock(mutex_);auto result=readWindow_;readWindow_={};return result;}
 void AudioLane::mix(int64_t start,size_t n,float gain,std::vector<float>& out,bool mono,bool left,bool right){sum(start,n,gain,out,true,mono,left,right);}
 void AudioLane::sample(int64_t start,size_t n,float gain,std::vector<float>& out,bool mono,bool left,bool right){sum(start,n,gain,out,false,mono,left,right);}
 void AudioLane::sum(int64_t start,size_t n,float gain,std::vector<float>& out,bool prune,bool mono,bool left,bool right){
  std::lock_guard<std::mutex> lock(mutex_);
- while(prune&&!packets_.empty()&&packets_.front().start+int64_t(packets_.front().samples.size()/2)<=start)packets_.pop_front();
- const auto& history=prune?packets_:meterPackets_;
+ while(prune&&!packets_.empty()&&packets_.front().start+int64_t(packets_.front().frames())<=start)packets_.pop_front();
+ // A bounded backward phase correction may need packets already pruned by the
+ // previous read cursor. Retained history is immutable and shared with meters.
+ const bool retained=prune&&(packets_.empty()||start<packets_.front().start);
+ const auto& history=prune&&!retained?packets_:meterPackets_;
  if(prune){
   int64_t coveredEnd=start,newestEnd=INT64_MIN;size_t covered=0;
   for(const auto& p:history){
-   const int64_t end=p.start+int64_t(p.samples.size()/2);newestEnd=std::max(newestEnd,end);
+   const int64_t end=p.start+int64_t(p.frames());newestEnd=std::max(newestEnd,end);
    const auto first=std::max({start,p.start,coveredEnd}),last=std::min(start+int64_t(n),end);
    if(last>first){covered+=size_t(last-first);coveredEnd=last;}
   }
   ++readWindow_.reads;
-  if(sourceSeen_){missingFrames+=n-covered;readWindow_.missing+=n-covered;}else{++noSourceReads;++readWindow_.noSource;}
+  if(sourceSeen_){const auto padding=start<firstSample_?std::min<uint64_t>(n,uint64_t(firstSample_)-uint64_t(start)):0;preSourcePaddingFrames+=padding;missingFrames+=n-covered-padding;readWindow_.missing+=n-covered-padding;}else{++noSourceReads;++readWindow_.noSource;}
   // No packet is represented by reads/missingFrames, not a fictitious headroom.
   sourceHeadroom=newestEnd==INT64_MIN?INT64_MIN:newestEnd-(start+int64_t(n));
   if(newestEnd!=INT64_MIN){const auto h=newestEnd-(start+int64_t(n));++readWindow_.headroomCount;readWindow_.headroomSum+=h;readWindow_.headroomMin=std::min(readWindow_.headroomMin,h);readWindow_.headroomMax=std::max(readWindow_.headroomMax,h);}
   ++outputReads;
  }
- for(const auto& p:history){auto first=std::max(start,p.start),last=std::min(start+int64_t(n),p.start+int64_t(p.samples.size()/2));for(auto i=first;i<last;++i){const size_t src=size_t(i-p.start)*2,dst=size_t(i-start)*2;if(mono){const float value=((left?p.samples[src]:0)*.5f+(right?p.samples[src+1]:0)*.5f)*gain;out[dst]+=value;out[dst+1]+=value;}else for(int c=0;c<2;c++)out[dst+c]+=(c==0?left:right)?p.samples[src+c]*gain:0;}}
+ for(const auto& p:history){auto first=std::max(start,p.start),last=std::min(start+int64_t(n),p.start+int64_t(p.frames()));for(auto i=first;i<last;++i){const size_t src=(size_t(i-p.start)+p.offset)*2,dst=size_t(i-start)*2;if(mono){const float value=((left?p.samples[src]:0)*.5f+(right?p.samples[src+1]:0)*.5f)*gain;out[dst]+=value;out[dst+1]+=value;}else for(int c=0;c<2;c++)out[dst+c]+=(c==0?left:right)?p.samples[src+c]*gain:0;}}
 }
 static AudioLevels measureAudio(const std::vector<float>& samples){
  AudioLevels levels;double powerLeft=0,powerRight=0;const size_t frames=samples.size()/2;if(!frames)return levels;

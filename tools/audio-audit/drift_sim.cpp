@@ -19,19 +19,25 @@
 #include <string>
 using namespace u2k;
 
-static std::vector<double> lateness(const char* path){
+static std::vector<double> lateness(const char* path,bool raw){
     std::vector<double> v;std::ifstream in(path);std::string line;
     while(std::getline(in,line)){
         std::istringstream s(line);std::vector<std::string> c;for(std::string x;s>>x;)c.push_back(x);
-        if(c.size()==9)v.push_back(std::stoll(c[5])/1000.-std::stoll(c[2]));
+        if(c.size()==9)v.push_back(raw?std::stod(c[7])/1000.-std::stoll(c[1]):std::stoll(c[5])/1000.-std::stoll(c[2]));
         else if(c.size()==6)v.push_back(std::stoll(c[1])/1000.-std::stoll(c[5]));
     }
     return v;
 }
 int main(int argc,char** argv){
-    double ppm=0,margin=3,seconds=900,callbackMs=9.7,fps=25;const char* trace=nullptr;int reports=10;
+    double ppm=0,margin=3,seconds=900,callbackMs=9.7,fps=25,sourceAge=0,maxMissing=-1,stallMs=0,stallAtMs=40;bool raw=false,calibrate=false,mapped=false;uint32_t fifo=0;const char* trace=nullptr;int reports=10;
     for(int i=1;i+1<argc;i+=2){
-        if(!std::strcmp(argv[i],"--ppm"))ppm=std::atof(argv[i+1]);
+        if(!std::strcmp(argv[i],"--startup-stall-ms"))stallMs=std::atof(argv[i+1]);
+        else if(!std::strcmp(argv[i],"--calibrate-clock"))calibrate=std::atoi(argv[i+1])!=0;
+        else if(!std::strcmp(argv[i],"--fifo-frames"))fifo=uint32_t(std::atoi(argv[i+1]));
+        else if(!std::strcmp(argv[i],"--source-age-ms"))sourceAge=std::atof(argv[i+1]);
+        else if(!std::strcmp(argv[i],"--pts-domain"))raw=!std::strcmp(argv[i+1],"raw");
+        else if(!std::strcmp(argv[i],"--max-missing-percent"))maxMissing=std::atof(argv[i+1]);
+        else if(!std::strcmp(argv[i],"--ppm"))ppm=std::atof(argv[i+1]);
         else if(!std::strcmp(argv[i],"--margin"))margin=std::atof(argv[i+1]);
         else if(!std::strcmp(argv[i],"--seconds"))seconds=std::atof(argv[i+1]);
         else if(!std::strcmp(argv[i],"--callback-ms"))callbackMs=std::atof(argv[i+1]);
@@ -40,28 +46,32 @@ int main(int argc,char** argv){
         else if(!std::strcmp(argv[i],"--reports"))reports=std::atoi(argv[i+1]);
         else {std::fprintf(stderr,"Unknown option %s\n",argv[i]);return 2;}
     }
-    std::vector<double> late=trace?lateness(trace):std::vector<double>{1.4};
+    std::vector<double> late=trace?lateness(trace,raw):std::vector<double>{1.4};
     if(late.empty()){std::fprintf(stderr,"No packets in trace\n");return 2;}
     auto lane=std::make_shared<AudioLane>();AudioMixer mixer;mixer.inputs({{lane,true,1}});
     std::vector<float> l(480,.5f),r(480,.5f);const float* data[]={l.data(),r.data()};
     const int64_t base=1'800'000'000'000;             // epoch_ in ms; packets start 1 s earlier
     // DeckLink.cpp: three video frames, clamped to 30-250 ms.
     const int64_t target=std::clamp<int64_t>(int64_t(std::ceil(3*48000/fps)),1440,12000);
-    const int64_t epoch=base*48;int64_t packet=0;AudioSchedule schedule(epoch-target,uint32_t(target));
+    ClockPhaseAcquisition phase;phase.reset(2*target);
+    const int64_t epoch=base*48;int64_t packet=0;AudioSchedule schedule=AudioSchedule::fromHostAnchor(epoch,uint32_t(target),uint32_t(std::llround(sourceAge*48)));
     std::printf("device %+g ppm, margin %g ms, callback %g ms, target %lld samples, lateness %s\n",ppm,margin,callbackMs,(long long)target,trace?trace:"1.4 ms");
     std::printf("%10s %12s %16s %16s\n","time (s)","missing %","min headroom ms","max headroom ms");
-    uint64_t missing=0,total=0;double minHead=1e9,maxHead=-1e9,next=seconds/reports;
+    uint64_t missing=0,total=0,allMissing=0,allTotal=0;double minHead=1e9,maxHead=-1e9,next=seconds/reports;
     auto arrival=[&](int64_t k){return double(base-1000+k*10)+late[size_t(k)%late.size()];};
     for(double t=0;t<=seconds;t+=callbackMs/1000){
         const double now=base+margin+t*1000;      // Mac clock, ms
         while(arrival(packet)<=now){lane->push(data,480,2,base-1000+packet*10);++packet;}
-        const int64_t played=int64_t(t*48000*(1+ppm*1e-6));
-        schedule.catchUp(played);              // Shared DeckLink scheduling arithmetic
-        int64_t buffered=schedule.cursor()-played;
+        const double deviceElapsed=t-std::clamp(t-stallAtMs/1000.,0.,stallMs/1000.);
+        const int64_t played=int64_t(deviceElapsed*48000*(1+ppm*1e-6));
+        schedule.recover(played,calibrate?480:0);
+        const auto span=schedule.cursor()-played;
+        int64_t buffered=calibrate?std::max<int64_t>(0,span-fifo):span;
+        if(calibrate&&!mapped&&t>0&&phase.observe(int64_t(std::llround(now*48)),schedule.cursor()-buffered,0)){schedule.calibrateQueue(int64_t(std::llround(now*48)),uint32_t(buffered),uint32_t(std::llround(sourceAge*48)));mapped=true;}
         for(int block=0;buffered<target&&block<24;block++){
             const uint32_t count=schedule.blockSize(uint32_t(buffered));
             const auto pcm=mixer.mix(schedule.readStart(),count);
-            for(size_t i=0;i<pcm.size();i+=2){++total;missing+=pcm[i]==0;}
+            for(size_t i=0;i<pcm.size();i+=2){++total;++allTotal;missing+=pcm[i]==0;allMissing+=pcm[i]==0;}
             schedule.advance(count);buffered+=count;
         }
         // Proposed diagnostic: newest received sample minus the end of the request.
@@ -73,4 +83,5 @@ int main(int argc,char** argv){
             missing=total=0;minHead=1e9;maxHead=-1e9;next+=seconds/reports;
         }
     }
+    if(maxMissing>=0&&allTotal&&100.*allMissing/allTotal>maxMissing){std::fprintf(stderr,"Missing source frames exceed threshold\n");return 1;}
 }

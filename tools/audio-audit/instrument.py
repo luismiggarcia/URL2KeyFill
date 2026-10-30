@@ -30,7 +30,11 @@ inline void traceAudioPacket(const void* browser,int64_t raw,int64_t adjusted,in
 '''
 anchor = '#include <cstdlib>\n'
 call_old = 'audio_->push(data,frames,channels_.load(),pts+audioOffset_);}'
-call_new = 'traceAudioPacket(this,pts,pts+audioOffset_,frames,channels_.load());' + call_old
+adjusted = 'pts+audioOffset_'
+if call_old not in source:
+    call_old = 'audio_->push(data,frames,channels_.load(),pts);}'
+    adjusted = 'pts'
+call_new = 'traceAudioPacket(this,pts,' + adjusted + ',frames,channels_.load());' + call_old
 if source.count(anchor) != 1 or source.count(call_old) != 1:
     sys.exit("Browser.hpp no longer matches the instrumentation anchors; update instrument.py.")
 source = source.replace(anchor, anchor + helper, 1).replace(call_old, call_new, 1)
