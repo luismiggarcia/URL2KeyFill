@@ -14,7 +14,11 @@ AppKit and WebKit are system frameworks, with no third-party UI toolkit or redis
 
 Each layer owns a CEF browser, an immutable latest BGRA frame and a bounded audio lane. CEF renders with transparent background and device scale 1; CSS opaque backgrounds remain opaque. `OnPaint` copies the frame before returning. Browser errors clear that layer's image and audio; other layers continue.
 
-The scene worker examines latest frames about every 16 ms and only recomposes when frame pointers or scene configuration change. It blends from the bottom of the ordered stack to the top, using premultiplied source-over for all four channels. Scene configuration and source ownership are protected separately from the UI. Deleting a layer closes its browser asynchronously; retired runtimes remain owned until `OnBeforeClose`.
+The scene worker waits for frame/configuration notifications rather than polling every 16 ms. Notifications coalesce; only visible sources subscribe, and unchanged frame pointers/configuration do not trigger composition. Weak wake signals and explicit unsubscription keep source publication safe after a Scene is destroyed. A configuration superseded during composition is discarded before publication.
+
+For one visible source already matching the composition size, the immutable frame is reused directly. Other scenes blend from the bottom of the ordered stack to the top, using premultiplied source-over for all four channels. Scene configuration and source ownership are protected separately from the UI. Deleting a layer closes its browser asynchronously; retired runtimes remain owned until `OnBeforeClose`.
+
+CEF's maximum windowless paint rate follows the selected mode (25/50 for the primary production modes, rounded to an integer and capped at 60 for other rates). This is a paint-rate request, not phase locking: fractional SDI timing remains rational, and external begin-frame scheduling/physical motion acceptance remain pending.
 
 All layer browsers use the selected browser viewport. The composed viewport is fitted proportionally into the SDI target with transparent margins. Bilinear interpolation works on premultiplied channels. The native local monitor draws its checkerboard separately; that checkerboard never enters SDI. KEY shows the alpha mask locally. A static scene retains its last frame while scheduled SDI repeats it.
 

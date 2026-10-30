@@ -113,6 +113,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  u2k::Size size=[self viewport];validate(size);u2k::Size target=size;if(auto m=[self selectedMode])target=m->size;
  std::vector<ImageInput> images;
  for(NSDictionary* layer in layers){auto it=runtimes.find([layer[@"id"] UTF8String]);if(it==runtimes.end())continue;images.push_back({it->second->frame,[layer[@"visible"] boolValue]});}
+ if(auto m=[self selectedMode])for(auto& entry:runtimes)entry.second->browser->frameRate(m->rate);
  scene->configure(std::move(images),size,target);[self configureAudio];
 }
 -(void)configureAudio{
@@ -123,7 +124,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  std::vector<AudioInput> listen;for(NSDictionary* layer in layers)if([monitoredLayers containsObject:layer[@"id"]]){auto it=runtimes.find([layer[@"id"] UTF8String]);if(it!=runtimes.end())listen.push_back({it->second->audio,true,1,[layer[@"mono"] boolValue],layer[@"left"]?[layer[@"left"] boolValue]:true,layer[@"right"]?[layer[@"right"] boolValue]:true});}monitorMixer->inputs(std::move(listen));*monitorMaster=monitorOutput;const auto status=output->status();*monitorProgram=!(status.running&&!status.onAir);[self setAudioOutputActive:status.running&&status.onAir];
 }
 -(void)createRuntime:(NSDictionary*)layer{
- auto r=std::make_shared<Runtime>();r->id=[layer[@"id"] UTF8String];r->browser=new Browser(*r->frame,[self viewport],r->audio);std::weak_ptr<Runtime> weak=r;r->browser->closed=[weak]{if(auto r=weak.lock())r->closed=true;};runtimes.emplace(r->id,r);r->browser->create([layer[@"url"] UTF8String]);
+ auto r=std::make_shared<Runtime>();r->id=[layer[@"id"] UTF8String];r->browser=new Browser(*r->frame,[self viewport],r->audio);if(auto m=[self selectedMode])r->browser->frameRate(m->rate);std::weak_ptr<Runtime> weak=r;r->browser->closed=[weak]{if(auto r=weak.lock())r->closed=true;};runtimes.emplace(r->id,r);r->browser->create([layer[@"url"] UTF8String]);
 }
 -(void)reloadLayer:(NSDictionary*)layer{
  auto it=runtimes.find([layer[@"id"] UTF8String]);if(it!=runtimes.end()){it->second->audio->clear();it->second->browser->load([layer[@"url"] UTF8String],[self viewport]);}

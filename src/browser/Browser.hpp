@@ -18,6 +18,7 @@ class Browser final: public CefClient, public CefRenderHandler, public CefLifeSp
     int64_t audioOffset_=0;bool audioClockReady_=false;
     std::string pendingUrl_;
     Size size_;
+    int frameRate_=60;
     CefRefPtr<CefBrowser> browser_;
     uint64_t sequence_=0;
     bool failed_=false, closing_=false;
@@ -37,6 +38,7 @@ public:
     void OnAudioStreamStopped(CefRefPtr<CefBrowser>)override{audio_->clear();}
     void OnAudioStreamError(CefRefPtr<CefBrowser>,const CefString&)override{audio_->clear();}
     void create(const std::string&);
+    void frameRate(const Rate&);
     void load(const std::string&,Size);
     void close();
     CefRefPtr<CefRenderHandler> GetRenderHandler()override{return this;}
@@ -46,7 +48,7 @@ public:
     void GetViewRect(CefRefPtr<CefBrowser>,CefRect& r)override{r=CefRect(0,0,size_.width,size_.height);}
     bool GetScreenInfo(CefRefPtr<CefBrowser>,CefScreenInfo& s)override{s.device_scale_factor=1;s.depth=32;s.depth_per_component=8;s.rect=s.available_rect=CefRect(0,0,size_.width,size_.height);return true;}
     void OnPaint(CefRefPtr<CefBrowser>,PaintElementType,const RectList&,const void*,int,int)override;
-    void OnAfterCreated(CefRefPtr<CefBrowser> b)override{browser_=b;if(!pendingUrl_.empty()){b->GetMainFrame()->LoadURL(pendingUrl_);pendingUrl_.clear();}if(closing_)b->GetHost()->CloseBrowser(true);}
+    void OnAfterCreated(CefRefPtr<CefBrowser> b)override{browser_=b;b->GetHost()->SetWindowlessFrameRate(frameRate_);if(!pendingUrl_.empty()){b->GetMainFrame()->LoadURL(pendingUrl_);pendingUrl_.clear();}if(closing_)b->GetHost()->CloseBrowser(true);}
     void OnBeforeClose(CefRefPtr<CefBrowser>)override{browser_=nullptr;if(closed)closed();}
     bool OnBeforePopup(CefRefPtr<CefBrowser>,CefRefPtr<CefFrame>,int,const CefString&,const CefString&,WindowOpenDisposition,bool,const CefPopupFeatures&,CefWindowInfo&,CefRefPtr<CefClient>&,CefBrowserSettings&,CefRefPtr<CefDictionaryValue>&,bool*)override{return true;}
     bool OnBeforeBrowse(CefRefPtr<CefBrowser>,CefRefPtr<CefFrame>,CefRefPtr<CefRequest> r,bool,bool)override{return !allowedUrl(r->GetURL().ToString());}

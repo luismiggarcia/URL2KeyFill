@@ -73,18 +73,23 @@ std::vector<float> AudioMixer::sample(int64_t start,size_t n,bool respectMute){
 }
 AudioLevels AudioMixer::sourceLevels(int64_t start,size_t n){return measureAudio(sample(start,n,false));}
 std::shared_ptr<const Frame> composite(const std::vector<std::shared_ptr<const Frame>>& layers,Size size){
+ std::shared_ptr<const Frame> single;size_t visible=0;
+ for(const auto& layer:layers)if(layer){single=layer;++visible;}
+ if(visible==1&&single->size==size)return single;
  auto out=std::make_shared<Frame>(size);
  for(auto it=layers.rbegin();it!=layers.rend();++it){if(!*it)continue;auto src=(*it)->size==size?*it:resize(**it,size);
   for(size_t i=0;i<out->pixels.size();i+=4){const int a=src->pixels[i+3];if(!a)continue;if(a==255){std::memcpy(out->pixels.data()+i,src->pixels.data()+i,4);continue;}for(int c=0;c<4;c++)out->pixels[i+c]=uint8_t(std::min(255,int(src->pixels[i+c])+(int(out->pixels[i+c])*(255-a)+127)/255));}
  }return out;
 }
 Scene::Scene(){worker_=std::thread([this]{run();});}
-Scene::~Scene(){{std::lock_guard<std::mutex> lock(mutex_);quit_=true;}cv_.notify_one();worker_.join();}
-void Scene::configure(std::vector<ImageInput> v,Size viewport,Size target){validate(viewport);validate(target);std::lock_guard<std::mutex> lock(mutex_);if(layers_==v&&viewport_==viewport&&target_==target)return;layers_=std::move(v);viewport_=viewport;target_=target;++revision_;cv_.notify_one();}
+Scene::~Scene(){{std::lock_guard<std::mutex> lock(mutex_);quit_=true;for(auto& l:layers_)if(l.frames)l.frames->unsubscribe(signal_);}signal_->notify();worker_.join();}
+void Scene::configure(std::vector<ImageInput> v,Size viewport,Size target){validate(viewport);validate(target);std::lock_guard<std::mutex> lock(mutex_);if(layers_==v&&viewport_==viewport&&target_==target)return;for(auto& l:layers_)if(l.frames)l.frames->unsubscribe(signal_);layers_=std::move(v);for(auto& l:layers_)if(l.visible&&l.frames)l.frames->subscribe(signal_);viewport_=viewport;target_=target;++revision_;signal_->notify();}
 void Scene::run(){uint64_t previous=UINT64_MAX;std::vector<std::shared_ptr<const Frame>> held;
- for(;;){std::unique_lock<std::mutex> lock(mutex_);cv_.wait_for(lock,std::chrono::milliseconds(16));if(quit_)return;auto layers=layers_;auto viewport=viewport_,target=target_;auto revision=revision_;lock.unlock();
+ uint64_t observed=0;
+ for(;;){std::unique_lock<std::mutex> wake(signal_->mutex);signal_->cv.wait(wake,[&]{return signal_->revision!=observed;});observed=signal_->revision;wake.unlock();
+  std::unique_lock<std::mutex> lock(mutex_);if(quit_)return;auto layers=layers_;auto viewport=viewport_,target=target_;auto revision=revision_;lock.unlock();
   std::vector<std::shared_ptr<const Frame>> next;for(auto& l:layers)next.push_back(l.visible?l.frames->get():nullptr);if(next==held&&revision==previous)continue;
-  try{auto image=composite(next,viewport);frames.publish(viewport==target?image:resize(*image,target));++composed;}catch(...){frames.clear();}held=std::move(next);previous=revision;
+  try{auto image=composite(next,viewport);auto result=viewport==target?image:resize(*image,target);std::lock_guard<std::mutex> current(mutex_);if(quit_)return;if(revision!=revision_)continue;frames.publish(std::move(result));++composed;}catch(...){frames.clear();}held=std::move(next);previous=revision;
  }
 }
 }

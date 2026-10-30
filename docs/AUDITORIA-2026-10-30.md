@@ -809,3 +809,21 @@ de domínio e margem será feita em conjunto após fechar a baseline. Os testes 
 core, a build completa e os modelos passaram; os resultados de deriva/jitter do
 modelo mantêm-se após partilhar o agendador. A baseline de 30 min está a executar a
 cópia isolada do commit `bc8ae57`, sem incorporar estas alterações.
+
+### 9.3 Vídeo: composição por eventos e percurso simples
+
+Composição deixa de esperar pelo polling de 16 ms: as fontes visíveis notificam o
+worker, as notificações são consolidadas e uma configuração entretanto ultrapassada
+não publica um resultado antigo. A subscrição usa sinais de lifetime independente,
+com referências fracas e remoção explícita na reconfiguração/destruição. Uma única
+imagem já no tamanho certo é reutilizada diretamente, sem passagem de composição.
+
+O limite de pinturas CEF passa a acompanhar o modo escolhido (25/50 para os modos
+principais; arredondamento inteiro, máximo 60 nos restantes). Não é phase locking;
+external begin frame e validação física da cadência fracionária continuam pendentes.
+
+Build e CTest 4/4 passaram. O novo teste cobre publicação, ocultação, ausência de
+recomposição redundante e publicação concorrente com reconfiguração/destruição.
+ThreadSanitizer passou sem erros reportados nesse cenário. O smoke nativo com CEF
+passou com a composição por eventos e o novo limite de pintura. Ainda não existe
+medição comparativa física de atraso/CPU nem aceitação SDI destas otimizações.

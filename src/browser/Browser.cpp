@@ -2,12 +2,17 @@
 #include "include/wrapper/cef_stream_resource_handler.h"
 #include "include/cef_stream.h"
 #include <stdexcept>
+#include <algorithm>
 namespace u2k {
 void Browser::create(const std::string& url){
     if(!allowedUrl(url))throw std::invalid_argument("Unsupported URL.");
     CefWindowInfo wi;wi.SetAsWindowless(0);CefBrowserSettings s;
-    s.background_color=CefColorSetARGB(0,0,0,0);s.windowless_frame_rate=60;
+    s.background_color=CefColorSetARGB(0,0,0,0);s.windowless_frame_rate=frameRate_;
     if(!CefBrowserHost::CreateBrowser(wi,this,url,s,nullptr,nullptr))throw std::runtime_error("Unable to create the Chromium browser.");
+}
+void Browser::frameRate(const Rate& rate){
+    rate.validate();const int fps=int(std::clamp<int64_t>((rate.scale+rate.duration/2)/rate.duration,1,60));
+    if(frameRate_==fps)return;frameRate_=fps;if(browser_)browser_->GetHost()->SetWindowlessFrameRate(fps);
 }
 void Browser::load(const std::string& url,Size size){
     validate(size);if(!allowedUrl(url))throw std::invalid_argument("Unsupported URL.");

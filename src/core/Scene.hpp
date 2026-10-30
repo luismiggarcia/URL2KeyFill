@@ -55,7 +55,7 @@ public:
 struct ImageInput {std::shared_ptr<LatestFrame> frames;bool visible=true;bool operator==(const ImageInput&)const=default;};
 std::shared_ptr<const Frame> composite(const std::vector<std::shared_ptr<const Frame>>&,Size);
 class Scene {
-    std::mutex mutex_;std::condition_variable cv_;bool quit_=false;uint64_t revision_=0;
+    std::mutex mutex_;std::shared_ptr<FrameSignal> signal_=std::make_shared<FrameSignal>();bool quit_=false;uint64_t revision_=0;
     Size viewport_,target_;std::vector<ImageInput> layers_;std::thread worker_;
     void run();
 public:
