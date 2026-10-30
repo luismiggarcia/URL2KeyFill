@@ -88,3 +88,19 @@ The installer stages, signs and verifies the new bundle before replacing the ins
 Public macOS distribution still needs Developer ID signing, suitable CEF entitlements, notarization and clean-machine validation. Ad-hoc signing is appropriate for these development releases, not a claim of Apple notarization.
 
 The core, layer composition, audio mixing, URL policy, image processing and CEF client are portable C++. Windows still needs a native host, trusted local interface bridge, native preview, CEF/sandbox bootstrap, COM initialization, DeckLink discovery and string/GUID adaptation, settings paths and atomic replacement. The current DeckLink implementation includes macOS-specific adaptation. A matching Windows CEF distribution, runtime packaging, signing and installer must also be provided. No Windows executable is currently supplied.
+
+## Audio drawer
+
+AUDIO opens the mixer drawer. Layer strips follow the layer list, scroll horizontally,
+and keep OUTPUT fixed on the right. Faders run from silence to +6 dB, with 0 dB
+at the midpoint; double-click resets gain. L/R enable source channels before the
+layer mono fold-down. MONO averages enabled channels; MUTE silences the layer.
+OUTPUT provides gain, mono, channel enable and mute after the layer sum.
+Double-click the small meter beside the video monitor to toggle global mute.
+
+MONITOR sends audio to the Mac's default playback device. Multiple layer monitors
+can be selected together, before layer gain/mute/visibility, but after channel
+selection and mono. OUTPUT monitor is exclusive with all layer monitors and follows
+the output gain, mute and pause state. Monitoring reads retained source samples
+without consuming the SDI audio queue. Monitoring selections start off each launch;
+layer and output mix settings are saved with the session.
