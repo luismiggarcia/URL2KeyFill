@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(URL2KeyFill VERSION 0.2.2 LANGUAGES CXX)
+project(URL2KeyFill VERSION 3.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(U2K_BUILD_APP "Build native macOS application with real CEF" OFF)
@@ -75,10 +75,18 @@ if(U2K_BUILD_APP)
  if(U2K_DECKLINK)
   list(APPEND U2K_LICENSE_FILES "${DECKLINK_SDK_ROOT}/End User License Agreement.pdf")
  endif()
+ file(GLOB_RECURSE U2K_ASSETS LIST_DIRECTORIES false CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")
+ # A changing manifest also detects removals; directory names ending in parentheses
+ # must not become Make dependencies (Make interprets those as archive members).
+ string(JOIN "\n" U2K_ASSET_MANIFEST ${U2K_ASSETS})
+ file(CONFIGURE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/u2k-assets-manifest.txt" CONTENT "${U2K_ASSET_MANIFEST}\n" @ONLY)
+ set_property(TARGET URL2KeyFill APPEND PROPERTY LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Info.plist.in" "${CMAKE_CURRENT_BINARY_DIR}/u2k-assets-manifest.txt" ${U2K_ASSETS})
  add_custom_command(TARGET URL2KeyFill POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E make_directory "${CEF_APP}/Contents/Resources"
-  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/assets/test.html" "${CEF_APP}/Contents/Resources/test.html"
+  COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/assets/branding/URL2KeyFill.icns" "${CEF_APP}/Contents/Resources/URL2KeyFill.icns"
   COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/assets/interface.html" "${CEF_APP}/Contents/Resources/interface.html"
+  COMMAND ${CMAKE_COMMAND} -E rm -rf "${CEF_APP}/Contents/Resources/assets"
+  COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/assets" "${CEF_APP}/Contents/Resources/assets"
   COMMAND ${CMAKE_COMMAND} -E copy ${U2K_LICENSE_FILES} "${CEF_APP}/Contents/Resources/"
   COMMAND /bin/bash "${CMAKE_CURRENT_SOURCE_DIR}/scripts/sign-local.sh" "${CEF_APP}"
   VERBATIM)

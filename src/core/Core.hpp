@@ -27,6 +27,7 @@ struct Settings {
     void save(const std::filesystem::path&) const;
     static Settings load(const std::filesystem::path&);
 };
+std::string canonicalBuiltinUrl(std::string);
 bool allowedUrl(const std::string&);
 // Owned, top-left BGRA8, premultiplied sRGB. Never retain a CEF callback pointer.
 struct Frame {

@@ -7,26 +7,51 @@ namespace u2k {
 void AudioLane::push(const float* const* data,int n,int channels,int64_t pts){
  if(pts>INT64_MAX/48||pts<INT64_MIN/48)return;
  if(!data||n<1||n>48000||channels<1||channels>8)return;
- AudioPacket p;p.start=pts*48;latestTimestamp=p.start;p.samples.resize(size_t(n)*2);uint64_t signal=0;
- for(int i=0;i<n;i++)for(int c=0;c<2;c++){float v=data[std::min(c,channels-1)][i];p.samples[i*2+c]=std::isfinite(v)?v:0;if(std::abs(v)>.00001f)++signal;}
+ AudioPacket p;p.expectedForOutput=outputExpected.load(std::memory_order_relaxed);p.start=pts*48;latestTimestamp=p.start;p.samples.resize(size_t(n)*2);uint64_t signal=0;float peaks[2]={0,0};
+ for(int i=0;i<n;i++)for(int c=0;c<2;c++){float v=data[std::min(c,channels-1)][i];v=std::isfinite(v)?v:0;p.samples[i*2+c]=v;peaks[c]=std::max(peaks[c],std::abs(v));if(std::abs(v)>.00001f)++signal;}
+ // Capture source peaks before gain/mute; reading a meter never consumes audio packets.
+ auto retain=[](std::atomic<float>& target,float value){float old=target.load(std::memory_order_relaxed);while(old<value&&!target.compare_exchange_weak(old,value,std::memory_order_relaxed)){};};
+ retain(peakLeft_,peaks[0]);retain(peakRight_,peaks[1]);
  nonZero+=signal;
- std::lock_guard<std::mutex> lock(mutex_);if(!packets_.empty()&&p.start<packets_.back().start)packets_.clear();
+ std::lock_guard<std::mutex> lock(mutex_);if(!packets_.empty()&&p.start<packets_.back().start){packets_.clear();meterPackets_.clear();}
+ meterPackets_.push_back(p);
+ while(meterPackets_.size()>64||(!meterPackets_.empty()&&meterPackets_.back().start-meterPackets_.front().start>24000))meterPackets_.pop_front();
  packets_.push_back(std::move(p));received+=n;
- while(packets_.size()>64||(!packets_.empty()&&packets_.back().start-packets_.front().start>24000)){packets_.pop_front();++discarded;}
+ while(packets_.size()>64||(!packets_.empty()&&packets_.back().start-packets_.front().start>24000)){
+  if(packets_.front().expectedForOutput&&outputExpected.load(std::memory_order_relaxed))++outputOverruns;else ++unusedExpired;
+  packets_.pop_front();++discarded;
+ }
 }
-void AudioLane::clear(){std::lock_guard<std::mutex> lock(mutex_);packets_.clear();}
-void AudioLane::mix(int64_t start,size_t n,float gain,std::vector<float>& out){
+std::pair<float,float> AudioLane::takePeaks(){return {peakLeft_.exchange(0,std::memory_order_relaxed),peakRight_.exchange(0,std::memory_order_relaxed)};}
+void AudioLane::clear(){std::lock_guard<std::mutex> lock(mutex_);packets_.clear();meterPackets_.clear();peakLeft_=0;peakRight_=0;}
+void AudioLane::mix(int64_t start,size_t n,float gain,std::vector<float>& out,bool mono){sum(start,n,gain,out,true,mono);}
+void AudioLane::sample(int64_t start,size_t n,float gain,std::vector<float>& out,bool mono){sum(start,n,gain,out,false,mono);}
+void AudioLane::sum(int64_t start,size_t n,float gain,std::vector<float>& out,bool prune,bool mono){
  std::lock_guard<std::mutex> lock(mutex_);
- while(!packets_.empty()&&packets_.front().start+int64_t(packets_.front().samples.size()/2)<=start)packets_.pop_front();
- for(const auto& p:packets_){auto first=std::max(start,p.start),last=std::min(start+int64_t(n),p.start+int64_t(p.samples.size()/2));for(auto i=first;i<last;++i)for(int c=0;c<2;c++)out[size_t(i-start)*2+c]+=p.samples[size_t(i-p.start)*2+c]*gain;}
+ while(prune&&!packets_.empty()&&packets_.front().start+int64_t(packets_.front().samples.size()/2)<=start)packets_.pop_front();
+ const auto& history=prune?packets_:meterPackets_;
+ for(const auto& p:history){auto first=std::max(start,p.start),last=std::min(start+int64_t(n),p.start+int64_t(p.samples.size()/2));for(auto i=first;i<last;++i){const size_t src=size_t(i-p.start)*2,dst=size_t(i-start)*2;if(mono){const float value=(p.samples[src]*.5f+p.samples[src+1]*.5f)*gain;out[dst]+=value;out[dst+1]+=value;}else for(int c=0;c<2;c++)out[dst+c]+=p.samples[src+c]*gain;}}
 }
+static AudioLevels measureAudio(const std::vector<float>& samples){
+ AudioLevels levels;double powerLeft=0,powerRight=0;const size_t frames=samples.size()/2;if(!frames)return levels;
+ for(size_t i=0;i<frames;++i){const float l=std::clamp(samples[i*2],-1.f,1.f),r=std::clamp(samples[i*2+1],-1.f,1.f);powerLeft+=double(l)*l;powerRight+=double(r)*r;levels.peakLeft=std::max(levels.peakLeft,std::abs(l));levels.peakRight=std::max(levels.peakRight,std::abs(r));}
+ levels.rmsLeft=float(std::sqrt(powerLeft/frames));levels.rmsRight=float(std::sqrt(powerRight/frames));return levels;
+}
+AudioLevels AudioLane::sourceLevels(int64_t start,size_t n,bool mono){if(n>48000)throw std::invalid_argument("Audio meter block exceeds one second");std::vector<float> samples(n*2,0);sample(start,n,1,samples,mono);return measureAudio(samples);}
 void AudioMixer::inputs(std::vector<AudioInput> v){std::lock_guard<std::mutex> lock(mutex_);inputs_=std::move(v);}
 std::vector<int32_t> AudioMixer::mix(int64_t start,size_t n){
  lastMixTimestamp=start;
  if(n>48000)throw std::invalid_argument("Audio block exceeds one second");
  std::vector<AudioInput> inputs;{std::lock_guard<std::mutex> lock(mutex_);inputs=inputs_;}
- std::vector<float> buffer(n*2,0);if(enabled)for(auto& i:inputs)if(i.enabled&&i.lane)i.lane->mix(start,n,std::clamp(i.gain,0.f,2.f),buffer);
+ std::vector<float> buffer(n*2,0);if(enabled&&!muted)for(auto& i:inputs)if(i.enabled&&i.lane)i.lane->mix(start,n,std::clamp(i.gain,0.f,2.f),buffer,i.mono);
  uint64_t limited=0,audible=0;std::vector<int32_t> pcm(n*2);for(size_t i=0;i<pcm.size();++i){double v=buffer[i];if(std::abs(v)>1)++limited;pcm[i]=int32_t(std::clamp(v,-1.,1.)*2147483647.);if(pcm[i])++audible;}clipped+=limited;nonSilent+=audible;return pcm;
+}
+std::pair<float,float> AudioMixer::sourcePeaks(int64_t start,size_t n){const auto levels=sourceLevels(start,n);return {levels.peakLeft,levels.peakRight};}
+AudioLevels AudioMixer::sourceLevels(int64_t start,size_t n){
+ if(n>48000)throw std::invalid_argument("Audio meter block exceeds one second");
+ std::vector<AudioInput> inputs;{std::lock_guard<std::mutex> lock(mutex_);inputs=inputs_;}
+ std::vector<float> samples(n*2,0);for(auto& input:inputs)if(input.enabled&&input.lane)input.lane->sample(start,n,std::clamp(input.gain,0.f,2.f),samples,input.mono);
+ return measureAudio(samples);
 }
 std::shared_ptr<const Frame> composite(const std::vector<std::shared_ptr<const Frame>>& layers,Size size){
  auto out=std::make_shared<Frame>(size);

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>URL2KeyFill · Animated lower third</title>
+<style>
+/* Ten-second loop: enter at 3 s, exit at 8 s, next entry at 13 s.
+   All moving parts share the same clock; the page background stays transparent. */
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#f5f7fa}
+.lower-third{position:absolute;left:7%;bottom:10%;width:70%;max-width:1440px;filter:drop-shadow(0 12px 16px #0005)}
+.part{animation-duration:10s;animation-iteration-count:infinite;animation-timing-function:cubic-bezier(.2,.75,.25,1);opacity:0;will-change:transform,opacity,clip-path}
+.kicker{display:inline-flex;align-items:center;gap:.7em;padding:.45em .9em;background:#efbc6c;color:#20262d;font-size:clamp(10px,1.1vw,25px);font-weight:700;letter-spacing:.13em;animation-name:kicker}
+.kicker::before{content:"";width:.45em;height:.45em;background:#253e49;border-radius:50%}
+.nameplate{display:flex;align-items:stretch;min-height:clamp(65px,7.5vw,170px);background:linear-gradient(110deg,#0e2032d9,#192f42cc);border-right:1px solid #ffffff24;animation-name:nameplate}
+.brand{display:flex;flex-direction:column;justify-content:center;padding:1.1em 1.2em;flex:0 0 18%;border-right:1px solid #ffffff24;background:#0b1927a6;font-size:clamp(10px,1.2vw,28px);font-weight:700;letter-spacing:-.04em;line-height:1.1}
+.brand span{color:#efbc6c}.brand small{margin-top:.7em;font-size:.38em;letter-spacing:.24em;color:#aabac8;font-weight:500}
+.identity{display:flex;flex-direction:column;justify-content:center;padding:1.4vw 2vw;min-width:0;animation-name:identity}
+h1{margin:0;font-size:clamp(20px,3.1vw,70px);font-weight:650;letter-spacing:.035em;line-height:1.1}
+.role{margin:.6em 0 0;font-size:clamp(11px,1.25vw,29px);color:#c2d2de;letter-spacing:.04em}
+.strap{display:flex;justify-content:space-between;align-items:center;gap:1em;padding:.65em 1.2em;background:#edf2f5;color:#263441;font-size:clamp(10px,1vw,24px);letter-spacing:.08em;animation-name:strap}
+.strap strong{font-weight:650}.strap a{font-size:.85em;letter-spacing:.06em;color:inherit;text-decoration:none;white-space:nowrap}
+.rule{height:clamp(3px,.28vw,7px);background:#efbc6c;transform-origin:left;animation-name:rule}
+@keyframes kicker{0%,30%{opacity:0;transform:translateY(16px);clip-path:inset(0 100% 0 0)}35%,80%{opacity:1;transform:translateY(0);clip-path:inset(0)}84%,100%{opacity:0;transform:translateY(-12px);clip-path:inset(0 0 0 100%)}}
+@keyframes nameplate{0%,31%{opacity:0;transform:translateX(-24px);clip-path:inset(0 100% 0 0)}37%,81%{opacity:1;transform:translateX(0);clip-path:inset(0)}87%,100%{opacity:0;transform:translateX(24px);clip-path:inset(0 0 0 100%)}}
+@keyframes identity{0%,34%{opacity:0;transform:translateX(-14px)}40%,80%{opacity:1;transform:translateX(0)}84%,100%{opacity:0;transform:translateX(14px)}}
+@keyframes strap{0%,35%{opacity:0;transform:translateY(-10px);clip-path:inset(0 100% 0 0)}41%,80%{opacity:1;transform:translateY(0);clip-path:inset(0)}85%,100%{opacity:0;transform:translateY(-10px);clip-path:inset(0 0 0 100%)}}
+@keyframes rule{0%,32%{opacity:0;transform:scaleX(0)}40%,82%{opacity:1;transform:scaleX(1)}89%,100%{opacity:0;transform:scaleX(0)}}
+</style>
+</head>
+<body>
+<article class="lower-third" aria-label="Luis Garcia, LG-Systems">
+ <div class="kicker part">LIVE · STUDIO 01</div>
+ <div class="nameplate part">
+  <div class="brand"><strong>URL<span>2</span>KeyFill</strong><small>WEB GRAPHICS</small></div>
+  <div class="identity part"><h1>Luis Garcia</h1><p class="role">LG-Systems</p></div>
+ </div>
+ <div class="strap part"><strong>GET WEB GRAPHICS INTO YOUR SDI VIDEO PRODUCTION SWITCHER</strong><a href="https://lg-systems.net">https://lg-systems.net</a></div>
+ <div class="rule part"></div>
+</article>
+</body>
+</html>

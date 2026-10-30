@@ -24,15 +24,19 @@ void Browser::OnLoadingStateChange(CefRefPtr<CefBrowser>,bool loading,bool,bool)
 void Browser::OnLoadError(CefRefPtr<CefBrowser>,CefRefPtr<CefFrame> f,ErrorCode code,const CefString& text,const CefString&){if(!f->IsMain()||code==ERR_ABORTED)return;failed_=true;frames_.clear();audio_->clear();message="Load error: "+text.ToString();}
 void Browser::OnLoadEnd(CefRefPtr<CefBrowser>,CefRefPtr<CefFrame> f,int status){if(f->IsMain()&&status>=400){failed_=true;frames_.clear();audio_->clear();message="HTTP error "+std::to_string(status)+" — layer cleared.";}}
 void Browser::OnRenderProcessTerminated(CefRefPtr<CefBrowser>,TerminationStatus,int,const CefString& reason){failed_=true;frames_.clear();audio_->clear();message="Browser terminated: "+reason.ToString()+". Layer cleared; reload to recover.";}
-class TestFactory final:public CefSchemeHandlerFactory {
-    std::string html_;
+// Only exact URLs discovered in the bundled assets catalog are served.
+class ExampleFactory final:public CefSchemeHandlerFactory {
+    std::map<std::string,std::string> pages_;
 public:
-    explicit TestFactory(std::string h):html_(std::move(h)){}
+    explicit ExampleFactory(std::map<std::string,std::string> pages):pages_(std::move(pages)){}
     CefRefPtr<CefResourceHandler> Create(CefRefPtr<CefBrowser>,CefRefPtr<CefFrame>,const CefString&,CefRefPtr<CefRequest> r)override{
-        if(r->GetURL()!="u2k://test/index.html")return nullptr;
-        auto stream=CefStreamReader::CreateForData(html_.data(),html_.size());return new CefStreamResourceHandler("text/html",stream);
+        auto page=pages_.find(canonicalBuiltinUrl(r->GetURL().ToString()));if(page==pages_.end())return nullptr;
+        auto stream=CefStreamReader::CreateForData(page->second.data(),page->second.size());return new CefStreamResourceHandler("text/html",stream);
     }
-    IMPLEMENT_REFCOUNTING(TestFactory);
+    IMPLEMENT_REFCOUNTING(ExampleFactory);
 };
-void registerTestPage(std::string html){CefRegisterSchemeHandlerFactory("u2k","test",new TestFactory(std::move(html)));}
+void registerExamplePages(std::map<std::string,std::string> pages){
+    CefRefPtr<ExampleFactory> factory=new ExampleFactory(std::move(pages));
+    CefRegisterSchemeHandlerFactory("u2k","",factory);
+}
 }

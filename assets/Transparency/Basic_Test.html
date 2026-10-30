@@ -10,4 +10,25 @@ h1{font-size:clamp(24px,4vw,100px);margin:0 0 20px}p{font-size:clamp(14px,2vw,42
 <!-- Exact pixel probes outside the card for automated OSR tests. -->
 <div style="position:absolute;left:100px;top:70px;width:20px;height:20px;background:rgba(255,0,0,.5)"></div>
 <div style="position:absolute;left:130px;top:70px;width:20px;height:20px;background:rgb(0,255,0)"></div>
+<script>
+(()=>{
+ // Left: original moving tone. Right: one click per second, alternating 12 dB in level.
+ // The generated sound is embedded in this page; no remote media is required.
+ const Context=window.AudioContext||window.webkitAudioContext;if(!Context)return;
+ const context=new Context(),duration=8,buffer=context.createBuffer(2,Math.round(context.sampleRate*duration),context.sampleRate),left=buffer.getChannelData(0),right=buffer.getChannelData(1);
+ for(let i=0;i<buffer.length;i++){
+  const t=i/context.sampleRate,position=t<=4?t/4:2-t/4,u=t-4;
+  const cycles=t<=4?220*t+82.5*t*t:2200+880*u-82.5*u*u;
+  const envelope=.16*(.15+.85*Math.sin(Math.PI*position)**2)*(.6+.4*Math.sin(4*Math.PI*t)**2),sample=Math.sin(2*Math.PI*cycles)*envelope;
+  left[i]=sample*Math.cos(position*Math.PI/2);
+  const second=Math.floor(t),clickTime=t-second,level=second%2===0?.5:.125;
+  right[i]=clickTime<.025?level*Math.sin(2*Math.PI*2000*clickTime)*(1-Math.exp(-clickTime/.0003))*Math.exp(-clickTime/.003):0;
+ }
+ const source=context.createBufferSource();source.buffer=buffer;source.loop=true;source.connect(context.destination);const startedAt=context.currentTime+.03;source.start(startedAt);
+ const moving=document.querySelector('.moving');
+ function sync(){if(context.state==='running'){const t=Math.max(0,context.currentTime-startedAt)%duration,position=t<=4?t/4:2-t/4;moving.style.animation='none';moving.style.left=(5+85*position)+'%';}requestAnimationFrame(sync);}requestAnimationFrame(sync);
+ context.resume().catch(()=>{});document.addEventListener('pointerdown',()=>context.resume().catch(()=>{}));
+ window.basicTestAudio={context,source,startedAt,duration};
+})();
+</script>
 </html>

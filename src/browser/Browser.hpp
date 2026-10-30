@@ -7,6 +7,7 @@
 #include "include/cef_parser.h"
 #include "include/cef_scheme.h"
 #include <functional>
+#include <map>
 #include <chrono>
 #include <cstdlib>
 namespace u2k {
@@ -69,5 +70,5 @@ public:
 }
     IMPLEMENT_REFCOUNTING(BrowserApp);
 };
-void registerTestPage(std::string html);
+void registerExamplePages(std::map<std::string,std::string> pages);
 }

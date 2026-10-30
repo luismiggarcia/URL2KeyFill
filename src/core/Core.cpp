@@ -20,10 +20,20 @@ Rect fit(Size s,Size d) {
 void Rate::validate() const {if(duration<=0||scale<=0||duration>1000000||scale>1000000||double(scale)/duration>240||scale<duration) throw std::invalid_argument("Invalid rational frame rate.");}
 int64_t Rate::timestamp(uint64_t n) const {validate(); if(n>uint64_t(INT64_MAX/duration))throw std::overflow_error("Timestamp overflow.");return int64_t(n)*duration;}
 std::string Rate::label() const {std::ostringstream s;s<<std::fixed<<std::setprecision(3)<<double(scale)/duration<<" fps ("<<scale<<"/"<<duration<<")";return s.str();}
-bool allowedUrl(const std::string& s) {
-    return s.size()<=8192 && (s.rfind("https://",0)==0||s.rfind("http://",0)==0||s=="u2k://test/index.html") && s.find_first_of("\r\n\0",0,3)==std::string::npos;
+std::string canonicalBuiltinUrl(std::string url) {
+    if(url.rfind("u2k://assets/",0)==0)url="u2k://"+url.substr(13);
+    if(url=="u2k://test/index.html")url="u2k://Transparency/Basic_Test.html";
+    if(url=="u2k://lowerthird/index.html")url="u2k://Lower_Third/Animated_10_sec_cycle.html";
+    if(url.rfind("u2k://",0)==0){auto slash=url.find('/',6);for(size_t i=6;i<slash&&i<url.size();++i)if(url[i]>='A'&&url[i]<='Z')url[i]+=32;}
+    return url;
 }
-void Settings::validate() const {u2k::validate(viewport);rate.validate();if(!allowedUrl(url))throw std::invalid_argument("Use HTTP/HTTPS or the built-in test URL.");if(device.size()>1024)throw std::invalid_argument("Invalid device identifier.");}
+bool allowedUrl(const std::string& s) {
+    auto slash=s.find('/',6);
+    // Syntax validation only: the CEF factory serves exact catalog entries, never arbitrary paths.
+    const bool builtin=s.rfind("u2k://",0)==0&&slash!=std::string::npos&&slash>6&&slash+1<s.size()&&s.find_first_of("?#\\")==std::string::npos&&s.find("..",6)==std::string::npos;
+    return s.size()<=8192 && (s.rfind("https://",0)==0||s.rfind("http://",0)==0||builtin) && s.find_first_of("\r\n\0",0,3)==std::string::npos;
+}
+void Settings::validate() const {u2k::validate(viewport);rate.validate();if(!allowedUrl(url))throw std::invalid_argument("Use HTTP/HTTPS or a built-in example URL.");if(device.size()>1024)throw std::invalid_argument("Invalid device identifier.");}
 void Settings::save(const std::filesystem::path& p) const {
     validate();if(!p.parent_path().empty())std::filesystem::create_directories(p.parent_path());
     auto temp=p;temp+=".tmp";
