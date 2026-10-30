@@ -960,3 +960,29 @@ Falta depois: compensação adaptativa de deriva, callback local previsível, qu
 de mistura/níveis e alinhamento A/V final. Não há captura conjunta disponível para
 aceitação física e a aplicação instalada não foi substituída. Alterações novas na
 pasta `components/` feitas em paralelo não fazem parte deste passo.
+
+### 10.3 Baseline P2 de 30 minutos — resultado e limitação
+
+Candidata `64b87b1`, HD Mini, 1080p25, idade configurada de 60 ms e reserva
+de 5760 samples. Evidência versionada em `tools/audio-audit/data/application-headroom-p2-1800s.*`.
+O trace cobre 1799,60 s após warmup. Sem erros de API, recuperações, resets,
+frames de vídeo tardios ou perdidos; sem duplicados/reordenação/ajustes de timestamps.
+Porém, aos 1531,99 s foram contados **12 frames de áudio em falta (0,25 ms)**,
+com headroom mínimo de −0,25 ms. A idade de leitura calibrada variou entre
+58,5625 e 60,2292 ms. O smoke terminou normalmente, mas o critério de zero
+lacunas **não passou**. Falta investigar a chegada/disponibilidade nesse intervalo;
+não atribuir a causa a deriva ou jitter sem trace mais fino.
+
+### 10.4 Captura física por HDMI ou SDI
+
+A saída HDMI do HD Mini inclui áudio estéreo embebido e permite uma primeira
+medição A/V, capturando flash e impulso sonoro gerados no mesmo instante de conteúdo.
+É necessário gravar imagem e áudio embebido juntos; o capturador pode introduzir
+o seu próprio desfasamento, que deve ser caracterizado. Especificação do fabricante:
+https://www.blackmagicdesign.com/uk/products/ultrastudio/techspecs/W-DLUS-09
+
+Esta medição caracteriza o percurso HDMI mais captura. Não demonstra que a fase
+HDMI/SDI é idêntica. Para aceitação da saída SDI de produção, medir o SDI Fill com
+áudio embebido, diretamente ou através de conversor cujo efeito seja caracterizado.
+Flash/impulso na gravação mede desfasamento relativo A/V; latência absoluta desde
+a origem exige também referência temporal de entrada comum.

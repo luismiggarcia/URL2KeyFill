@@ -15,7 +15,7 @@ export class GainSlider extends HTMLElement {
     .tick{position:absolute;transform:translateX(-50%);white-space:nowrap;border:0;padding:0;background:transparent;color:inherit;font:inherit;line-height:16px;cursor:pointer}
     .tick:disabled{cursor:default;opacity:.45}
     .tick:focus-visible{outline:1px solid #edc06b;outline-offset:2px}
-    .tick:before{content:'';position:absolute;left:50%;top:-9px;height:5px;width:2px;background:#c6d3e4}
+    .tick:before{content:'';position:absolute;left:50%;top:-9px;height:5px;width:2px;background:#c6d3e4;transform:translateX(-50%)}
     :host([orientation="vertical"]){width:60px;height:200px}
     :host([orientation="vertical"]) .track{padding:0;margin:0;height:180px}
     :host([orientation="vertical"]) input{writing-mode:vertical-lr;direction:rtl;flex:none;width:6px;height:180px;margin:0 10px;background:linear-gradient(90deg,#0d141c,#354252);box-shadow:inset 1px 0 3px #0009}
@@ -25,6 +25,12 @@ export class GainSlider extends HTMLElement {
     :host([orientation="vertical"]) .tick{transform:translateY(50%)}
     :host([orientation="vertical"]) .tick:before{left:-9px;top:50%;width:4px;height:2px;transform:translateY(-50%)}
     :host([orientation="vertical"]) .tick.zero{padding-left:1ch}
+    /* Horizontal track: remove native input borders/padding from thumb travel. */
+    :host(:not([orientation="vertical"])) input{padding:0;border:0;background:transparent;box-shadow:none}
+    :host(:not([orientation="vertical"])) input::-webkit-slider-runnable-track{box-sizing:border-box;height:6px;border:1px solid #111820;border-radius:3px;background:linear-gradient(#0d141c,#354252);box-shadow:inset 0 1px 3px #0009}
+    :host(:not([orientation="vertical"])) input::-webkit-slider-thumb{margin-top:-10.5px}
+    :host(:not([orientation="vertical"])) input::-moz-range-track{box-sizing:border-box;height:6px;border:1px solid #111820;border-radius:3px;background:linear-gradient(#0d141c,#354252);box-shadow:inset 0 1px 3px #0009}
+    :host(:not([orientation="vertical"])) .scale{left:7.5px;right:7.5px}
     input:disabled{opacity:.45;cursor:default}
     </style><div class="track"><input type="range" min="0" max="2" step="any" value="1"><span class="scale"></span></div>`;
     this.#input = this.shadowRoot.querySelector('input');

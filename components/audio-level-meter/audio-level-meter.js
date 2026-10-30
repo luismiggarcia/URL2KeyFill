@@ -1,6 +1,6 @@
 /** Isolated display component. Levels are supplied by the host in dBFS. */
 export class AudioLevelMeter extends HTMLElement {
-  static observedAttributes = ['orientation', 'compact', 'muted', 'left', 'right'];
+  static observedAttributes = ['orientation', 'compact', 'layer-compact', 'muted', 'left', 'right'];
   #channels = [];
   #levels = [-Infinity, -Infinity];
   #peaks = [-Infinity, -Infinity];
@@ -19,6 +19,9 @@ export class AudioLevelMeter extends HTMLElement {
       :host([orientation="horizontal"]) .meter { flex-direction:column; }
       :host([orientation="horizontal"]) .channel { flex-direction:row; }
       :host([compact]) { --audio-led-size:2px; --audio-led-gap:1px; --audio-channel-gap:2px; --audio-meter-padding:4px; }
+      :host([layer-compact]) { --audio-led-gap:1px; --audio-channel-gap:3px; --audio-meter-padding:2px; }
+      :host([layer-compact]) .led { width:5px; height:2px; }
+      :host([layer-compact]) .led:nth-child(n+11) { display:none; }
       :host([muted]) :is(.lit,.peak) { background:#a4adb8; box-shadow:none; }
     </style><div class="meter" role="img"></div>`;
     const meter = shadow.querySelector('.meter');
@@ -85,9 +88,12 @@ export class AudioLevelMeter extends HTMLElement {
   }
   #render() {
     this.#channels.forEach((segments, channel) => {
-      const peakIndex = Math.floor((this.#peaks[channel] + 60) / 3);
+      const thresholds = this.hasAttribute('layer-compact') ? [-60,-48,-36,-30,-24,-18,-12,-6,-3,0] : Array.from({length:21},(_,i)=>-60+i*3);
+      const peakIndex = thresholds.findLastIndex(db=>this.#peaks[channel]>=db);
       segments.forEach((led, index) => {
-        led.classList.toggle('lit', this.#levels[channel] >= -60 + index * 3);
+        const db=thresholds[index];
+        led.style.setProperty('--zone', `var(--audio-meter-${db >= -3 ? 'red' : db >= -12 ? 'yellow' : 'green'})`);
+        led.classList.toggle('lit', db!==undefined && this.#levels[channel] >= db);
         led.classList.toggle('peak', peakIndex >= 0 && peakIndex === index);
       });
     });

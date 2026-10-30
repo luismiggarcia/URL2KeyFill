@@ -11,6 +11,7 @@ export class StudioButton extends HTMLElement {
     :host([square]) button{width:var(--studio-key-size);height:var(--studio-key-size);min-height:0;border-radius:5px;border:1px solid #6c747f;box-shadow:inset 0 1px 0 #ffffff38,0 3px 0 #111417,0 5px 8px #0004;flex-direction:column;gap:7px;padding:5px;white-space:nowrap;background:linear-gradient(#4c535c,#353b43);color:#edf1f6}
     :host([square]) button:active:not(:disabled){transform:translateY(1px)}
     :host([variant="amber"]) button{background:linear-gradient(#f8dfa8,#d9a556);color:#453318;border-color:#e5c18b}
+    :host([square][variant="play"][pressed]) button{background:linear-gradient(#d3978c,#aa695e);color:#fff0e9;border-color:#dcaa9b}
     :host([variant="delete"]) button{background:#403638;color:#e0b4ad;border-color:#756066}
     :host([variant="quit"]) button{background:linear-gradient(#d3978c,#aa695e);color:#fff0e9;border-color:#dcaa9b}
     :host([variant="refresh"]) button{gap:5px;font-size:11px;padding:0;min-height:22px}
@@ -44,7 +45,7 @@ export class StudioButton extends HTMLElement {
   #render(){
     if(!this.#button)return;
     this.#button.disabled=this.disabled;
-    if(this.hasAttribute('toggle')||this.hasAttribute('led'))this.#button.setAttribute('aria-pressed',String(this.pressed));
+    if(this.hasAttribute('toggle')||this.hasAttribute('led')||this.getAttribute('variant')==='play')this.#button.setAttribute('aria-pressed',String(this.pressed));
     else this.#button.removeAttribute('aria-pressed');
     const label=this.getAttribute('label');
     if(label)this.#button.setAttribute('aria-label',label);else this.#button.removeAttribute('aria-label');

@@ -26,3 +26,5 @@ Usa um botão nativo com teclado, foco e desactivação. O evento `click` propag
 RELOAD e DELETE são apresentações: não executam operações. Não se copiaram posicionamentos específicos dos painéis, ligações à aplicação nem a regra da aplicação que remove os contornos de foco. O símbolo POWER está incluído em SVG, sem bibliotecas externas.
 
 Demonstração: `preview.html` através do servidor HTTP indicado no README da colecção.
+
+PLAY: `<studio-button square variant="play" toggle pressed>PLAY</studio-button>`. O estado activo é vermelho; o inactivo usa o fundo normal. `toggle` permite alternar no mostruário.
