@@ -1,4 +1,21 @@
-# Audio timing implementation — initial P1 slice, 30/10/2026
+# Audio timing implementation — 30/10/2026
+
+Additional implementation checks:
+
+- Event-driven composition and immutable single-layer reuse: CTest 4/4 passed,
+  including publication/visibility and concurrent configuration/destruction tests.
+  The scene event test also passed under ThreadSanitizer without reported errors.
+- CEF paint-rate requests now follow the selected mode (integer rate capped at 60).
+  This is not fractional phase locking or physical judder acceptance.
+- Core audio scheduling arithmetic is shared with the deterministic model; model
+  outcomes are unchanged. The new uptime clock/gap detector foundation is tested but
+  is not yet the application's active media clock.
+- Real native/CEF monitor smoke passed: engine start, explicit configuration-handler
+  rebuild, idle shutdown, PFL label, lower third and automatic AV diagnostic. Actual
+  headphone/AirPlay changes and sleep/wake remain untested. The local 100 ms read
+  offset and render callback allocations/locks are not resolved by lifecycle changes.
+- User confirmed no loopback or joint A/V capture equipment is available yet;
+  physical A/V offset and end-to-end latency acceptance remain pending.
 
 P1 continuation: interval telemetry/CSV export and destination-owned PAUSE added.
 CTest 3/3 passed, audit models and analyser aggregation/slope checks passed. The

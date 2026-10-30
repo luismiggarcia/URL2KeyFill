@@ -71,6 +71,8 @@ ctest --test-dir build-core --output-on-failure
 ./build/URL2KeyFill.app/Contents/MacOS/URL2KeyFill --smoke-test
 ./build/URL2KeyFill.app/Contents/MacOS/URL2KeyFill --smoke-no-device-test
 ./build/URL2KeyFill.app/Contents/MacOS/URL2KeyFill --hardware-smoke-test
+./build/URL2KeyFill.app/Contents/MacOS/URL2KeyFill --monitor-smoke-test
+./build/URL2KeyFill.app/Contents/MacOS/URL2KeyFill --hardware-test-mode 1080p50
 ```
 
 The probe enumerates real devices and supported modes without starting output. The normal integration test uses temporary settings, two transparent local CEF pages and a generated 440 Hz tone captured internally. It checks the interface bridge, composition, persistence, audio capture and clean shutdown without starting SDI.
@@ -78,6 +80,13 @@ The probe enumerates real devices and supported modes without starting output. T
 The no-device test deliberately supplies an empty device list to exercise driver guidance and disabled PLAY. Real CEF rendering/audio capture continue; fake successful hardware playback is never supplied.
 
 The hardware test deliberately starts SDI video and stereo audio on a detected device and exercises pause, resume and stop. Use it only when interrupting the connected output is acceptable. All integration tests close automatically. They require normal desktop/driver access but no screen recording or microphone permission.
+
+`--monitor-smoke-test` also starts the Mac's local audio monitor, explicitly calls
+its configuration-rebuild handler and checks idle engine shutdown. It does not
+simulate a physical headphone swap, AirPlay transfer or sleep/wake cycle.
+`--hardware-test-mode` selects `1080p25`, `1080p50` or `1080p5994`; it fails if that
+exact mode is unavailable. Combine it with `--audio-baseline-seconds` for an extended
+run in the selected mode. Without this option, hardware smoke/baseline selects 1080p25.
 
 ## Settings and local installation
 

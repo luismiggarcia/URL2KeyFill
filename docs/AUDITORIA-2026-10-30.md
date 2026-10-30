@@ -827,3 +827,28 @@ recomposição redundante e publicação concorrente com reconfiguração/destru
 ThreadSanitizer passou sem erros reportados nesse cenário. O smoke nativo com CEF
 passou com a composição por eventos e o novo limite de pintura. Ainda não existe
 medição comparativa física de atraso/CPU nem aceitação SDI destas otimizações.
+
+Microbenchmark de composição de uma fonte semi-transparente (`tools/scene_bench.cpp`,
+Clang C++20 `-O2`, 100 iterações por tamanho): `bc8ae57` demorou ~4,16 ms em 1080p e
+~15,41 ms em UHD por chamada; o percurso de reutilização não percorre os pixels e
+ficou abaixo de 0,001 ms. Ambos devolveram os valores de pixels esperados. Isto mede
+apenas esta rotina, não o atraso total nem o consumo de CPU da aplicação inteira.
+
+### 9.4 Monitor local e indicações de escuta
+
+Separadas criação/paragem/reconstrução do AVAudioEngine. Mudanças de configuração
+do motor e o evento de despertar do macOS pedem reconstrução na main queue; eventos
+de motores anteriores são ignorados e os observadores são removidos no encerramento.
+O motor para quando não há fontes monitorizadas. Mantêm-se, por enquanto, a leitura
+local histórica de 100 ms e o processamento atual no render callback: A3 e o controlo
+do relógio local ainda não estão resolvidos por esta alteração de lifecycle.
+
+O teste `--monitor-smoke-test` passou no dispositivo local: arranque, execução
+explícita do handler de reconstrução e paragem quando termina a escuta, seguido do
+smoke CEF/UI completo. Troca física de auscultadores/AirPlay e sleep/wake não foram
+ensaiados. A UI identifica PFL nas layers, explica a posição de L/R e assinala HIDDEN
+nas faixas ocultas. O teste nativo verifica a identificação PFL.
+
+O Luis confirmou que **ainda não há loopback nem captura conjunta A/V disponível**.
+A medição física do offset som/imagem permanece pendente; nem a baseline SDI nem o
+teste do monitor local serão apresentados como aceitação de sincronismo A/V.
