@@ -1,3 +1,15 @@
+# Audio timing implementation — initial P1 slice, 30/10/2026
+
+- Branch `codex/audio-timing`; final audit and hardware traces preserved first in commit `55dbb38`.
+- Persistent project-local CMake 3.31.6 extracted from the archive with the SHA-256 recorded in BUILD.md. Full Release arm64 application rebuilt with real CEF and DeckLink; generated build files no longer depend on `/tmp` CMake.
+- CTest passed 3/3, including new directed tests for source coverage, silent packets, internal gaps despite positive headroom, overlapping coverage, monitor isolation and channel routing.
+- `tools/audio-audit/run-models.sh` passed. Timing/jitter/drift behaviour is intentionally unchanged in this slice.
+- Native CEF/UI smoke test passed, including persistence, composition, lower third, automatic AV diagnostic and clean shutdown.
+- HD Mini hardware smoke test passed: scheduled video/stereo audio, pause/resume, and STOP directly after PAUSE restoring the shared mixer. This is the minimal A1 lifecycle fix; moving PAUSE entirely out of the shared mixer remains pending.
+- Audio controls now update audio separately; unchanged image configurations do not request recomposition. Persistent mutable commands use a 500 ms save debounce and normal shutdown flush. Transient monitor/transport commands do not request session writes.
+- Diagnostics distinguish source coverage failures from silent samples and API errors from stream-clock recoveries. Per-layer headroom reports the last source read, not a filtered stability estimate; counters are cumulative per runtime. Missing coverage is summed per layer, not a unique count of missing output frames. Sources with no packet since creation/clear are classified separately internally. A source that silently stops without a CEF stream-stop notification is not automatically reclassified as inactive.
+- Not yet performed: 30-minute application headroom recording, external A/V capture/listening, long-run stability or measured CPU benefit. This is an initial implementation slice, not completion/physical acceptance of P1 or the audit plan. Source clock, margin and three-frame scheduling reserve remain unchanged.
+
 # Release 0.2.2 validation — 29/10/2026
 
 - Release arm64 build with the real DeckLink backend passed; bundle version 0.2.2, build 4.

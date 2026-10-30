@@ -9,12 +9,16 @@ struct AudioLevels {float rmsLeft=0,rmsRight=0,peakLeft=0,peakRight=0;};
 struct AudioPacket {int64_t start=0;std::vector<float> samples;bool expectedForOutput=false;};
 class AudioLane {
     std::mutex mutex_;std::deque<AudioPacket> packets_,meterPackets_;
+    bool sourceSeen_=false;
     std::atomic<float> peakLeft_{0},peakRight_{0};
     void sum(int64_t,size_t,float,std::vector<float>&,bool prune,bool mono,bool left=true,bool right=true);
 public:
     std::atomic<uint64_t> received{0},discarded{0},nonZero{0},unusedExpired{0},outputOverruns{0};
     std::atomic<bool> outputExpected{false};
     std::atomic<int64_t> latestTimestamp{0};
+    // SDI reads only: missing frames describe coverage, not signal amplitude.
+    std::atomic<uint64_t> outputReads{0},missingFrames{0},noSourceReads{0};
+    std::atomic<int64_t> sourceHeadroom{0};
     void push(const float* const*,int frames,int channels,int64_t ptsMilliseconds);
     std::pair<float,float> takePeaks();
     AudioLevels sourceLevels(int64_t start,size_t frames,bool mono=false,bool left=true,bool right=true);
@@ -23,6 +27,10 @@ public:
     void sample(int64_t start,size_t frames,float gain,std::vector<float>&,bool mono=false,bool left=true,bool right=true);
 };
 struct AudioInput {std::shared_ptr<AudioLane> lane;bool enabled=true;float gain=1;bool mono=false;bool left=true,right=true;};
+inline bool audioRouteEnabled(bool sourceMono,bool sourceLeft,bool sourceRight,bool outputMono,bool outputLeft,bool outputRight){
+    if(sourceMono||outputMono)return (sourceLeft||sourceRight)&&(outputLeft||outputRight);
+    return (sourceLeft&&outputLeft)||(sourceRight&&outputRight);
+}
 class AudioMixer {
     std::mutex mutex_;std::vector<AudioInput> inputs_;
 public:
@@ -37,7 +45,7 @@ public:
     std::pair<float,float> sourcePeaks(int64_t start,size_t frames);
     AudioLevels sourceLevels(int64_t start,size_t frames);
 };
-struct ImageInput {std::shared_ptr<LatestFrame> frames;bool visible=true;};
+struct ImageInput {std::shared_ptr<LatestFrame> frames;bool visible=true;bool operator==(const ImageInput&)const=default;};
 std::shared_ptr<const Frame> composite(const std::vector<std::shared_ptr<const Frame>>&,Size);
 class Scene {
     std::mutex mutex_;std::condition_variable cv_;bool quit_=false;uint64_t revision_=0;

@@ -16,6 +16,17 @@
 4. Obtain the [Desktop Video 16.0 SDK](https://www.blackmagicdesign.com/developer/products/capture-and-playback/sdk-and-software), completing the vendor's registration and license requirements. Extract it into `third_party/DeckLinkSDK`. The file `third_party/DeckLinkSDK/Mac/include/DeckLinkAPI.h` must exist. Installing the driver alone does not supply these headers.
 5. Install Desktop Video and authorize its Blackmagic extensions as requested. Restart if required by the installer. Connect UltraStudio using a compatible **Thunderbolt** cable, not merely a USB-C cable.
 
+For a project-local CMake installation, extract the verified archive into
+`third_party/` and add its persistent executable directory for the build session:
+
+```sh
+export PATH="$PWD/third_party/cmake-3.31.6-macos-universal/CMake.app/Contents/bin:$PATH"
+```
+
+Reconfigure `build/` using this copy before building. Do not leave generated build
+files pointing to a CMake installation under `/tmp`. The local dependency is ignored
+by Git, like CEF and the DeckLink SDK.
+
 SHA-256 of the original dependency archives used:
 
 ```text

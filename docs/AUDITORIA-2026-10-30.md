@@ -754,3 +754,25 @@ em falta às 3 h e 20 % às 6 h; com 5 ms, 1 % às 4 h e 9,5 % às 6 h.
 >   este relatório (§7 e §8) e as alterações em `tools/audio-audit`.
 
 Com estas emendas, o plano do §7 fica aprovado pelo auditor para execução.
+
+## 9. Arranque da implementação — 30/10/2026
+
+Estado anterior preservado no commit `55dbb38`; implementação iniciada no branch
+`codex/audio-timing`. Primeira parcela de P1: correção mínima A1 em STOP, expectativa
+de áudio por roteamento efetivo (A10), configuração de áudio separada da imagem e
+gravação consolidada a 500 ms (V3). A configuração visual idêntica deixa de forçar
+recomposição. Introduzidas métricas de cobertura de origem e headroom da última
+leitura, sem confundir amostras silenciosas com lacunas, e contagem de recuperações
+de relógio separada de erros de API.
+
+CMake 3.31.6 colocado em `third_party/` após verificação do SHA-256 indicado em BUILD;
+build reconfigurada para esse caminho persistente. Build completa passou, CTest 3/3,
+modelos da auditoria, smoke gráfico e smoke real no HD Mini passaram. O teste de
+hardware passou a incluir STOP diretamente após PAUSE e verificação de reposição do
+mixer. Evidência e limitações em `docs/VALIDATION.md`.
+
+Esta parcela não conclui P1: falta série temporal/exportação e ensaio de headroom
+de ≥30 min, métricas agregadas/filtradas e separação completa do estado PAUSE.
+Também não altera relógios, margem J ou reserva de três frames. Não constitui
+aceitação física A/V. O passo seguinte é fechar a telemetria/baseline na aplicação
+antes de alterar em conjunto o domínio temporal e a margem explícita, segundo §8.

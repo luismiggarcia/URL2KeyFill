@@ -46,7 +46,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
 -(BOOL)canBecomeMainWindow{return YES;}
 @end
 @interface AppDelegate:NSObject<NSApplicationDelegate,NSWindowDelegate,WKScriptMessageHandler,WKNavigationDelegate,WKUIDelegate>{
- RackWindow* window;WKWebView* web;Preview* preview;NSTimer* timer;NSMutableDictionary* prefs;NSMutableArray<NSMutableDictionary*>* layers;NSArray<NSDictionary*>* examples;
+ RackWindow* window;WKWebView* web;Preview* preview;NSTimer* timer;NSTimer* saveTimer;NSMutableDictionary* prefs;NSMutableArray<NSMutableDictionary*>* layers;NSArray<NSDictionary*>* examples;
  AVAudioEngine* audioEngine;AVAudioSourceNode* audioSource;NSMutableSet<NSString*>* monitoredLayers;BOOL monitorOutput;std::shared_ptr<AudioMixer> monitorMixer;std::shared_ptr<std::atomic<bool>> monitorMaster;
  std::unique_ptr<Scene> scene;std::shared_ptr<AudioMixer> mixer;std::unique_ptr<Output> output;
  std::vector<Device> devices;std::unordered_map<std::string,std::shared_ptr<Runtime>> runtimes;std::vector<std::shared_ptr<Runtime>> retired;
@@ -68,7 +68,14 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
 -(NSMutableDictionary*)newLayer{
  return [@{@"id":NSUUID.UUID.UUIDString,@"name":@"Test layer",@"url":@"u2k://Transparency/Basic_Test.html",@"visible":@YES,@"muted":@NO,@"mono":@NO,@"gain":@1,@"left":@YES,@"right":@YES} mutableCopy];
 }
+-(void)scheduleSave{
+ [saveTimer invalidate];saveTimer=[NSTimer scheduledTimerWithTimeInterval:.5 target:self selector:@selector(flushSave:) userInfo:nil repeats:NO];
+}
+-(void)flushSave:(NSTimer*)sender{
+ saveTimer=nil;try{[self save];}catch(const std::exception& e){message=ns(e.what());[self sendState];}
+}
 -(void)save{
+ [saveTimer invalidate];saveTimer=nil;
  if(closing)return;
  NSDictionary* state=@{@"version":@1,@"preferences":prefs,@"layers":layers};NSError* error=nil;NSData* data=[NSJSONSerialization dataWithJSONObject:state options:NSJSONWritingPrettyPrinted error:&error];if(!data)throw std::runtime_error(error.localizedDescription.UTF8String);
  auto p=settingsPath();std::filesystem::create_directories(p.parent_path());if(![data writeToFile:ns(p.string()) options:NSDataWritingAtomic error:&error])throw std::runtime_error(error.localizedDescription.UTF8String);
@@ -98,14 +105,19 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  [self chooseMode];openSetup=devices.empty();[self save];message=ns(output->status().message);
 }
 -(void)setAudioOutputActive:(BOOL)active{
- active=active&&![prefs[@"audioMuted"] boolValue];
- for(NSDictionary* layer in layers){auto runtime=runtimes.find([layer[@"id"] UTF8String]);if(runtime!=runtimes.end())runtime->second->audio->outputExpected=active&&[layer[@"visible"] boolValue]&&![layer[@"muted"] boolValue]&&[layer[@"gain"] doubleValue]>0;}
+ active=active&&![prefs[@"audioMuted"] boolValue]&&mixer->gain>0;
+ for(NSDictionary* layer in layers){auto runtime=runtimes.find([layer[@"id"] UTF8String]);if(runtime!=runtimes.end())runtime->second->audio->outputExpected=active&&[layer[@"visible"] boolValue]&&![layer[@"muted"] boolValue]&&[layer[@"gain"] doubleValue]>0&&audioRouteEnabled([layer[@"mono"] boolValue],[layer[@"left"] boolValue],[layer[@"right"] boolValue],mixer->mono,mixer->left,mixer->right);}
 }
 -(void)configureScene{
  u2k::Size size=[self viewport];validate(size);u2k::Size target=size;if(auto m=[self selectedMode])target=m->size;
- std::vector<ImageInput> images;std::vector<AudioInput> audio;
- for(NSDictionary* layer in layers){auto it=runtimes.find([layer[@"id"] UTF8String]);if(it==runtimes.end())continue;images.push_back({it->second->frame,[layer[@"visible"] boolValue]});audio.push_back({it->second->audio,[layer[@"visible"] boolValue]&&![layer[@"muted"] boolValue],[layer[@"gain"] floatValue],[layer[@"mono"] boolValue],layer[@"left"]?[layer[@"left"] boolValue]:true,layer[@"right"]?[layer[@"right"] boolValue]:true});}
- scene->configure(std::move(images),size,target);mixer->inputs(std::move(audio));mixer->muted=[prefs[@"audioMuted"] boolValue];mixer->gain=prefs[@"audioGain"]?[prefs[@"audioGain"] floatValue]:1;mixer->mono=[prefs[@"audioMono"] boolValue];mixer->left=prefs[@"audioLeft"]?[prefs[@"audioLeft"] boolValue]:true;mixer->right=prefs[@"audioRight"]?[prefs[@"audioRight"] boolValue]:true;
+ std::vector<ImageInput> images;
+ for(NSDictionary* layer in layers){auto it=runtimes.find([layer[@"id"] UTF8String]);if(it==runtimes.end())continue;images.push_back({it->second->frame,[layer[@"visible"] boolValue]});}
+ scene->configure(std::move(images),size,target);[self configureAudio];
+}
+-(void)configureAudio{
+ std::vector<AudioInput> audio;
+ for(NSDictionary* layer in layers){auto it=runtimes.find([layer[@"id"] UTF8String]);if(it==runtimes.end())continue;audio.push_back({it->second->audio,[layer[@"visible"] boolValue]&&![layer[@"muted"] boolValue],[layer[@"gain"] floatValue],[layer[@"mono"] boolValue],layer[@"left"]?[layer[@"left"] boolValue]:true,layer[@"right"]?[layer[@"right"] boolValue]:true});}
+ mixer->inputs(std::move(audio));mixer->muted=[prefs[@"audioMuted"] boolValue];mixer->gain=prefs[@"audioGain"]?[prefs[@"audioGain"] floatValue]:1;mixer->mono=[prefs[@"audioMono"] boolValue];mixer->left=prefs[@"audioLeft"]?[prefs[@"audioLeft"] boolValue]:true;mixer->right=prefs[@"audioRight"]?[prefs[@"audioRight"] boolValue]:true;
  NSMutableSet* validMonitorIds=[NSMutableSet set];for(NSDictionary* l in layers)[validMonitorIds addObject:l[@"id"]];[monitoredLayers intersectSet:validMonitorIds];
  std::vector<AudioInput> listen;for(NSDictionary* layer in layers)if([monitoredLayers containsObject:layer[@"id"]]){auto it=runtimes.find([layer[@"id"] UTF8String]);if(it!=runtimes.end())listen.push_back({it->second->audio,true,1,[layer[@"mono"] boolValue],layer[@"left"]?[layer[@"left"] boolValue]:true,layer[@"right"]?[layer[@"right"] boolValue]:true});}monitorMixer->inputs(std::move(listen));*monitorMaster=monitorOutput;const auto status=output->status();[self setAudioOutputActive:status.running&&status.onAir];
 }
@@ -191,7 +203,10 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
   for(NSString* key in @[@"visible",@"muted",@"mono",@"left",@"right"])if(data[key])layer[key]=@([data[key] boolValue]);if(data[@"gain"]){double gain=[data[@"gain"] doubleValue];if(!std::isfinite(gain)||gain<0||gain>2)throw std::runtime_error("Gain must be between 0 and 2.");layer[@"gain"]=@(gain);}break;}}
  else if([type isEqual:@"reorder"]){NSArray* ids=data[@"ids"];if(![ids isKindOfClass:NSArray.class]||ids.count!=layers.count)throw std::runtime_error("Invalid layer order.");NSMutableArray* ordered=[NSMutableArray array];for(id identity in ids){for(NSDictionary* l in layers)if([l[@"id"] isEqual:identity]&&![ordered containsObject:l])[ordered addObject:l];}if(ordered.count!=layers.count)throw std::runtime_error("Invalid layer order.");layers=ordered;message=@"Layer order updated";}
  else if([type isEqual:@"configure"]){if(output->status().running)throw std::runtime_error("Stop PLAY before changing output settings.");NSMutableDictionary* next=[prefs mutableCopy];NSString* device=data[@"device"];bool valid=false;for(auto& d:devices)if(d.id==[device UTF8String])valid=true;if(!valid)throw std::runtime_error("Select a detected device.");next[@"device"]=device;next[@"preferredDevice"]=device;next[@"mode"]=@([data[@"mode"] unsignedIntValue]);if(![@[@"BGRA",@"ARGB"] containsObject:data[@"pixel"]])throw std::runtime_error("Unsupported pixel format.");next[@"pixel"]=data[@"pixel"];next[@"keying"]=@([data[@"keying"] boolValue]);if(![@[@"match",@"1920x1080",@"3840x2160",@"custom"] containsObject:data[@"browserSize"]])throw std::runtime_error("Unsupported browser size.");next[@"browserSize"]=data[@"browserSize"];next[@"width"]=@([data[@"width"] intValue]);next[@"height"]=@([data[@"height"] intValue]);validate({[next[@"width"] intValue],[next[@"height"] intValue]});next[@"audioMuted"]=@([data[@"audioMuted"] boolValue]);u2k::Size old=[self viewport];BOOL deviceChanged=![next[@"device"] isEqual:prefs[@"device"]];prefs=next;[self chooseMode];if(deviceChanged)if(auto m=[self selectedMode])prefs[@"keying"]=@(m->keying);if(!(old==[self viewport]))for(NSDictionary* layer in layers)[self reloadLayer:layer];message=@"Configuration saved";}
- [self configureScene];[self save];[self sendState];
+ BOOL imageChanged=[@[@"add",@"delete",@"reorder",@"configure",@"reload",@"refresh"] containsObject:type]||([type isEqual:@"layer"]&&(data[@"visible"]||data[@"url"]));
+ if(imageChanged)[self configureScene];else [self configureAudio];
+ if([@[@"audioGlobal",@"audioMute",@"layer",@"layersVisible",@"add",@"delete",@"reorder",@"configure"] containsObject:type])[self scheduleSave];
+ [self sendState];
  }catch(const std::exception& e){message=ns(e.what());[self sendState];}
 }
 -(void)sendState{
@@ -200,9 +215,9 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  for(auto& d:devices)if(d.id==[prefs[@"device"] UTF8String])for(auto& m:d.modes){if(std::find(seen.begin(),seen.end(),m.id)==seen.end()){seen.push_back(m.id);[modeList addObject:@{@"id":@(m.id),@"name":ns(m.name.substr(0,m.name.find(" · ")))}];}if(m.id==[prefs[@"mode"] unsignedIntValue]){NSString* p=m.pixelFormat==0x42475241?@"BGRA":@"ARGB";if(![pixels containsObject:p])[pixels addObject:p];}}
  Mode* mode=[self selectedMode];if(mode){if(mode->keying)[outputs addObject:@"Fill + Key"];if(mode->fillOnlySupported)[outputs addObject:@"Fill only"];}
  auto status=output->status();u2k::Size size=[self viewport];NSString* deviceName=@"";for(auto& d:devices)if(d.id==[prefs[@"device"] UTF8String])deviceName=ns(d.name);
- uint64_t captured=0,unusedExpired=0,overruns=0;NSMutableArray* pageStates=[NSMutableArray array];for(auto& entry:runtimes){captured+=entry.second->audio->received;unusedExpired+=entry.second->audio->unusedExpired;overruns+=entry.second->audio->outputOverruns;[pageStates addObject:ns(entry.second->browser->message)];}
- std::ostringstream metrics;metrics<<std::fixed<<std::setprecision(1)<<"CEF "<<browserRate<<" fps · Composite "<<composeRate<<" fps · SDI "<<sdIRate<<" fps · Browser "<<size.width<<" × "<<size.height<<" · ";if(mode)metrics<<"SDI "<<mode->rate.label()<<" · ";metrics<<"Composites "<<scene->composed<<" · SDI frames "<<status.completed<<" · Late "<<status.late<<" · Dropped "<<status.dropped<<" · Audio captured "<<captured<<" / SDI "<<status.audioFrames<<" frames · Audio errors "<<status.audioErrors<<" · Audio buffer overruns "<<overruns<<" · Audio unused expired "<<unusedExpired<<" · Audible audio samples "<<mixer->nonSilent<<" · Limited samples "<<mixer->clipped;
- NSString* detail=[pageStates componentsJoinedByString:@" | "];NSString* diagnostics=[ns(metrics.str()) stringByAppendingFormat:@"\n%@",detail];
+ uint64_t captured=0,unusedExpired=0,overruns=0,missingFrames=0;NSMutableArray* audioWindows=[NSMutableArray array];NSMutableArray* pageStates=[NSMutableArray array];for(auto& entry:runtimes){captured+=entry.second->audio->received;unusedExpired+=entry.second->audio->unusedExpired;overruns+=entry.second->audio->outputOverruns;missingFrames+=entry.second->audio->missingFrames;if(entry.second->audio->outputReads){const auto head=entry.second->audio->sourceHeadroom.load();[audioWindows addObject:[NSString stringWithFormat:@"%@: %@",ns(entry.first),head==INT64_MIN?@"no source coverage":[NSString stringWithFormat:@"%.2f ms",head/48.]]];}[pageStates addObject:ns(entry.second->browser->message)];}
+ std::ostringstream metrics;metrics<<std::fixed<<std::setprecision(1)<<"CEF "<<browserRate<<" fps · Composite "<<composeRate<<" fps · SDI "<<sdIRate<<" fps · Browser "<<size.width<<" × "<<size.height<<" · ";if(mode)metrics<<"SDI "<<mode->rate.label()<<" · ";metrics<<"Composites "<<scene->composed<<" · SDI frames "<<status.completed<<" · Late "<<status.late<<" · Dropped "<<status.dropped<<" · Audio captured "<<captured<<" / SDI "<<status.audioFrames<<" frames · Audio errors "<<status.audioErrors<<" · Audio missing source frames "<<missingFrames<<" · Audio buffer overruns "<<overruns<<" · Audio unused expired "<<unusedExpired<<" · Audible audio samples "<<mixer->nonSilent<<" · Limited samples "<<mixer->clipped;
+ NSString* detail=[[pageStates componentsJoinedByString:@" | "] stringByAppendingFormat:@"\nSource headroom (last read, per layer): %@",[audioWindows componentsJoinedByString:@" | "]];NSString* diagnostics=[ns(metrics.str()) stringByAppendingFormat:@"\n%@",detail];
  NSDictionary* state=@{@"examples":examples?:@[],@"layers":layers,@"layersVisible":prefs[@"layersVisible"],@"device":prefs[@"device"],@"deviceName":deviceName,@"devices":deviceList,@"mode":prefs[@"mode"],@"modeName":mode?ns(mode->name.substr(0,mode->name.find(" · "))):@"Unavailable",@"modes":modeList,@"pixels":pixels,@"pixel":prefs[@"pixel"],@"outputs":outputs,@"keying":prefs[@"keying"],@"width":@(size.width),@"height":@(size.height),@"browserSize":prefs[@"browserSize"],@"audioMuted":prefs[@"audioMuted"],@"audioGain":prefs[@"audioGain"]?:@1,@"audioMono":prefs[@"audioMono"]?:@NO,@"audioLeft":prefs[@"audioLeft"]?:@YES,@"audioRight":prefs[@"audioRight"]?:@YES,@"monitorOutput":@(monitorOutput),@"monitoredLayers":monitoredLayers.allObjects,@"output":@{@"running":@(status.running),@"onAir":@(status.onAir)},@"diagnostics":diagnostics,@"message":message?:@"Ready",@"openSetup":@(openSetup)};
  openSetup=NO;NSData* json=[NSJSONSerialization dataWithJSONObject:state options:0 error:nil];NSString* script=[@"window.receiveState(" stringByAppendingFormat:@"%@);",[[NSString alloc]initWithData:json encoding:NSUTF8StringEncoding]];[web evaluateJavaScript:script completionHandler:^(id value,NSError* error){if(error)std::cerr<<"UI state error: "<<error.localizedDescription.UTF8String<<'\n';}];
 }
@@ -235,7 +250,7 @@ auto alpha=frame->pixels[80*frame->stride+110*4+3];if(alpha<120||alpha>135){std:
   else if(smokePhase==2&&image&&image->pixels[80*image->stride+110*4+3]>=120&&image->pixels[80*image->stride+110*4+3]<=135){std::cout<<"PASS visibility changes composite without unloading browser\n";[self save];NSData* data=[NSData dataWithContentsOfFile:ns(settingsPath().string())];NSDictionary* saved=[NSJSONSerialization JSONObjectWithData:data options:0 error:nil];if([saved[@"layers"] count]!=2){[self quit];return;}std::cout<<"PASS persisted layer configuration\n";smokePhase=3;}
   else if(smokePhase==3){uint64_t audio=0;for(auto& r:runtimes)audio+=r.second->audio->received;if(audio>4800){std::cout<<"PASS CEF 48 kHz stereo audio capture: "<<audio<<" samples\n";if(hardwareTest){auto m=[self selectedMode];if(!m){std::cerr<<"FAIL no hardware for SDI test\n";[self quit];return;}output->start([prefs[@"device"] UTF8String],*m,scene->frames);wasRunning=YES;smokePhase=4;}else{auto example=[self newLayer];example[@"id"]=@"lowerthird-smoke";example[@"url"]=@"u2k://Lower_Third/Animated_10_sec_cycle.html";[self createRuntime:example];smokePhase=6;started=std::chrono::steady_clock::now();}}}
   else if(smokePhase==4&&status.completed>120&&status.audioFrames>48000&&mixer->nonSilent>4800){output->onAir(false);smokePhase=5;std::cout<<"PASS scheduled SDI video and stereo audio\n";}
-  else if(smokePhase==5&&status.completed>150){output->onAir(true);output->stop();smokeResult=0;std::cout<<"PASS SDI pause, resume and stop\n";[self quit];}
+  else if(smokePhase==5&&status.completed>150){output->onAir(true);output->onAir(false);output->stop();if(!mixer->enabled||!output->status().onAir){std::cerr<<"FAIL PAUSE to STOP leaves shared mixer disabled\n";[self quit];return;}smokeResult=0;std::cout<<"PASS SDI pause, resume and stop restores shared mixer\n";[self quit];}
   else if(smokePhase>=6&&smokePhase<=9){
    auto example=runtimes.find("lowerthird-smoke");if(example==runtimes.end())return;auto sample=example->second->frame->get();if(!sample||example->second->browser->message!="Page loaded")return;
    bool visible=false;for(int y=0;y<sample->size.height&&!visible;y+=16)for(int x=0;x<sample->size.width;x+=16)if(sample->pixels[y*sample->stride+x*4+3]>20){visible=true;break;}
