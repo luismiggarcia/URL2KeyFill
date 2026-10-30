@@ -33,7 +33,7 @@ int main(){
         auto lane=std::make_shared<AudioLane>();std::vector<float> v(480,.5f);const float* d[]={v.data(),v.data()};lane->push(d,480,2,1000);
         AudioMixer m;m.inputs({{lane,true,1}});m.enabled=false;
         auto monitor=m.sample(48000,480);auto meter=m.sourceLevels(48000,480);
-        std::snprintf(text,sizeof text,"A1 mixer.enabled=false (left by PAUSE then STOP): monitor %.3f, composite meter peak %.3f",monitor[0],meter.peakLeft);
+        std::snprintf(text,sizeof text,"A1 historical disabled-mixer mechanism (not current output lifecycle): monitor %.3f, composite meter peak %.3f",monitor[0],meter.peakLeft);
         line(monitor[0]==0&&meter.peakLeft>0,text);
     }
     return 0;

@@ -27,6 +27,12 @@ int main(){try{
  auto reads=lane->outputReads.load();mixer.mix(48000,480);REQUIRE(lane->outputReads==reads);
  mixer.mono=true;mixer.mix(48000,480);REQUIRE(lane->outputReads==reads+1);
  mixer.gain=0;reads=lane->outputReads.load();mixer.mix(48000,480);REQUIRE(lane->outputReads==reads);
+ // Destination PAUSE must not alter the shared mixer's monitor state.
+ mixer.gain=1;for(auto v:mixer.mix(48000,480,false))REQUIRE(v==0);
+ REQUIRE(mixer.enabled);REQUIRE(lane->outputReads==reads);
+ auto w=lane->takeReadWindow();REQUIRE(w.reads==3);REQUIRE(w.missing==480);
+ REQUIRE(w.headroomCount==3);REQUIRE(w.headroomMin==0);REQUIRE(w.headroomMax==960);
+ REQUIRE(lane->takeReadWindow().reads==0);REQUIRE(lane->missingFrames==480);
  std::cout<<"PASS: source coverage, headroom, silent packets, overlap, monitor isolation and effective routing\n";
  return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

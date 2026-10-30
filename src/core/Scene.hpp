@@ -7,9 +7,14 @@
 namespace u2k {
 struct AudioLevels {float rmsLeft=0,rmsRight=0,peakLeft=0,peakRight=0;};
 struct AudioPacket {int64_t start=0;std::vector<float> samples;bool expectedForOutput=false;};
+struct AudioReadWindow {
+    uint64_t reads=0,missing=0,noSource=0,headroomCount=0;
+    int64_t headroomMin=INT64_MAX,headroomMax=INT64_MIN,headroomSum=0;
+};
 class AudioLane {
     std::mutex mutex_;std::deque<AudioPacket> packets_,meterPackets_;
     bool sourceSeen_=false;
+    AudioReadWindow readWindow_;
     std::atomic<float> peakLeft_{0},peakRight_{0};
     void sum(int64_t,size_t,float,std::vector<float>&,bool prune,bool mono,bool left=true,bool right=true);
 public:
@@ -19,6 +24,8 @@ public:
     // SDI reads only: missing frames describe coverage, not signal amplitude.
     std::atomic<uint64_t> outputReads{0},missingFrames{0},noSourceReads{0};
     std::atomic<int64_t> sourceHeadroom{0};
+    // Reporting only; called outside audio callbacks, resets the interval statistics.
+    AudioReadWindow takeReadWindow();
     void push(const float* const*,int frames,int channels,int64_t ptsMilliseconds);
     std::pair<float,float> takePeaks();
     AudioLevels sourceLevels(int64_t start,size_t frames,bool mono=false,bool left=true,bool right=true);
@@ -41,7 +48,7 @@ public:
     std::atomic<uint64_t> clipped{0},nonSilent{0};
     std::atomic<int64_t> lastMixTimestamp{0};
     void inputs(std::vector<AudioInput>);
-    std::vector<int32_t> mix(int64_t start,size_t frames);
+    std::vector<int32_t> mix(int64_t start,size_t frames,bool programActive=true);
     std::pair<float,float> sourcePeaks(int64_t start,size_t frames);
     AudioLevels sourceLevels(int64_t start,size_t frames);
 };

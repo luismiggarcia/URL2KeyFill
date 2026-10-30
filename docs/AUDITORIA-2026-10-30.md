@@ -776,3 +776,22 @@ de ≥30 min, métricas agregadas/filtradas e separação completa do estado PAU
 Também não altera relógios, margem J ou reserva de três frames. Não constitui
 aceitação física A/V. O passo seguinte é fechar a telemetria/baseline na aplicação
 antes de alterar em conjunto o domínio temporal e a margem explícita, segundo §8.
+
+### 9.1 Telemetria por intervalo e estado PAUSE independente
+
+Segunda parcela: PAUSE passa a pertencer ao callback de saída, sem desativar o mixer
+partilhado. O monitor OUTPUT segue o estado do programa através de uma flag própria;
+STOP repõe escuta, enquanto PFL continua independente. Acrescentados agregados por
+intervalo (reads, lacunas, ausência de fonte, headroom mínimo/médio/máximo) e CSV escrito
+fora dos callbacks, bem como profundidade/alvo de áudio reportados pelo backend.
+
+O modo `--audio-baseline-seconds` permite ensaios entre 1 s e 8 h com a configuração
+do smoke de hardware; `analyze_headroom.py` resume o CSV e calcula tendência das
+médias por intervalo após warmup. A estabilidade não é inferida do exit code do smoke.
+
+Ensaio preliminar de 10 s no HD Mini: zero frames de origem em falta, zero erros de
+API e zero recuperações de áudio; **um frame de vídeo perdido**, presente já no primeiro
+intervalo. Não é aceitação de estabilidade. CSV em
+`tools/audio-audit/data/application-headroom-p1-short.csv.gz`. O headroom inicial
+inclui preroll; a inclinação de um ensaio tão curto não é estimativa útil da deriva.
+É necessário o registo de 30 min antes de alterar o mapeamento temporal.

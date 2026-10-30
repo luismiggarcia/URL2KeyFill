@@ -1,5 +1,16 @@
 # Audio timing implementation — initial P1 slice, 30/10/2026
 
+P1 continuation: interval telemetry/CSV export and destination-owned PAUSE added.
+CTest 3/3 passed, audit models and analyser aggregation/slope checks passed. The
+10-second application hardware run passed smoke assertions, with zero missing
+source frames, audio API errors or clock recoveries. CSV revealed **one dropped
+video frame already in the first reporting interval**; this is not stability
+acceptance. Evidence is in `tools/audio-audit/data/application-headroom-p1-short.csv.gz`.
+The 30-minute baseline remains the next required measurement. Clock mapping and
+scheduling reserves are still unchanged. The historical shared-mixer lifecycle
+limitation described below has now been removed; monitor OUTPUT follows a separate
+program-state flag, while PFL remains independent.
+
 - Branch `codex/audio-timing`; final audit and hardware traces preserved first in commit `55dbb38`.
 - Persistent project-local CMake 3.31.6 extracted from the archive with the SHA-256 recorded in BUILD.md. Full Release arm64 application rebuilt with real CEF and DeckLink; generated build files no longer depend on `/tmp` CMake.
 - CTest passed 3/3, including new directed tests for source coverage, silent packets, internal gaps despite positive headroom, overlapping coverage, monitor isolation and channel routing.

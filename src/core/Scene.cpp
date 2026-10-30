@@ -24,6 +24,7 @@ void AudioLane::push(const float* const* data,int n,int channels,int64_t pts){
 }
 std::pair<float,float> AudioLane::takePeaks(){return {peakLeft_.exchange(0,std::memory_order_relaxed),peakRight_.exchange(0,std::memory_order_relaxed)};}
 void AudioLane::clear(){std::lock_guard<std::mutex> lock(mutex_);packets_.clear();meterPackets_.clear();sourceSeen_=false;sourceHeadroom=INT64_MIN;peakLeft_=0;peakRight_=0;}
+AudioReadWindow AudioLane::takeReadWindow(){std::lock_guard<std::mutex> lock(mutex_);auto result=readWindow_;readWindow_={};return result;}
 void AudioLane::mix(int64_t start,size_t n,float gain,std::vector<float>& out,bool mono,bool left,bool right){sum(start,n,gain,out,true,mono,left,right);}
 void AudioLane::sample(int64_t start,size_t n,float gain,std::vector<float>& out,bool mono,bool left,bool right){sum(start,n,gain,out,false,mono,left,right);}
 void AudioLane::sum(int64_t start,size_t n,float gain,std::vector<float>& out,bool prune,bool mono,bool left,bool right){
@@ -37,9 +38,11 @@ void AudioLane::sum(int64_t start,size_t n,float gain,std::vector<float>& out,bo
    const auto first=std::max({start,p.start,coveredEnd}),last=std::min(start+int64_t(n),end);
    if(last>first){covered+=size_t(last-first);coveredEnd=last;}
   }
-  if(sourceSeen_)missingFrames+=n-covered;else ++noSourceReads;
+  ++readWindow_.reads;
+  if(sourceSeen_){missingFrames+=n-covered;readWindow_.missing+=n-covered;}else{++noSourceReads;++readWindow_.noSource;}
   // No packet is represented by reads/missingFrames, not a fictitious headroom.
   sourceHeadroom=newestEnd==INT64_MIN?INT64_MIN:newestEnd-(start+int64_t(n));
+  if(newestEnd!=INT64_MIN){const auto h=newestEnd-(start+int64_t(n));++readWindow_.headroomCount;readWindow_.headroomSum+=h;readWindow_.headroomMin=std::min(readWindow_.headroomMin,h);readWindow_.headroomMax=std::max(readWindow_.headroomMax,h);}
   ++outputReads;
  }
  for(const auto& p:history){auto first=std::max(start,p.start),last=std::min(start+int64_t(n),p.start+int64_t(p.samples.size()/2));for(auto i=first;i<last;++i){const size_t src=size_t(i-p.start)*2,dst=size_t(i-start)*2;if(mono){const float value=((left?p.samples[src]:0)*.5f+(right?p.samples[src+1]:0)*.5f)*gain;out[dst]+=value;out[dst+1]+=value;}else for(int c=0;c<2;c++)out[dst+c]+=(c==0?left:right)?p.samples[src+c]*gain:0;}}
@@ -51,11 +54,11 @@ static AudioLevels measureAudio(const std::vector<float>& samples){
 }
 AudioLevels AudioLane::sourceLevels(int64_t start,size_t n,bool mono,bool left,bool right){if(n>48000)throw std::invalid_argument("Audio meter block exceeds one second");std::vector<float> samples(n*2,0);sample(start,n,1,samples,mono,left,right);return measureAudio(samples);}
 void AudioMixer::inputs(std::vector<AudioInput> v){std::lock_guard<std::mutex> lock(mutex_);inputs_=std::move(v);}
-std::vector<int32_t> AudioMixer::mix(int64_t start,size_t n){
+std::vector<int32_t> AudioMixer::mix(int64_t start,size_t n,bool programActive){
  lastMixTimestamp=start;
  if(n>48000)throw std::invalid_argument("Audio block exceeds one second");
  std::vector<AudioInput> inputs;{std::lock_guard<std::mutex> lock(mutex_);inputs=inputs_;}
- std::vector<float> buffer(n*2,0);if(enabled&&!muted)for(auto& i:inputs)if(i.enabled&&i.lane&&i.gain>0&&gain>0&&audioRouteEnabled(i.mono,i.left,i.right,mono,left,right))i.lane->mix(start,n,std::clamp(i.gain,0.f,2.f),buffer,i.mono,i.left,i.right);
+ std::vector<float> buffer(n*2,0);if(programActive&&enabled&&!muted)for(auto& i:inputs)if(i.enabled&&i.lane&&i.gain>0&&gain>0&&audioRouteEnabled(i.mono,i.left,i.right,mono,left,right))i.lane->mix(start,n,std::clamp(i.gain,0.f,2.f),buffer,i.mono,i.left,i.right);
  for(size_t j=0;j<n;j++){float l=buffer[j*2],r=buffer[j*2+1];if(mono)l=r=(l+r)*.5f;buffer[j*2]=left?l*gain:0;buffer[j*2+1]=right?r*gain:0;}
  uint64_t limited=0,audible=0;std::vector<int32_t> pcm(n*2);for(size_t i=0;i<pcm.size();++i){double v=buffer[i];if(std::abs(v)>1)++limited;pcm[i]=int32_t(std::clamp(v,-1.,1.)*2147483647.);if(pcm[i])++audible;}clipped+=limited;nonSilent+=audible;return pcm;
 }

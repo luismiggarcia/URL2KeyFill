@@ -56,6 +56,8 @@ class AudioCallback final:public IDeckLinkAudioOutputCallback {
  int64_t cursor_=0,epoch_;uint32_t target_;bool accepting_=true;
 public:
  std::atomic<uint64_t> frames{0},errors{0},recoveries{0};std::atomic<bool> failed{false};
+ std::atomic<bool> programActive{true};std::atomic<uint32_t> bufferedFrames{0};
+ uint32_t targetFrames()const{return target_;}
  AudioCallback(IDeckLinkOutput* o,std::shared_ptr<AudioMixer> m,const Mode& mode):output_(o),mixer_(std::move(m)){
   output_->AddRef();target_=uint32_t(std::clamp<int64_t>((3*mode.rate.duration*48000+mode.rate.scale-1)/mode.rate.scale,1440,12000));epoch_=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()*48;
  }
@@ -68,10 +70,10 @@ public:
   uint32_t buffered=0;if(output_->GetBufferedAudioSampleFrameCount(&buffered)!=S_OK){++errors;failed=true;return E_FAIL;}
   BMDTimeValue time=0;double speed=0;if(output_->GetScheduledStreamTime(48000,&time,&speed)==S_OK&&time>cursor_){cursor_=time;++recoveries;}
   try{for(int block=0;buffered<target_&&block<24;block++){
-   uint32_t count=std::min<uint32_t>(1024,target_-buffered),written=0;auto pcm=mixer_->mix(epoch_+cursor_-target_,count);
+   uint32_t count=std::min<uint32_t>(1024,target_-buffered),written=0;auto pcm=mixer_->mix(epoch_+cursor_-target_,count,programActive);
    if(output_->ScheduleAudioSamples(pcm.data(),count,cursor_,48000,&written)!=S_OK){++errors;failed=true;return E_FAIL;}
    if(!written)break;cursor_+=written;buffered+=written;frames+=written;
-  }}catch(...){++errors;failed=true;return E_FAIL;}return S_OK;
+  }}catch(...){++errors;failed=true;return E_FAIL;}bufferedFrames=buffered;return S_OK;
  }
 };
 
@@ -185,7 +187,7 @@ public:
             message(mode_.keying?"SDI active · Fill + Key · stereo audio":"SDI active · Fill only · stereo audio");worker_=std::thread([this]{work();});
         }catch(...){stop();throw;}
     }
-    void onAir(bool value)override{air_=value;mixer_->enabled=value;}
+    void onAir(bool value)override{air_=value;if(audioCallback_)audioCallback_->programActive=value;}
     void audio(std::shared_ptr<AudioMixer> mixer)override{if(running_)throw std::runtime_error("Stop output before changing the audio mixer.");mixer_=std::move(mixer);}
     void stop()override{
         quit_=true;state_->accepting=false;state_->cv.notify_all();if(worker_.joinable())worker_.join();
@@ -193,7 +195,7 @@ public:
         if(output_){output_->SetAudioCallback(nullptr);output_->DisableAudioOutput();output_->StopScheduledPlayback(0,nullptr,mode_.rate.scale);output_->SetScheduledFrameCompletionCallback(nullptr);if(keyer_)keyer_->Disable();output_->DisableVideoOutput();}
         running_=false;air_=true;mixer_->enabled=true;audioCallback_=Com<AudioCallback>();cachedSource_.reset();converted_.clear();pool_.clear();callback_=Com<Callback>();keyer_=Com<IDeckLinkKeyer>();output_=Com<IDeckLinkOutput>();device_=Com<IDeckLink>();
     }
-    OutputStatus status()const override{std::lock_guard<std::mutex> l(messageMutex_);return {running_,air_,state_->completed,state_->late,state_->dropped,message_,audioCallback_?audioCallback_->frames.load():0,audioCallback_?audioCallback_->errors.load():0,audioCallback_?audioCallback_->recoveries.load():0};}
+    OutputStatus status()const override{std::lock_guard<std::mutex> l(messageMutex_);return {running_,air_,state_->completed,state_->late,state_->dropped,message_,audioCallback_?audioCallback_->frames.load():0,audioCallback_?audioCallback_->errors.load():0,audioCallback_?audioCallback_->recoveries.load():0,audioCallback_?audioCallback_->bufferedFrames.load():0,audioCallback_?audioCallback_->targetFrames():0};}
 };
 std::unique_ptr<Output> makeOutput(){return std::make_unique<DeckLink>();}
 }

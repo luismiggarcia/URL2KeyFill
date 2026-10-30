@@ -102,3 +102,34 @@ used in production.
 Not covered: the real start margin δ inside the application's `DeckLink.cpp`, audible or
 captured SDI audio, Core Audio monitor glitches and A1 inside `DeckLink.cpp`
 (`mixer_checks` shows the mixer state it leaves behind).
+
+## Application headroom recording (P1)
+
+The application can export per-interval source coverage and headroom statistics
+without logging from the audio callbacks. Set `U2K_AUDIO_TRACE` to a writable CSV
+path. `--audio-baseline-seconds` runs the existing hardware smoke scenario for the
+requested PLAY duration (1–28800 seconds), then exercises PAUSE/STOP and exits.
+It emits real SDI video/audio. Run with normal desktop/driver access, outside the
+execution shell sandbox, while interruption of the connected output is acceptable.
+
+```sh
+U2K_AUDIO_TRACE=/tmp/u2k-headroom.csv \
+  ./build/URL2KeyFill.app/Contents/MacOS/URL2KeyFill --audio-baseline-seconds 1800
+python3 -I tools/audio-audit/analyze_headroom.py /tmp/u2k-headroom.csv
+```
+
+This scenario uses the smoke test's 1080p25 selection and test layers, not the user's
+saved session. Hardware availability is required. A zero exit code only means smoke
+assertions passed; inspect the CSV for missing frames, recovery/API errors and video
+late/drop counters before deciding stability. Missing frames are summed per lane;
+this is not a unique count of missing program output frames. Empty headroom fields
+mean no retained source sample. `no_source_reads` counts reads after creation/clear
+before a first packet, separately from missing coverage in an established source.
+
+Min/mean/max are collected for every SDI source read, reported about once per second
+on the main thread. The mean is per read, not sample weighted. The analyser fits the
+interval means after five seconds of warmup; this is a descriptive trend, not a
+clock measurement or physical A/V sync test. Each capture should contain a single
+continuous PLAY session. Keep exact binary commit, mode, driver, reference state,
+load and elapsed recording time alongside the CSV. The initial interval can include
+preroll and has a different headroom distribution from steady playback.
