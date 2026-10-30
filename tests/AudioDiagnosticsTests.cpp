@@ -101,6 +101,20 @@ int main(){try{
  AudioLane trimmed;trimmed.push(stereo,480,2,1000);trimmed.push(rampStereo,480,2,1005);
  out.assign(480,0);trimmed.sample(48480,240,1,out);REQUIRE(out[0]==ramp[240]);REQUIRE(out[478]==ramp[479]);
  AudioLane invalid;invalid.push(stereo,480,2,-1);invalid.push(stereo,480,2,INT64_MAX);REQUIRE(invalid.received==0);
+ // Reproduce the observed 12-frame tail deficit with contiguous packet timestamps.
+ AudioLane late;late.push(stereo,480,2,1000);out.assign(960,0);
+ late.mix(48012,480,1,out);for(size_t i=0;i<480;++i)REQUIRE(out[i*2]==(i<468?.25f:0.f));REQUIRE(late.missingFrames==12);REQUIRE(late.sourceHeadroom==-12);
+ auto gap=late.takeReadWindow().gap;REQUIRE(gap.sequence==1);REQUIRE(gap.missing==12);
+ REQUIRE(gap.start==48012&&gap.end==48492&&gap.newestEnd==48480);
+ REQUIRE(gap.newestPublished>=gap.newestArrival);REQUIRE(!gap.recoveryPublished);
+ late.push(stereo,480,2,1010);gap=late.takeReadWindow().gap;
+ REQUIRE(gap.sequence==1);REQUIRE(gap.recoveryEnd==48960);REQUIRE(gap.recoveryStart==48480);
+ REQUIRE(gap.recoveryPublished>=gap.readHost);REQUIRE(late.timestampGapFrames==0);
+ REQUIRE(late.timestampAdjustments==0);REQUIRE(late.takeReadWindow().gap.sequence==1);
+ // The missing tail really was silence, and subsequent data is not consumed twice.
+ out.assign(960,0);late.mix(48492,480,1,out);REQUIRE(late.missingFrames==24);
+ gap=late.takeReadWindow().gap;REQUIRE(gap.sequence==2);late.clear();
+ late.push(stereo,480,2,1000);REQUIRE(!late.takeReadWindow().gap.recoveryPublished);
  // Exercise clear/publication/read interleaving with immutable source buffers.
  AudioLane concurrent;std::atomic<bool> start{false},finished{false};
  std::thread producer([&]{while(!start.load())std::this_thread::yield();for(int i=0;i<500;++i)concurrent.push(stereo,480,2,1000+i*10);finished=true;});

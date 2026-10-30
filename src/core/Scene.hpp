@@ -6,8 +6,16 @@
 #include <condition_variable>
 namespace u2k {
 struct AudioLevels {float rmsLeft=0,rmsRight=0,peakLeft=0,peakRight=0;};
-struct AudioPacket {int64_t start=0;std::vector<float> samples;bool expectedForOutput=false;size_t offset=0;size_t frames()const{return samples.size()/2-offset;}};
+struct AudioPacket {int64_t start=0;std::vector<float> samples;bool expectedForOutput=false;size_t offset=0;int64_t arrival=0,published=0;size_t frames()const{return samples.size()/2-offset;}};
+// Latest missing read, retained across reporting intervals; sequence exposes replacement.
+// Host fields are uptime in 48 kHz samples, not output presentation timestamps.
+struct AudioGap {
+    uint64_t sequence=0,generation=0,missing=0;
+    int64_t start=0,end=0,readHost=0,newestEnd=0,newestArrival=0,newestPublished=0;
+    int64_t recoveryArrival=0,recoveryPublished=0,recoveryStart=0,recoveryEnd=0;
+};
 struct AudioReadWindow {
+    AudioGap gap;
     uint64_t reads=0,missing=0,noSource=0,headroomCount=0;
     int64_t headroomMin=INT64_MAX,headroomMax=INT64_MIN,headroomSum=0;
 };
@@ -15,7 +23,7 @@ class AudioLane {
     std::mutex mutex_;std::deque<AudioPacket> packets_,meterPackets_;
     bool sourceSeen_=false;int64_t firstSample_=0;
     bool timelineReady_=false;int64_t nextSample_=0,lastRawStart_=0;int lastFrames_=0;
-    AudioReadWindow readWindow_;
+    AudioReadWindow readWindow_;AudioGap gap_;
     std::atomic<float> peakLeft_{0},peakRight_{0};
     void sum(int64_t,size_t,float,std::vector<float>&,bool prune,bool mono,bool left=true,bool right=true);
 public:

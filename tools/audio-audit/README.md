@@ -159,3 +159,20 @@ capture age from the nine-column trace. `--calibrate-clock 1`, `--fifo-frames` a
 
 The source clock has not yet gained adaptive rate compensation. Initial phase
 calibration does not establish prolonged drift correction or physical lip sync.
+
+### Missing-read investigation
+
+Application telemetry appends a persistent latest-gap snapshot (`gap_sequence` and
+`gap_*`). Times are integer uptime samples at 48 kHz. It records the exact missing
+read, retained newest packet end and arrival/publication times. The first subsequent
+packet spanning a missing tail records recovery arrival/publication, even across
+reporting intervals. Arrival precedes copying and acquiring the lane mutex; publication
+is stamped after queue insertion/pruning, just before releasing it.
+
+`analyze_headroom.py` reports read-end age and recovery delay. A packet arrival after
+the read supports late delivery; arrival before but publication after points to work
+or lock waiting inside publication. This is not a per-packet trace: only the latest
+missing read is retained, sequence jumps expose overwritten reads, and recovery only
+characterises a missing tail, not an internal gap. Generation prevents matching a
+restarted stream. No file I/O or allocation is added to the missing-read diagnostic.
+The extra packet clock reads have not yet been benchmarked on hardware.

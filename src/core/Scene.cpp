@@ -1,4 +1,5 @@
 #include "Scene.hpp"
+#include "MediaClock.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -7,6 +8,7 @@ namespace u2k {
 void AudioLane::push(const float* const* data,int n,int channels,int64_t pts){
  if(pts<0||pts>(INT64_MAX-48048)/48)return;
  if(!data||n<1||n>48000||channels<1||channels>8)return;
+ const auto arrival=mediaSampleTime();
  const auto capturedGeneration=generation.load(std::memory_order_acquire);
  AudioPacket p;p.expectedForOutput=outputExpected.load(std::memory_order_relaxed);p.start=pts*48;p.samples.resize(size_t(n)*2);uint64_t signal=0;float peaks[2]={0,0};
  for(int i=0;i<n;i++)for(int c=0;c<2;c++){float v=data[std::min(c,channels-1)][i];v=std::isfinite(v)?v:0;p.samples[i*2+c]=v;peaks[c]=std::max(peaks[c],std::abs(v));if(std::abs(v)>.00001f)++signal;}
@@ -15,6 +17,7 @@ void AudioLane::push(const float* const* data,int n,int channels,int64_t pts){
  received+=n;
  std::lock_guard<std::mutex> lock(mutex_);
  if(generation.load(std::memory_order_relaxed)!=capturedGeneration){++stalePackets;return;}
+ p.arrival=arrival;
  const auto rawStart=p.start;
  if(timelineReady_){
   // Identical millisecond stamps can be legitimate for sub-millisecond packets.
@@ -38,10 +41,14 @@ void AudioLane::push(const float* const* data,int n,int channels,int64_t pts){
   if(packets_.front().expectedForOutput&&outputExpected.load(std::memory_order_relaxed))++outputOverruns;else ++unusedExpired;
   packets_.pop_front();++discarded;
  }
+ // Mark publication after copies/pruning, immediately before releasing the lane lock.
+ const auto published=mediaSampleTime();packets_.back().published=published;meterPackets_.back().published=published;
+ const auto& ready=packets_.back();
+ if(gap_.sequence&&gap_.generation==capturedGeneration&&!gap_.recoveryPublished&&gap_.newestEnd!=INT64_MIN&&gap_.newestEnd<gap_.end&&ready.start<=gap_.newestEnd&&nextSample_>=gap_.end){gap_.recoveryArrival=ready.arrival;gap_.recoveryPublished=published;gap_.recoveryStart=ready.start;gap_.recoveryEnd=nextSample_;}
 }
 std::pair<float,float> AudioLane::takePeaks(){return {peakLeft_.exchange(0,std::memory_order_relaxed),peakRight_.exchange(0,std::memory_order_relaxed)};}
 void AudioLane::clear(){std::lock_guard<std::mutex> lock(mutex_);++generation;packets_.clear();meterPackets_.clear();sourceSeen_=false;timelineReady_=false;sourceHeadroom=INT64_MIN;peakLeft_=0;peakRight_=0;}
-AudioReadWindow AudioLane::takeReadWindow(){std::lock_guard<std::mutex> lock(mutex_);auto result=readWindow_;readWindow_={};return result;}
+AudioReadWindow AudioLane::takeReadWindow(){std::lock_guard<std::mutex> lock(mutex_);auto result=readWindow_;result.gap=gap_;readWindow_={};return result;}
 void AudioLane::mix(int64_t start,size_t n,float gain,std::vector<float>& out,bool mono,bool left,bool right){sum(start,n,gain,out,true,mono,left,right);}
 void AudioLane::sample(int64_t start,size_t n,float gain,std::vector<float>& out,bool mono,bool left,bool right){sum(start,n,gain,out,false,mono,left,right);}
 void AudioLane::sum(int64_t start,size_t n,float gain,std::vector<float>& out,bool prune,bool mono,bool left,bool right){
@@ -52,14 +59,15 @@ void AudioLane::sum(int64_t start,size_t n,float gain,std::vector<float>& out,bo
  const bool retained=prune&&(packets_.empty()||start<packets_.front().start);
  const auto& history=prune&&!retained?packets_:meterPackets_;
  if(prune){
-  int64_t coveredEnd=start,newestEnd=INT64_MIN;size_t covered=0;
+  int64_t coveredEnd=start,newestEnd=INT64_MIN;const AudioPacket* newest=nullptr;size_t covered=0;
   for(const auto& p:history){
-   const int64_t end=p.start+int64_t(p.frames());newestEnd=std::max(newestEnd,end);
+   const int64_t end=p.start+int64_t(p.frames());if(end>newestEnd){newestEnd=end;newest=&p;}
    const auto first=std::max({start,p.start,coveredEnd}),last=std::min(start+int64_t(n),end);
    if(last>first){covered+=size_t(last-first);coveredEnd=last;}
   }
   ++readWindow_.reads;
-  if(sourceSeen_){const auto padding=start<firstSample_?std::min<uint64_t>(n,uint64_t(firstSample_)-uint64_t(start)):0;preSourcePaddingFrames+=padding;missingFrames+=n-covered-padding;readWindow_.missing+=n-covered-padding;}else{++noSourceReads;++readWindow_.noSource;}
+  if(sourceSeen_){const auto padding=start<firstSample_?std::min<uint64_t>(n,uint64_t(firstSample_)-uint64_t(start)):0;preSourcePaddingFrames+=padding;const auto missing=n-covered-padding;missingFrames+=missing;readWindow_.missing+=missing;
+   if(missing){const auto sequence=gap_.sequence+1;gap_={};gap_.sequence=sequence;gap_.generation=generation.load(std::memory_order_relaxed);gap_.missing=missing;gap_.start=start;gap_.end=start+int64_t(n);gap_.readHost=mediaSampleTime();gap_.newestEnd=newestEnd;if(newest){gap_.newestArrival=newest->arrival;gap_.newestPublished=newest->published;}}}else{++noSourceReads;++readWindow_.noSource;}
   // No packet is represented by reads/missingFrames, not a fictitious headroom.
   sourceHeadroom=newestEnd==INT64_MIN?INT64_MIN:newestEnd-(start+int64_t(n));
   if(newestEnd!=INT64_MIN){const auto h=newestEnd-(start+int64_t(n));++readWindow_.headroomCount;readWindow_.headroomSum+=h;readWindow_.headroomMin=std::min(readWindow_.headroomMin,h);readWindow_.headroomMax=std::max(readWindow_.headroomMax,h);}

@@ -986,3 +986,45 @@ HDMI/SDI é idêntica. Para aceitação da saída SDI de produção, medir o SDI
 áudio embebido, diretamente ou através de conversor cujo efeito seja caracterizado.
 Flash/impulso na gravação mede desfasamento relativo A/V; latência absoluta desde
 a origem exige também referência temporal de entrada comum.
+
+### 10.5 Investigação das 12 amostras em falta
+
+**Factos do trace:** uma única janela de reporte, aos 1531,992285 s, conta 12
+amostras e headroom mínimo −12 samples. As janelas imediatamente adjacentes
+têm mínimo ~39,4 ms. Não há resets, recuperação, mudança de calibração, erros
+SDK, lacunas/ajustes nos timestamps ou perda de vídeo. O instante é o do reporte,
+não o instante exato da leitura que falhou. A idade de leitura reportada é a
+última do intervalo e não necessariamente a da falha.
+
+**Reprodução controlada:** um pacote cobre [48000,48480); pedir [48012,48492)
+antes de publicar o pacote seguinte deixa exatamente 12 samples sem cobertura.
+O teste verifica tanto a contagem como as 12 amostras finais a zero, seguidas
+de publicação com timestamp contínuo. Isto demonstra um mecanismo compatível
+com os dados, não prova a causa histórica. Uma falta de disponibilidade transitória
+é a hipótese principal; não há evidência de esgotamento progressivo da margem.
+Não aumentar J por defeito nem introduzir saltos periódicos com base neste evento.
+
+**Diagnóstico acrescentado:** snapshot fixo da última leitura em falta, com sequência,
+geração, janela pedida, instante host da leitura, fim do pacote mais recente,
+chegada antes da cópia/lock e publicação após inserir/aparar os históricos.
+O primeiro pacote posterior que cobre a cauda em falta acrescenta chegada/publicação
+e limites, mesmo se só chegar no intervalo de reporte seguinte. A sequência permite
+reconhecer substituições: isto não preserva todos os eventos entre reportes nem
+resolve retroativamente o evento original. Não há escrita em disco nem alocação
+adicional neste registo de falha; os timestamps de pacote acrescentam duas consultas
+ao relógio, cujo custo ainda falta medir em hardware.
+
+**Validação:** build completa e CTest 4/4 passaram, incluindo reprodução exata do
+défice, recuperação posterior, persistência do diagnóstico e isolamento por geração.
+O smoke nativo passou captura CEF, arranque/reconstrução/paragem do monitor local
+e o diagnóstico A/V gerado no browser; não é captura física.
+O analisador conserva o resultado do trace histórico e calcula corretamente o
+cenário sintético de 60 ms de idade/−0,25 ms de cobertura. O novo ensaio SDI não
+arrancou: modo indisponível; `system_profiler SPThunderboltDataType` confirmou todos
+os portos sem dispositivo ligado. Não se conta este ensaio como validação SDI.
+
+**Próximo passo:** religar HD Mini e repetir a baseline com este diagnóstico, mantendo
+60 ms e a reserva atual. Se ocorrer falha, comparar chegada/publicação com leitura,
+idade nessa leitura, continuidade de timestamps e fase/fila. Caso a falha não se
+repita, o mecanismo histórico continua por confirmar; um ensaio sem falhas isolado
+não prova resolução. A medição física HDMI/SDI continua independente deste diagnóstico.

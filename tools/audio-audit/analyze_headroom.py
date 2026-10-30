@@ -44,6 +44,25 @@ def summarise(rows, warmup):
         for field in ['duplicate_packets','reordered_packets','trimmed_frames','timestamp_adjustments','timestamp_gap_frames','stale_packets','clock_resets','pre_source_padding_frames']:
             if field in data[0]:
                 result[layer][field] = max(int(r[field]) for r in data)
+        # Snapshot persists until replaced; update by sequence when the late packet arrives.
+        gaps = {}
+        for row in data:
+            if int(row.get('gap_sequence', 0)):
+                gaps[int(row['gap_sequence'])] = row
+        if gaps:
+            events = []
+            for sequence, r in gaps.items():
+                host, end = int(r['gap_read_host']), int(r['gap_end'])
+                newest = int(r['gap_newest_end'])
+                recovery = int(r['gap_recovery_published'])
+                events.append(dict(sequence=sequence, missing_frames=int(r['gap_missing']),
+                    read_end_age_ms=(host-end)/48,
+                    newest_end_minus_read_end_ms=(newest-end)/48 if newest != -(2**63) else None,
+                    newest_publication_age_ms=(host-int(r['gap_newest_published']))/48,
+                    recovery_arrival_after_read_ms=(int(r['gap_recovery_arrival'])-host)/48 if recovery else None,
+                    recovery_publication_after_read_ms=(recovery-host)/48 if recovery else None))
+            result[layer]['latest_gap_snapshots'] = events
+            result[layer]['gap_snapshots_note'] = 'Latest read only per reporting interval; sequence jumps indicate overwritten events. Recovery describes tail coverage only.'
         ages = [float(r['last_read_age_ms']) for r in data if r.get('last_read_age_ms')]
         if ages:
             result[layer]['last_read_age_min_ms'] = min(ages)
