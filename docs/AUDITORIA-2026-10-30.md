@@ -1140,3 +1140,92 @@ comprimidos, manifests com hashes, resultados por pulso, resumo e ensaio rejeita
 Build completa passou, probes compilaram com `-Wall -Wextra`, oito testes do
 analisador e CTest 4/4 passaram. Não foi aplicada compensação A/V neste passo nem
 substituída a aplicação instalada. Os ensaios pararam e libertaram o dispositivo.
+
+### 10.8 Correção do arranque autorizada — prontidão, frame zero e antecedência inicial
+
+**Âmbito autorizado:** corrigir o arranque e repetir ensaios 25/50p. Não foi
+implementado o histórico/seleção temporal de imagem da P5 nem compensação fixa A/V.
+
+**Investigação e passos que não chegaram.** A sequência anterior chamava
+`RenderAudioSamples(true)` manualmente, terminava preroll e iniciava playback sem
+esperar confirmação conjunta das filas; o worker de vídeo nascia depois do Start.
+A nova sequência segue o exemplo SignalGenerator do SDK: ativa ambos os fluxos
+antes de agendar vídeo, prepara o worker e deixa o callback real de preroll iniciar
+playback apenas após o SDK reportar reserva de áudio completa e três frames de
+vídeo. A espera pela confirmação tem timeout de 5 s; falhas do callback acordam a
+espera. O cleanup também deteta playback iniciado durante uma corrida com o timeout.
+
+Essas alterações, **isoladamente, não eliminaram a perda**. Foi acrescentada
+identificação atómica do índice agendado por slot. Os ensaios seguintes localizaram
+consistentemente a perda no **frame de programa 0**, e não num frame em regime.
+Houve seis arranques curtos sem perdas após mudar a ordem de ativação, mas um
+loopback A/V voltou a perder o frame 0: por isso os seis não foram usados para
+fechar o tema. A preparação física por um frame transparente síncrono, isoladamente,
+também voltou a mostrar uma perda do frame 0. Estas falhas estão preservadas.
+
+A referência SDK passou seis ensaios de 5 s a 50p (dois por combinação de reservas
+vídeo/áudio: 3/2880, 4/2880, 3/9600). Não se encontrou fundamento para aumentar as
+filas em regime. Foram adicionadas opções de reserva apenas à ferramenta de
+referência; os seus defaults e as reservas normais da aplicação não mudaram.
+
+**Correção final desta parcela:**
+
+- Antes do programa, `DisplayVideoFrameSync` apresenta um frame transparente preto,
+  reutilizando um dos três slots. É preparação explícita, com contagem e duração
+  próprias; não é um frame de programa subtraído aos contadores.
+- O primeiro frame de programa conserva **índice 0**, mas é agendado para uma imagem
+  depois de stream zero. Os seguintes mantêm cadência racional; a recuperação do
+  cursor de vídeo usa a mesma relação entre índice e instante.
+- Até esse instante é agendado silêncio de áudio explícito: **960 samples / 20 ms
+  a 50p**, **1920 / 40 ms a 25p**. As escritas, incluindo parciais, terminam exatamente
+  no limite silêncio/PCM. O contador é separado do padding anterior ao stream.
+- A origem provisória conserva o primeiro instante de origem de programa durante
+  esta antecedência. A aquisição de fase espera pelo padding e duas reservas
+  consumidas; depois mantém o orçamento J=60 ms existente. O início continua a ter
+  aquisição/transição de fase, não sincronismo de conteúdo já garantido.
+- O programa não disputa o deadline de stream zero. **Não se descarta o seu frame
+  0, não se ignora um resultado SDK e não se reduz o contador dropped.** Se o SDK
+  perder o primeiro frame de programa, `first_dropped_frame` continua a indicar 0.
+- Permanecem três frames de vídeo, áudio 5760 samples a 25p / 2880 a 50p e J=60 ms.
+  Acrescenta-se preparação/antecedência no início, sem uma fila adicional permanente
+  ou DSP no percurso estável. Em cadências fracionárias, o silêncio inicial arredonda
+  para o sample seguinte; a validação física desta parcela foi apenas 25/50p.
+
+**Validação da candidata final:** quatro loopbacks (dois por cadência) mais seis
+arranques consecutivos da fonte A/V a 50p. **10/10 terminaram normalmente**, com
+zero perdas/atrasos de vídeo, lacunas de áudio, erros API ou recuperações. Confirmados
+pelo SDK três frames e a reserva de áudio correspondente antes de Start. Nos dez
+ensaios, a chamada de preparação síncrona demorou **11,29–11,60 ms**; a isto soma-se
+preroll e a antecedência inicial acima, não se trata da latência completa de PLAY.
+
+| Cadência | Arranque final | Pares/canal | Áudio − vídeo bruto |
+|---|---|---:|---:|
+| 1080p25 | A | 23 | +52,31 ms |
+| 1080p25 | B | 23 | +65,46 ms |
+| 1080p50 | A | 18 | +46,71 ms |
+| 1080p50 | B | 18 | +76,00 ms |
+
+Os canais coincidiram e não houve gaps de timestamps entre os pares capturados.
+**A perda inicial não se reproduziu nesta amostra; o desfasamento de conteúdo A/V
+continua presente e variável entre arranques.** Não se declara eliminada qualquer
+possibilidade de perda sob outras condições, nem aceite o sincronismo final.
+A antecedência é uma mitigação validada nestes ensaios, não prova isolada de uma
+causa interna específica do firmware/SDK. Aplicam-se os limites de medição da §10.7.
+
+Build completa/assinatura local, CTest 4/4 e oito testes do analisador passaram.
+Novos testes exercitam silêncio de 960/1920 samples, escritas parciais de 137 samples
+e transição para PCM sem atravessar/repetir o padding. O backend passou compilação
+`-Wall -Wextra`. A análise preserva o caso histórico de 12 amostras em falta e deteta
+corretamente frame zero nos casos intermédios. Não se induziu timeout/falha API no
+hardware; esses caminhos não têm validação por injeção física nesta parcela.
+
+**Evidência:** `tools/audio-audit/data/startup-2026-10-31/`, com hashes da candidata
+e fontes, dez casos finais, falhas intermédias e ensaios das reservas de referência.
+A aplicação instalada não foi substituída. Os processos de teste pararam e libertaram
+os recursos que ativaram.
+
+**O que se segue, pendente de confirmação do Luis:** alinhar a seleção temporal do
+vídeo com o áudio (P5), começando por carimbo temporal/histórico limitado e relação
+entre instante de conteúdo e apresentação. Repetir loopbacks por vários arranques
+para validar o residual e a quantização. Não avançar automaticamente para essa
+implementação nem considerar este passo como correção completa do sincronismo A/V.

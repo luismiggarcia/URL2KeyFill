@@ -1,0 +1,217 @@
+{
+  "sign": "positive = audio later than video",
+  "measurement": "output plus input relative A/V; uncalibrated input",
+  "video_frame_ms": 20.0,
+  "valid_video_frames": 1712,
+  "video_timestamp_gaps": 1,
+  "video_timestamp_gaps_within_matched_range": 0,
+  "flashes_after_warmup": 18,
+  "channels": {
+    "audio_L": {
+      "pairs": 18,
+      "unmatched_flashes": 0,
+      "median_ms": 71.1875,
+      "min_ms": 71.1875,
+      "max_ms": 91.1875,
+      "stdev_ms": 9.74996043043569,
+      "events": [
+        {
+          "video_pts_48k": 179520,
+          "audio_pts_48k": 183897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 228480,
+          "audio_pts_48k": 231897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 275520,
+          "audio_pts_48k": 279897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 324480,
+          "audio_pts_48k": 327897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 371520,
+          "audio_pts_48k": 375897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 420480,
+          "audio_pts_48k": 423897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 467520,
+          "audio_pts_48k": 471897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 516480,
+          "audio_pts_48k": 519897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 563520,
+          "audio_pts_48k": 567897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 612480,
+          "audio_pts_48k": 615897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 660480,
+          "audio_pts_48k": 663897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 708480,
+          "audio_pts_48k": 711897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 756480,
+          "audio_pts_48k": 759897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 804480,
+          "audio_pts_48k": 807897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 851520,
+          "audio_pts_48k": 855897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 900480,
+          "audio_pts_48k": 903897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 947520,
+          "audio_pts_48k": 951897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 996480,
+          "audio_pts_48k": 999897,
+          "audio_minus_video_ms": 71.1875
+        }
+      ]
+    },
+    "audio_R": {
+      "pairs": 18,
+      "unmatched_flashes": 0,
+      "median_ms": 71.1875,
+      "min_ms": 71.1875,
+      "max_ms": 91.1875,
+      "stdev_ms": 9.74996043043569,
+      "events": [
+        {
+          "video_pts_48k": 179520,
+          "audio_pts_48k": 183897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 228480,
+          "audio_pts_48k": 231897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 275520,
+          "audio_pts_48k": 279897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 324480,
+          "audio_pts_48k": 327897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 371520,
+          "audio_pts_48k": 375897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 420480,
+          "audio_pts_48k": 423897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 467520,
+          "audio_pts_48k": 471897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 516480,
+          "audio_pts_48k": 519897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 563520,
+          "audio_pts_48k": 567897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 612480,
+          "audio_pts_48k": 615897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 660480,
+          "audio_pts_48k": 663897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 708480,
+          "audio_pts_48k": 711897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 756480,
+          "audio_pts_48k": 759897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 804480,
+          "audio_pts_48k": 807897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 851520,
+          "audio_pts_48k": 855897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 900480,
+          "audio_pts_48k": 903897,
+          "audio_minus_video_ms": 71.1875
+        },
+        {
+          "video_pts_48k": 947520,
+          "audio_pts_48k": 951897,
+          "audio_minus_video_ms": 91.1875
+        },
+        {
+          "video_pts_48k": 996480,
+          "audio_pts_48k": 999897,
+          "audio_minus_video_ms": 71.1875
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Periodic 1 Hz pattern: nearest pairing assumes offset within 400 ms; larger offsets are ambiguous.",
+    "Browser visual onset is frame-quantised; this does not establish sub-frame source synchrony.",
+    "Input A/V offset requires a known scheduled reference; no input correction applied.",
+    "Shared-device loopback does not test drift between independent devices."
+  ]
+}

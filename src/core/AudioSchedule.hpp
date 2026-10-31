@@ -37,7 +37,8 @@ public:
     int64_t calibrate(int64_t host,int64_t played,uint32_t sourceAge){const auto old=sourceOrigin_;sourceOrigin_=host-played-int64_t(target_)-sourceAge;return sourceOrigin_-old;}
     int64_t calibrateQueue(int64_t host,uint32_t buffered,uint32_t sourceAge){return calibrate(host,cursor_-int64_t(buffered),sourceAge);}
     uint32_t target()const{return target_;}
-    uint32_t blockSize(uint32_t buffered)const{return buffered>=target_?0:std::min<uint32_t>(1024,target_-buffered);}
+    uint32_t paddingRemaining(uint32_t initialPadding)const{return cursor_>=initialPadding?0:uint32_t(initialPadding-cursor_);}
+    uint32_t blockSize(uint32_t buffered,uint32_t initialPadding=0)const{const auto count=buffered>=target_?0:std::min<uint32_t>(1024,target_-buffered);const auto padding=paddingRemaining(initialPadding);return padding?std::min(count,padding):count;}
     uint32_t bufferedSpan(uint32_t deviceBuffered,int64_t played)const{const auto ahead=cursor_>played?uint64_t(cursor_-played):0;return std::max(deviceBuffered,uint32_t(std::min<uint64_t>(ahead,UINT32_MAX)));}
     bool recover(int64_t played,uint32_t lead){if(played<=cursor_)return false;cursor_=played+lead;return true;}
     bool catchUp(int64_t played){return recover(played,0);}

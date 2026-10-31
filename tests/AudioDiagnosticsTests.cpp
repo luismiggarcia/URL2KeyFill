@@ -39,6 +39,16 @@ int main(){try{
  REQUIRE(!acquisition.observe(1007000,1000,1)); // Startup offset changed: reacquire.
  REQUIRE(!acquisition.observe(1007100,1100,1));REQUIRE(!acquisition.observe(1007200,1200,1));
  REQUIRE(acquisition.observe(1007300,1300,1));
+ // Initial silence ends exactly on a frame boundary, even after partial writes.
+ for(uint32_t lead:{960u,1920u}){
+  auto startup=AudioSchedule::fromHostAnchor(1000000-lead,lead*3,2880);
+  uint32_t buffered=0,padding=0;
+  while(startup.paddingRemaining(lead)){const auto count=startup.blockSize(buffered,lead);REQUIRE(count<=startup.paddingRemaining(lead));const auto written=std::min(count,137u);padding+=written;buffered+=written;startup.advance(written);}
+  REQUIRE(padding==lead);REQUIRE(startup.cursor()==lead);REQUIRE(startup.paddingRemaining(lead)==0);
+  const auto firstProgramme=startup.readStart();REQUIRE(firstProgramme==1000000-int64_t(lead*3)-2880);
+  REQUIRE(startup.blockSize(buffered,lead)==std::min(1024u,lead*2));
+  startup.advance(startup.blockSize(buffered,lead));REQUIRE(startup.paddingRemaining(lead)==0);
+ }
  REQUIRE(schedule.readStart()==42240);REQUIRE(schedule.blockSize(0)==1024);
  REQUIRE(schedule.blockSize(5700)==60);REQUIRE(schedule.blockSize(5760)==0);
  schedule.advance(400);REQUIRE(schedule.readStart()==42640);REQUIRE(schedule.cursor()==400);

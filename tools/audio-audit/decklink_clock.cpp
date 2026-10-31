@@ -48,21 +48,21 @@ public:
 
 // Use the SDK sample's readiness-driven preroll for the A/V reference.
 class ReferenceAudio final:public IDeckLinkAudioOutputCallback {
- IDeckLinkOutput* output_;int64_t scale_;std::vector<int32_t> pcm_;
+ IDeckLinkOutput* output_;int64_t scale_;uint32_t audioTarget_,videoTarget_;std::vector<int32_t> pcm_;
 public:
  std::atomic<bool> started{false},requested{false};std::atomic<uint64_t> errors{0};std::atomic<int64_t> written{0};
- ReferenceAudio(IDeckLinkOutput* output,int64_t scale):output_(output),scale_(scale),pcm_(4800){}
+ ReferenceAudio(IDeckLinkOutput* output,int64_t scale,uint32_t audioTarget,uint32_t videoTarget):output_(output),scale_(scale),audioTarget_(audioTarget),videoTarget_(videoTarget),pcm_(4800){}
  HRESULT QueryInterface(REFIID,LPVOID* p)override{if(p)*p=nullptr;return E_NOINTERFACE;}
  ULONG AddRef()override{return 1;}ULONG Release()override{return 1;}
  HRESULT RenderAudioSamples(bool preroll)override{
   uint32_t buffered=0;if(output_->GetBufferedAudioSampleFrameCount(&buffered)!=S_OK){++errors;return E_FAIL;}
   const auto before=buffered;
-  for(int block=0;buffered<9600&&block<8;++block){const uint32_t n=std::min<uint32_t>(2400,9600-buffered);const auto start=written.load();
+  for(int block=0;buffered<audioTarget_&&block<8;++block){const uint32_t n=std::min<uint32_t>(2400,audioTarget_-buffered);const auto start=written.load();
    for(uint32_t i=0;i<n;++i){const double t=double((start+i)%48000)/48000.;const double envelope=std::max(0.,std::min({1.,t/.002,(.04-t)/.002}));const auto v=int32_t(t<.04?std::sin(2*3.141592653589793*1000*t)*envelope*270352173.:0);pcm_[i*2]=pcm_[i*2+1]=v;}
    uint32_t done=0;if(output_->ScheduleAudioSamples(pcm_.data(),n,start,48000,&done)!=S_OK){++errors;return E_FAIL;}if(!done)break;written+=done;buffered+=done;
   }
   uint32_t frames=0;
-  if(preroll&&before>=9600&&output_->GetBufferedVideoFrameCount(&frames)==S_OK&&frames>=4&&!requested.exchange(true)){
+  if(preroll&&before>=audioTarget_&&output_->GetBufferedVideoFrameCount(&frames)==S_OK&&frames>=videoTarget_&&!requested.exchange(true)){
    if(output_->StartScheduledPlayback(0,scale_,1.0)!=S_OK){++errors;return E_FAIL;}started=true;
   }return S_OK;
  }
@@ -80,8 +80,9 @@ static Fit fit(const std::vector<Sample>& s,double unitsPerSecond,int64_t Sample
 }
 
 int main(int argc,char** argv){
-    bool avReference=false;double seconds=600;std::string modeName="1080p25",csv;
-    for(int i=1;i+1<argc;i+=2){if(!std::strcmp(argv[i],"--seconds"))seconds=std::atof(argv[i+1]);else if(!std::strcmp(argv[i],"--mode"))modeName=argv[i+1];else if(!std::strcmp(argv[i],"--av-reference"))avReference=std::string(argv[i+1])=="1";else if(!std::strcmp(argv[i],"--csv"))csv=argv[i+1];}
+    uint32_t videoPreroll=4,audioPreroll=9600;bool avReference=false;double seconds=600;std::string modeName="1080p25",csv;
+    for(int i=1;i+1<argc;i+=2){if(!std::strcmp(argv[i],"--seconds"))seconds=std::atof(argv[i+1]);else if(!std::strcmp(argv[i],"--mode"))modeName=argv[i+1];else if(!std::strcmp(argv[i],"--av-reference"))avReference=std::string(argv[i+1])=="1";else if(!std::strcmp(argv[i],"--video-preroll"))videoPreroll=uint32_t(std::atoi(argv[i+1]));else if(!std::strcmp(argv[i],"--audio-preroll"))audioPreroll=uint32_t(std::atoi(argv[i+1]));else if(!std::strcmp(argv[i],"--csv"))csv=argv[i+1];}
+    if(videoPreroll<3||videoPreroll>8||audioPreroll<480||audioPreroll>12000||(!avReference&&(videoPreroll!=4||audioPreroll!=9600))){std::fprintf(stderr,"Invalid reference preroll settings\n");return 2;}
     const BMDDisplayMode mode=modeName=="1080p50"?bmdModeHD1080p50:modeName=="1080p5994"?bmdModeHD1080p5994:bmdModeHD1080p25;
     std::signal(SIGINT,[](int){interrupted=true;});std::signal(SIGTERM,[](int){interrupted=true;});
 
@@ -102,7 +103,7 @@ int main(int argc,char** argv){
     IDeckLinkKeyer* keyer=nullptr;
     if(keyed){check(device->QueryInterface(IID_IDeckLinkKeyer,(void**)&keyer),"Get keyer");check(keyer->Enable(true),"Enable external keying");check(keyer->SetLevel(255),"Set key level");}
     VideoCallback callback(output,duration,scale,avReference);check(output->SetScheduledFrameCompletionCallback(&callback),"Video callback");
-    std::vector<IDeckLinkMutableVideoFrame*> frames(4);
+    std::vector<IDeckLinkMutableVideoFrame*> frames(videoPreroll);
     for(auto& f:frames){
         check(output->CreateVideoFrame(width,height,width*4,bmdFormat8BitBGRA,bmdFrameFlagDefault,&f),"CreateVideoFrame");
         IDeckLinkVideoBuffer* buffer=nullptr;check(f->QueryInterface(IID_IDeckLinkVideoBuffer,(void**)&buffer),"Video buffer");
@@ -111,7 +112,7 @@ int main(int argc,char** argv){
         check(output->ScheduleVideoFrame(f,index*duration,duration,scale),"ScheduleVideoFrame");
     }
     check(output->EnableAudioOutput(bmdAudioSampleRate48kHz,bmdAudioSampleType32bitInteger,2,bmdAudioOutputStreamTimestamped),"EnableAudioOutput");
-    std::vector<int32_t> silence(2*2400,0);int64_t written=0;ReferenceAudio referenceAudio(output,scale);
+    std::vector<int32_t> silence(2*2400,0);int64_t written=0;ReferenceAudio referenceAudio(output,scale,audioPreroll,videoPreroll);
     auto feed=[&](uint32_t target){uint32_t buffered=0;output->GetBufferedAudioSampleFrameCount(&buffered);
         while(buffered<target){uint32_t done=0;if(output->ScheduleAudioSamples(silence.data(),2400,written,48000,&done)!=S_OK||!done)break;written+=done;buffered+=done;}return buffered;};
     if(avReference)check(output->SetAudioCallback(&referenceAudio),"Reference audio callback");

@@ -1,0 +1,32 @@
+{
+  "reference_sha256": "800d42853b88c39088655a01b87d81a98ecbaf54e2757cf7fd86b2f297459dd2",
+  "mode": "1080p50",
+  "seconds": 5,
+  "settings": [
+    {
+      "video_frames": 3,
+      "audio_frames": 2880
+    },
+    {
+      "video_frames": 3,
+      "audio_frames": 2880
+    },
+    {
+      "video_frames": 4,
+      "audio_frames": 2880
+    },
+    {
+      "video_frames": 4,
+      "audio_frames": 2880
+    },
+    {
+      "video_frames": 3,
+      "audio_frames": 9600
+    },
+    {
+      "video_frames": 3,
+      "audio_frames": 9600
+    }
+  ],
+  "all_exit_codes_zero": true
+}

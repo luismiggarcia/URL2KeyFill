@@ -63,6 +63,13 @@ def summarise(rows, warmup):
                     recovery_publication_after_read_ms=(recovery-host)/48 if recovery else None))
             result[layer]['latest_gap_snapshots'] = events
             result[layer]['gap_snapshots_note'] = 'Latest read only per reporting interval; sequence jumps indicate overwritten events. Recovery describes tail coverage only.'
+        for field in ['preroll_audio_frames', 'preroll_video_frames', 'startup_sync_frames', 'startup_lead_frames', 'startup_audio_padding_frames']:
+            if field in data[0]:
+                result[layer][field] = max(int(r[field]) for r in data)
+        if 'startup_sync_ms' in data[0]:
+            result[layer]['startup_sync_ms'] = max(float(r['startup_sync_ms']) for r in data)
+        if 'first_dropped_frame' in data[0]:
+            result[layer]['first_dropped_frame'] = next((int(r['first_dropped_frame']) for r in data if int(r['first_dropped_frame']) >= 0), None)
         ages = [float(r['last_read_age_ms']) for r in data if r.get('last_read_age_ms')]
         if ages:
             result[layer]['last_read_age_min_ms'] = min(ages)

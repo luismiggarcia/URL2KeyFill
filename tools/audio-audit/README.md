@@ -235,3 +235,45 @@ matched pulse range. This same-device test does not validate independent clock d
 The short clock-rate fits printed by the SDK reference are not used as ppm evidence.
 
 Validate the analyser with `PYTHONDONTWRITEBYTECODE=1 python3 tools/audio-audit/test_loopback.py`.
+
+### Startup readiness telemetry
+
+`preroll_audio_frames` / `preroll_video_frames` are the SDK-reported queue counts
+used to authorise StartScheduledPlayback from the actual audio preroll callback.
+They are not estimated counts of writes accepted by ScheduleAudioSamples. Normal
+reserves remain three video frames and the existing audio target. A five-second
+preroll-readiness wait returns a controlled failure; fatal callback errors wake the waiter.
+The video worker is waiting before the first possible frame completion.
+
+`first_dropped_frame` is the zero-based scheduled frame index of the first SDK drop,
+recorded through the three reusable frame slots. -1 means absent/unknown; always
+consult dropped_video too. Frame pointer/index metadata uses atomics and the capture
+diagnostic does not allocate or make extra driver calls in the video callback.
+`analyze_headroom.py` includes these optional fields without changing old CSV results.
+Startup readiness and content A/V phase remain separate acceptance criteria.
+
+The SDK reference also accepts `--video-preroll 3..8` and
+`--audio-preroll 480..12000` in `--av-reference 1` mode. Defaults remain 4 frames /
+9600 audio samples; `--video-preroll 3 --audio-preroll 2880` matches the app's
+50p reserve. These settings are for diagnostic comparison, not new app defaults.
+The app now enables audio output before scheduling any video, matching the SDK
+SignalGenerator ordering, in addition to starting from actual preroll readiness.
+
+Before scheduled preroll, the app sends one transparent-black frame with
+DisplayVideoFrameSync to initialise the physical video path. This is an explicit
+startup frame, not a scheduled programme frame: `startup_sync_frames` and
+`startup_sync_ms` report the successful preparation and duration separately. It
+reuses one of the three video slots, with no additional steady-state queue or DSP.
+If preparation fails, startup fails and owned resources are released. This is not
+a fixed sleep or a dropped programme frame removed from the counter.
+
+`startup_lead_frames` declares the initial programme lead (one frame). Programme
+frame 0 is scheduled at that future instant, and **still has programme index 0**
+in first_dropped_frame diagnostics. No programme frame is removed or drop counter
+suppressed. `startup_audio_padding_frames` counts actual scheduled initial silence
+(960 samples at 50p; 1920 at 25p). This pads the same startup interval before source
+PCM, with separate accounting from pre_source_padding_frames. Partial writes stop
+exactly at the boundary. Phase acquisition waits until the initial padding and two
+queue depths have been consumed; after acquisition the normal source-age budget
+still applies. This adds an explicit startup interval, not a permanent extra queue.
+Fractional frame intervals round initial audio padding up to the next sample.
