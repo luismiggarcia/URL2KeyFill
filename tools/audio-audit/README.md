@@ -210,9 +210,14 @@ Run `run-loopback.py` with `--capture /tmp/u2k-decklink-capture`, a **new**
   path, not an independent calibration of input alone. Compare the same mode and
   repeat after restarts; do not assume an identical offset across modes.
 
-By default the runner starts playback and waits 4 s before enabling input, so the
-input locks to an established signal. `--settle-seconds 0` reproduces capture-first
-startup for diagnostics; its offsets must not be assumed to be valid calibration.
+By default the runner starts playback and waits 4 s before enabling input;
+`--settle-seconds` accepts 1–10 s. Input first warms until one second of consecutive
+valid audio/video (six-second deadline), then stops, flushes and restarts with reset
+measurement counters. READY is emitted only after this sequence. The runner ends
+recording one second before playback is due to stop, avoiding output reconfiguration
+inside the measurement. At least eight seconds of recording must remain; use 30 s
+or longer (at least 25 s recommended). Any recorded no-signal event invalidates the
+measurement. The probe disables recording before its own StopStreams.
 The runner waits for input readiness, hashes both executables, captures exit codes,
 and saves logs, timestamps, per-pulse results and app telemetry. `analyze_loopback.py`
 can also analyse a captured CSV directly. Positive `audio_minus_video_ms` means
@@ -277,3 +282,24 @@ exactly at the boundary. Phase acquisition waits until the initial padding and t
 queue depths have been consumed; after acquisition the normal source-age budget
 still applies. This adds an explicit startup interval, not a permanent extra queue.
 Fractional frame intervals round initial audio padding up to the next sample.
+
+### Temporal video selection and diagnostic decomposition
+
+The output selects bounded historical video on the audio source mapping; preview
+continues to show the latest frame. SDR pixels are prepared before scheduling and
+released on STOP. See `docs/ARCHITECTURE.md` for the 16-frame / 192–384 MiB bounds,
+half-frame selection tolerance and scoped macOS activity. No accelerated IOSurface
+path or empirical fixed A/V offset is enabled.
+
+`analyze_pipeline_sync.py application.csv --capture-result result.json` compares
+source flash arrival versus audio PTS, scheduled A/V and measured A/V. These source
+and scheduled markers are enabled only by `--sdi-av-test`. A stable calibrated audio
+origin and at least five matched events are required; multiple origins are rejected.
+Paint arrival is not content PTS. Snapshot windows can omit events, so differing
+phase clusters produce a conservative difference range rather than a subtraction
+of medians presented as transport delay. Input latency remains included.
+
+Run `PYTHONDONTWRITEBYTECODE=1 python3 tools/audio-audit/test_pipeline_sync.py`
+(four tests), alongside `test_loopback.py` (nine tests). Final evidence, rejected
+experiments and fixed-output/input-restart controls are under
+`data/video-timeline-2026-10-31/`; acceptance remains partial as explained in audit §10.9.

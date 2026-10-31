@@ -54,6 +54,10 @@ class LoopbackTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             analyse(rows)
 
+    def test_input_relock_rejected(self):
+        rows = fixture();rows.append(dict(kind='no_signal', pts_48k='0', duration_48k='1920', value='0'))
+        with self.assertRaises(ValueError):analyse(rows)
+
     def test_video_gap_is_reported(self):
         rows = fixture()
         rows = [r for r in rows if not (r['kind'] == 'video' and int(r['pts_48k']) == 48000*4)]

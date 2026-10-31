@@ -13,6 +13,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <thread>
+#include <pthread/qos.h>
 
 namespace u2k {
 namespace {
@@ -34,7 +35,7 @@ struct CompletionState {
     std::mutex mutex;std::condition_variable cv;
     std::deque<IDeckLinkVideoFrame*> free;
     std::atomic<uint64_t> completed{0},late{0},dropped{0};
-    std::atomic<bool> accepting{false};
+    std::atomic<bool> accepting{false},workerQos{false};
     static constexpr uint32_t startupLeadFrames=1;
     std::array<std::atomic<IDeckLinkVideoFrame*>,3> slots{};std::array<std::atomic<int64_t>,3> scheduled{};
     std::atomic<int64_t> firstDroppedFrame{-1},warmupSamples{0};std::atomic<uint32_t> warmupFrames{0};
@@ -68,10 +69,11 @@ public:
  std::atomic<int64_t> readAge{INT64_MIN};
  std::atomic<bool> clockCalibrated{false};std::atomic<int64_t> startupShift{0};
  std::atomic<bool> playbackStarted{false};
+ std::atomic<int64_t> sourceOrigin{0};
  std::atomic<uint32_t> startupPaddingWritten{0};std::atomic<int64_t> streamQueuePhase{0};std::atomic<uint32_t> prerollAudio{0},prerollVideo{0};
  uint32_t targetFrames()const{return schedule_.target();}
  AudioCallback(IDeckLinkOutput* o,std::shared_ptr<AudioMixer> m,const Mode& mode,uint32_t sourceAge):output_(o),mixer_(std::move(m)),playbackScale_(mode.rate.scale),startupPadding_(uint32_t((mode.rate.duration*48000+mode.rate.scale-1)/mode.rate.scale)),sourceAge_(sourceAge){
-  output_->AddRef();const auto target=uint32_t(std::clamp<int64_t>((3*mode.rate.duration*48000+mode.rate.scale-1)/mode.rate.scale,1440,12000));schedule_=AudioSchedule::fromHostAnchor(mediaSampleTime()-startupPadding_,target,sourceAge);phase_.reset(startupPadding_+2*target);
+  output_->AddRef();const auto target=uint32_t(std::clamp<int64_t>((3*mode.rate.duration*48000+mode.rate.scale-1)/mode.rate.scale,1440,12000));schedule_=AudioSchedule::fromHostAnchor(mediaSampleTime()-startupPadding_,target,sourceAge);phase_.reset(startupPadding_+2*target);sourceOrigin=schedule_.sourceOrigin();
  }
  ~AudioCallback(){output_->Release();}
  HRESULT QueryInterface(REFIID iid,LPVOID* p)override{if(!p)return E_INVALIDARG;*p=nullptr;const auto unknown=CFUUIDGetUUIDBytes(IUnknownUUID);if(!std::memcmp(&iid,&unknown,sizeof(iid))||!std::memcmp(&iid,&IID_IDeckLinkAudioOutputCallback,sizeof(iid))){*p=static_cast<IDeckLinkAudioOutputCallback*>(this);AddRef();return S_OK;}return E_NOINTERFACE;}
@@ -90,7 +92,7 @@ public:
   if(recovered){++recoveries;clockCalibrated=false;phase_.reset(schedule_.cursor()+schedule_.target());}
   const auto consumed=schedule_.cursor()-int64_t(buffered);
   if(activeTime&&(recovered||(!clockCalibrated&&phase_.observe(queueBefore+(queueAfter-queueBefore)/2,consumed,queueAfter-queueBefore)))){
-   oldOrigin_=schedule_.sourceOrigin();startupShift=schedule_.calibrateQueue(queueBefore+(queueAfter-queueBefore)/2,buffered,sourceAge_);fadePosition_=startupShift?0:240;clockCalibrated=!recovered;
+   oldOrigin_=schedule_.sourceOrigin();startupShift=schedule_.calibrateQueue(queueBefore+(queueAfter-queueBefore)/2,buffered,sourceAge_);fadePosition_=startupShift?0:240;sourceOrigin=schedule_.sourceOrigin();clockCalibrated=!recovered;
   }
   // The SDK stream clock and audio queue can have different phase. The producer
   // clock is paired with actual queue consumption, not the video stream position.
@@ -126,6 +128,8 @@ class DeckLink final:public Output {
     mutable std::mutex messageMutex_;std::string message_="Output stopped.";
     std::shared_ptr<const Frame> cachedSource_;std::vector<uint8_t> converted_;bool cachedAir_=false;
     std::thread worker_;Mode mode_;const LatestFrame* source_=nullptr;uint64_t next_=0;
+    bool syncDiagnostic_=false,syncWhite_=false;std::atomic<int64_t> scheduledFlashPts_{INT64_MIN};std::atomic<uint64_t> scheduledFlashCount_{0};
+    std::atomic<uint64_t> historyMisses_{0},historyReads_{0},historyStartupMisses_{0},preparedReads_{0},conversionFallbacks_{0};std::atomic<int64_t> selectedAge_{INT64_MIN};
     uint32_t sourceAge_=2880; // Provisional 60 ms on raw PTS; independent of the SDI reserve.
     bool videoEnabled_=false,audioEnabled_=false,videoCallbackSet_=false,audioCallbackSet_=false,keyerEnabled_=false,playbackStarted_=false;
     void message(std::string s){std::lock_guard<std::mutex> l(messageMutex_);message_=std::move(s);}
@@ -135,20 +139,35 @@ class DeckLink final:public Output {
         check(buffer->StartAccess(bmdBufferAccessWrite),"Access video buffer");
         void* bytes=nullptr;auto result=buffer->GetBytes(&bytes);
         try {
-            check(result,"Get video memory");auto image=source_->get();
-            const bool air=air_;const size_t length=size_t(f->GetRowBytes())*f->GetHeight();
+            check(result,"Get video memory");std::shared_ptr<const Frame> image;std::shared_ptr<const std::vector<uint8_t>> prepared;
+            if(audioCallback_){
+                const auto streamPosition=mode_.rate.timestamp(next_+CompletionState::startupLeadFrames)*48000/mode_.rate.scale;
+                const auto target=audioCallback_->sourceOrigin.load()+streamPosition;
+                auto selected=source_->history.at(target,mode_.rate.duration*48000/(2*mode_.rate.scale));if(selected.frame&&selected.frame->size!=mode_.size)selected={};image=selected.frame;prepared=selected.prepared;++historyReads_;
+                if(!image){if(audioCallback_->clockCalibrated)++historyMisses_;else ++historyStartupMisses_;selectedAge_=INT64_MIN;}
+                else selectedAge_=target-selected.time;
+            }
+            const bool air=air_;
+            if(syncDiagnostic_){bool white=false;if(air&&image&&image->size==mode_.size){const auto pixel=image->pixels.data()+(size_t(image->size.height/2)*image->size.width+image->size.width/2)*4;white=pixel[0]>200&&pixel[1]>200&&pixel[2]>200&&pixel[3]>200;}if(white&&!syncWhite_){scheduledFlashPts_=mode_.rate.timestamp(next_+CompletionState::startupLeadFrames)*48000/mode_.rate.scale;++scheduledFlashCount_;}syncWhite_=white;}
+            const size_t length=size_t(f->GetRowBytes())*f->GetHeight();
+            if(prepared&&image&&image->size==mode_.size&&air){
+                ++preparedReads_;
+                for(int y=0;y<image->size.height;++y){auto row=static_cast<uint8_t*>(bytes)+size_t(y)*f->GetRowBytes();std::memcpy(row,prepared->data()+size_t(y)*image->stride,image->stride);if(size_t(f->GetRowBytes())>image->stride)std::memset(row+image->stride,0,size_t(f->GetRowBytes())-image->stride);}
+            }else{
             if(converted_.size()!=length||cachedSource_!=image||cachedAir_!=air){
                 converted_.assign(length,0);
-                if(image&&image->size==mode_.size)toSDR(*image,converted_.data(),f->GetRowBytes(),air,mode_.pixelFormat==bmdFormat8BitARGB);
+                if(image&&image->size==mode_.size){if(air)++conversionFallbacks_;toSDR(*image,converted_.data(),f->GetRowBytes(),air,mode_.pixelFormat==bmdFormat8BitARGB);}
                 cachedSource_=image;cachedAir_=air;
             }
             std::memcpy(bytes,converted_.data(),length);
+            }
         }catch(...){buffer->EndAccess(bmdBufferAccessWrite);throw;}
         check(buffer->EndAccess(bmdBufferAccessWrite),"Release video buffer access");
         for(size_t i=0;i<state_->slots.size();++i)if(state_->slots[i]==f)state_->scheduled[i]=int64_t(next_);
         check(output_->ScheduleVideoFrame(f,mode_.rate.timestamp(next_+CompletionState::startupLeadFrames),mode_.rate.duration,mode_.rate.scale),"Schedule video frame");++next_;
     }
     void work(){
+        state_->workerQos=pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE,0)==0;
         try{while(!quit_){
             std::unique_lock<std::mutex> l(state_->mutex);
             if(!state_->cv.wait_for(l,std::chrono::seconds(2),[this]{return quit_||!state_->free.empty();})){
@@ -220,7 +239,7 @@ public:
             // SignalGenerator startup order; enabling audio may initialise transport.
             check(output_->EnableAudioOutput(bmdAudioSampleRate48kHz,bmdAudioSampleType32bitInteger,2,bmdAudioOutputStreamTimestamped),"Enable 48 kHz stereo SDI audio");
             audioEnabled_=true;
-            source_=&source;next_=0;quit_=false;air_=true;state_=std::make_shared<CompletionState>();callback_=Com<Callback>(new Callback(state_));
+            source_=&source;source_->history.prepareOutput(mode_.pixelFormat==bmdFormat8BitARGB,384*1024*1024);next_=0;quit_=false;air_=true;state_=std::make_shared<CompletionState>();callback_=Com<Callback>(new Callback(state_));
             check(output_->SetScheduledFrameCompletionCallback(callback_.get()),"Register video callback");
             videoCallbackSet_=true;
             int32_t stride=0;check(output_->RowBytesForPixelFormat(BMDPixelFormat(mode_.pixelFormat),mode_.size.width,&stride),"Get video stride");
@@ -240,8 +259,9 @@ public:
                 std::memset(bytes,0,size_t(stride)*mode_.size.height);check(blank->EndAccess(bmdBufferAccessWrite),"Release startup video buffer");
                 const auto before=mediaSampleTime();check(output_->DisplayVideoFrameSync(pool_.front().get()),"Prepare physical video output");state_->warmupSamples=mediaSampleTime()-before;state_->warmupFrames=1;
             }
-            for(auto& f:pool_)schedule(f.get());
             mixer_->enabled=true;audioCallback_=Com<AudioCallback>(new AudioCallback(output_.get(),mixer_,mode_,sourceAge_));
+            historyMisses_=0;historyStartupMisses_=0;preparedReads_=0;conversionFallbacks_=0;historyReads_=0;selectedAge_=INT64_MIN;syncWhite_=false;scheduledFlashPts_=INT64_MIN;scheduledFlashCount_=0;
+            for(auto& f:pool_)schedule(f.get());
             check(output_->SetAudioCallback(audioCallback_.get()),"Register SDI audio callback");
             audioCallbackSet_=true;
             // Have the video worker waiting before the first hardware completion.
@@ -252,6 +272,7 @@ public:
             message(mode_.keying?"SDI active · Fill + Key · stereo audio":"SDI active · Fill only · stereo audio");
         }catch(...){stop();throw;}
     }
+    void syncDiagnostic(bool enabled)override{if(running_)throw std::runtime_error("Stop output before changing diagnostics.");syncDiagnostic_=enabled;}
     void onAir(bool value)override{air_=value;if(audioCallback_)audioCallback_->programActive=value;}
     void audio(std::shared_ptr<AudioMixer> mixer)override{if(running_)throw std::runtime_error("Stop output before changing the audio mixer.");mixer_=std::move(mixer);}
     void audioSourceAge(uint32_t samples)override{if(running_)throw std::runtime_error("Stop output before changing source age.");if(samples<480||samples>9600)throw std::invalid_argument("Source age must be 10–200 ms");sourceAge_=samples;}
@@ -261,9 +282,9 @@ public:
         // A failed Enable on an occupied device must not disable another owner's output.
         if(output_){if(audioCallbackSet_)output_->SetAudioCallback(nullptr);if(audioEnabled_)output_->DisableAudioOutput();if(playbackStarted_)output_->StopScheduledPlayback(0,nullptr,mode_.rate.scale);if(videoCallbackSet_)output_->SetScheduledFrameCompletionCallback(nullptr);if(keyer_&&keyerEnabled_)keyer_->Disable();if(videoEnabled_)output_->DisableVideoOutput();}
         videoEnabled_=audioEnabled_=videoCallbackSet_=audioCallbackSet_=keyerEnabled_=playbackStarted_=false;
-        running_=false;air_=true;mixer_->enabled=true;audioCallback_=Com<AudioCallback>();cachedSource_.reset();converted_.clear();pool_.clear();callback_=Com<Callback>();keyer_=Com<IDeckLinkKeyer>();output_=Com<IDeckLinkOutput>();device_=Com<IDeckLink>();
+        running_=false;air_=true;mixer_->enabled=true;audioCallback_=Com<AudioCallback>();if(source_)source_->history.prepareOutput(std::nullopt,192*1024*1024);source_=nullptr;cachedSource_.reset();converted_.clear();pool_.clear();callback_=Com<Callback>();keyer_=Com<IDeckLinkKeyer>();output_=Com<IDeckLinkOutput>();device_=Com<IDeckLink>();
     }
-    OutputStatus status()const override{std::lock_guard<std::mutex> l(messageMutex_);return {running_,air_,state_->completed,state_->late,state_->dropped,message_,audioCallback_?audioCallback_->frames.load():0,audioCallback_?audioCallback_->errors.load():0,audioCallback_?audioCallback_->recoveries.load():0,audioCallback_?audioCallback_->bufferedFrames.load():0,audioCallback_?audioCallback_->targetFrames():0,sourceAge_,audioCallback_?audioCallback_->readAge.load():INT64_MIN,audioCallback_?audioCallback_->clockCalibrated.load():false,audioCallback_?audioCallback_->startupShift.load():0,audioCallback_?audioCallback_->streamQueuePhase.load():0,audioCallback_?audioCallback_->prerollAudio.load():0,audioCallback_?audioCallback_->prerollVideo.load():0,state_->firstDroppedFrame.load(),state_->warmupFrames.load(),state_->warmupSamples.load(),CompletionState::startupLeadFrames,audioCallback_?audioCallback_->startupPaddingWritten.load():0};}
+    OutputStatus status()const override{std::lock_guard<std::mutex> l(messageMutex_);return {running_,air_,state_->completed,state_->late,state_->dropped,message_,audioCallback_?audioCallback_->frames.load():0,audioCallback_?audioCallback_->errors.load():0,audioCallback_?audioCallback_->recoveries.load():0,audioCallback_?audioCallback_->bufferedFrames.load():0,audioCallback_?audioCallback_->targetFrames():0,sourceAge_,audioCallback_?audioCallback_->readAge.load():INT64_MIN,audioCallback_?audioCallback_->clockCalibrated.load():false,audioCallback_?audioCallback_->startupShift.load():0,audioCallback_?audioCallback_->streamQueuePhase.load():0,audioCallback_?audioCallback_->prerollAudio.load():0,audioCallback_?audioCallback_->prerollVideo.load():0,state_->firstDroppedFrame.load(),state_->warmupFrames.load(),state_->warmupSamples.load(),CompletionState::startupLeadFrames,audioCallback_?audioCallback_->startupPaddingWritten.load():0,historyReads_.load(),historyMisses_.load(),selectedAge_.load(),source_?source_->history.bytes():0,audioCallback_?audioCallback_->sourceOrigin.load():0,scheduledFlashPts_.load(),scheduledFlashCount_.load(),historyStartupMisses_.load(),preparedReads_.load(),conversionFallbacks_.load(),state_->workerQos.load()};}
 };
 std::unique_ptr<Output> makeOutput(){return std::make_unique<DeckLink>();}
 }

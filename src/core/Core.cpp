@@ -48,13 +48,46 @@ Settings Settings::load(const std::filesystem::path& p) {
     if(header=="URL2KeyFill 2"){int match=0;if(!(f>>match)||match<0||match>1)throw std::runtime_error("Invalid viewport option.");s.matchOutput=match;}else s.matchOutput=false;
     f>>std::ws;if(!f.eof())throw std::runtime_error("Unexpected settings data.");s.validate();return s;
 }
+static size_t historyBytes(const TimedFrame& f){return f.frame->pixels.size()+(f.prepared?f.prepared->size():0);}
+void FrameHistory::trim(){while(frames_.size()>1&&(frames_.size()>maxFrames_||bytes_>maxBytes_||(frames_.size()>2&&frames_.back().time-frames_[1].time>maxSpan_))){bytes_-=historyBytes(frames_.front());frames_.pop_front();}}
+void FrameHistory::configure(size_t frames,size_t bytes,int64_t span){std::lock_guard<std::mutex> lock(mutex_);++generation_;frames_.clear();bytes_=0;maxFrames_=frames;maxBytes_=bytes;maxSpan_=std::max<int64_t>(0,span);argb_.reset();}
+void FrameHistory::clear(){std::lock_guard<std::mutex> lock(mutex_);++generation_;frames_.clear();bytes_=0;}
+size_t FrameHistory::bytes()const{std::lock_guard<std::mutex> lock(mutex_);return bytes_;}
+void FrameHistory::prepareOutput(std::optional<bool> argb,size_t budget){
+ std::vector<TimedFrame> pending;uint64_t generation;
+ {std::lock_guard<std::mutex> lock(mutex_);argb_=argb;maxBytes_=budget;generation=++generation_;bytes_=0;
+  for(auto& f:frames_){f.prepared.reset();bytes_+=f.frame->pixels.size();}trim();if(argb)pending.assign(frames_.begin(),frames_.end());}
+ for(auto& f:pending){if(f.frame->pixels.size()>budget/2)continue;auto prepared=std::make_shared<std::vector<uint8_t>>(f.frame->pixels.size(),0);toSDR(*f.frame,prepared->data(),f.frame->stride,true,*argb);
+  std::lock_guard<std::mutex> lock(mutex_);if(generation_!=generation)return;
+  for(auto& entry:frames_)if(entry.frame==f.frame&&entry.time==f.time&&!entry.prepared){entry.prepared=prepared;bytes_+=prepared->size();break;}trim();
+ }
+}
+void FrameHistory::publish(std::shared_ptr<const Frame> f,int64_t time){
+ std::optional<bool> argb;uint64_t generation;size_t budget;
+ {std::lock_guard<std::mutex> lock(mutex_);if(!f){++generation_;frames_.clear();bytes_=0;return;}
+  if(!maxFrames_||time==INT64_MIN)return;if(f->pixels.size()>maxBytes_){frames_.clear();bytes_=0;return;}
+  if(!frames_.empty()&&time<frames_.back().time)return;
+  if(!frames_.empty()&&frames_.back().frame==f&&frames_.back().time==time)return;
+  argb=argb_;generation=generation_;budget=maxBytes_;
+ }
+ std::shared_ptr<std::vector<uint8_t>> prepared;
+ if(argb&&f->pixels.size()<=budget/2){prepared=std::make_shared<std::vector<uint8_t>>(f->pixels.size(),0);toSDR(*f,prepared->data(),f->stride,true,*argb);}
+ std::lock_guard<std::mutex> lock(mutex_);if(generation!=generation_||(!frames_.empty()&&time<frames_.back().time))return;
+ frames_.push_back({std::move(f),time,std::move(prepared)});bytes_+=historyBytes(frames_.back());trim();
+}
+TimedFrame FrameHistory::at(int64_t time,int64_t maxAhead)const{
+ std::lock_guard<std::mutex> lock(mutex_);TimedFrame selected;int64_t best=INT64_MAX;
+ for(const auto& f:frames_){if(f.time>time&&f.time-time>maxAhead)continue;const auto distance=f.time>time?f.time-time:time-f.time;
+  if(distance<best||(distance==best&&(f.time==selected.time||(f.time<=time&&selected.time>time)))){selected=f;best=distance;}}
+ return selected;
+}
 Frame::Frame(Size s,uint64_t seq):size(s),stride(size_t(s.width)*4),sequence(seq){validate(s);pixels.resize(stride*s.height,0);}
-std::shared_ptr<const Frame> Frame::copy(Size s,const void* p,size_t row,uint64_t seq) {
+std::shared_ptr<const Frame> Frame::copy(Size s,const void* p,size_t row,uint64_t seq,int64_t paintTime) {
     validate(s);if(!p||row<size_t(s.width)*4)throw std::invalid_argument("Invalid BGRA buffer.");
-    auto f=std::make_shared<Frame>(s,seq);for(int y=0;y<s.height;y++)std::memcpy(f->pixels.data()+y*f->stride,static_cast<const uint8_t*>(p)+y*row,f->stride);return f;
+    auto f=std::make_shared<Frame>(s,seq);f->paintTime=paintTime;for(int y=0;y<s.height;y++)std::memcpy(f->pixels.data()+y*f->stride,static_cast<const uint8_t*>(p)+y*row,f->stride);return f;
 }
 std::shared_ptr<const Frame> resize(const Frame& src,Size dest) {
-    auto out=std::make_shared<Frame>(dest,src.sequence);auto r=fit(src.size,dest);
+    auto out=std::make_shared<Frame>(dest,src.sequence);out->paintTime=src.paintTime;auto r=fit(src.size,dest);
     if(src.size==dest){out->pixels=src.pixels;return out;}
     for(int y=0;y<r.height;y++) {
         double sy=std::clamp((y+0.5)*src.size.height/r.height-0.5,0.,double(src.size.height-1));

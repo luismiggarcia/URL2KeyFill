@@ -34,6 +34,7 @@ void AudioLane::push(const float* const* data,int n,int channels,int64_t pts){
  }
  timelineReady_=true;lastRawStart_=rawStart;lastFrames_=n;nextSample_=p.start+int64_t(p.frames());latestTimestamp=p.start;
  retain(peakLeft_,peaks[0]);retain(peakRight_,peaks[1]);nonZero+=signal;
+ if(syncDiagnostic)for(size_t j=0;j<p.frames();++j){const float value=std::abs(p.samples[(j+p.offset)*2]);if(value>.003f){if(syncQuiet_>=4800){syncPulsePts=p.start+int64_t(j);++syncPulseCount;}syncQuiet_=0;}else syncQuiet_=std::min(syncQuiet_+1,4800);}
  meterPackets_.push_back(p);
  while(meterPackets_.size()>64||(!meterPackets_.empty()&&meterPackets_.back().start-meterPackets_.front().start>24000))meterPackets_.pop_front();
  if(!sourceSeen_)firstSample_=p.start;packets_.push_back(std::move(p));sourceSeen_=true;
@@ -47,7 +48,7 @@ void AudioLane::push(const float* const* data,int n,int channels,int64_t pts){
  if(gap_.sequence&&gap_.generation==capturedGeneration&&!gap_.recoveryPublished&&gap_.newestEnd!=INT64_MIN&&gap_.newestEnd<gap_.end&&ready.start<=gap_.newestEnd&&nextSample_>=gap_.end){gap_.recoveryArrival=ready.arrival;gap_.recoveryPublished=published;gap_.recoveryStart=ready.start;gap_.recoveryEnd=nextSample_;}
 }
 std::pair<float,float> AudioLane::takePeaks(){return {peakLeft_.exchange(0,std::memory_order_relaxed),peakRight_.exchange(0,std::memory_order_relaxed)};}
-void AudioLane::clear(){std::lock_guard<std::mutex> lock(mutex_);++generation;packets_.clear();meterPackets_.clear();sourceSeen_=false;timelineReady_=false;sourceHeadroom=INT64_MIN;peakLeft_=0;peakRight_=0;}
+void AudioLane::clear(){std::lock_guard<std::mutex> lock(mutex_);++generation;packets_.clear();meterPackets_.clear();sourceSeen_=false;timelineReady_=false;syncQuiet_=4800;syncPulsePts=INT64_MIN;sourceHeadroom=INT64_MIN;peakLeft_=0;peakRight_=0;}
 AudioReadWindow AudioLane::takeReadWindow(){std::lock_guard<std::mutex> lock(mutex_);auto result=readWindow_;result.gap=gap_;readWindow_={};return result;}
 void AudioLane::mix(int64_t start,size_t n,float gain,std::vector<float>& out,bool mono,bool left,bool right){sum(start,n,gain,out,true,mono,left,right);}
 void AudioLane::sample(int64_t start,size_t n,float gain,std::vector<float>& out,bool mono,bool left,bool right){sum(start,n,gain,out,false,mono,left,right);}
@@ -104,20 +105,20 @@ std::shared_ptr<const Frame> composite(const std::vector<std::shared_ptr<const F
  std::shared_ptr<const Frame> single;size_t visible=0;
  for(const auto& layer:layers)if(layer){single=layer;++visible;}
  if(visible==1&&single->size==size)return single;
- auto out=std::make_shared<Frame>(size);
+ auto out=std::make_shared<Frame>(size);for(const auto& layer:layers)if(layer)out->paintTime=std::max(out->paintTime,layer->paintTime);
  for(auto it=layers.rbegin();it!=layers.rend();++it){if(!*it)continue;auto src=(*it)->size==size?*it:resize(**it,size);
   for(size_t i=0;i<out->pixels.size();i+=4){const int a=src->pixels[i+3];if(!a)continue;if(a==255){std::memcpy(out->pixels.data()+i,src->pixels.data()+i,4);continue;}for(int c=0;c<4;c++)out->pixels[i+c]=uint8_t(std::min(255,int(src->pixels[i+c])+(int(out->pixels[i+c])*(255-a)+127)/255));}
  }return out;
 }
-Scene::Scene(){worker_=std::thread([this]{run();});}
+Scene::Scene(){frames.history.configure(16,192*1024*1024);worker_=std::thread([this]{run();});}
 Scene::~Scene(){{std::lock_guard<std::mutex> lock(mutex_);quit_=true;for(auto& l:layers_)if(l.frames)l.frames->unsubscribe(signal_);}signal_->notify();worker_.join();}
-void Scene::configure(std::vector<ImageInput> v,Size viewport,Size target){validate(viewport);validate(target);std::lock_guard<std::mutex> lock(mutex_);if(layers_==v&&viewport_==viewport&&target_==target)return;for(auto& l:layers_)if(l.frames)l.frames->unsubscribe(signal_);layers_=std::move(v);for(auto& l:layers_)if(l.visible&&l.frames)l.frames->subscribe(signal_);viewport_=viewport;target_=target;++revision_;signal_->notify();}
-void Scene::run(){uint64_t previous=UINT64_MAX;std::vector<std::shared_ptr<const Frame>> held;
+void Scene::configure(std::vector<ImageInput> v,Size viewport,Size target){validate(viewport);validate(target);std::lock_guard<std::mutex> lock(mutex_);if(layers_==v&&viewport_==viewport&&target_==target)return;for(auto& l:layers_)if(l.frames)l.frames->unsubscribe(signal_);frames.history.clear();layers_=std::move(v);for(auto& l:layers_)if(l.visible&&l.frames)l.frames->subscribe(signal_);viewport_=viewport;target_=target;++revision_;signal_->notify();}
+void Scene::run(){uint64_t previous=UINT64_MAX;int64_t previousStamp=INT64_MIN;std::vector<std::shared_ptr<const Frame>> held;
  uint64_t observed=0;
  for(;;){std::unique_lock<std::mutex> wake(signal_->mutex);signal_->cv.wait(wake,[&]{return signal_->revision!=observed;});observed=signal_->revision;wake.unlock();
   std::unique_lock<std::mutex> lock(mutex_);if(quit_)return;auto layers=layers_;auto viewport=viewport_,target=target_;auto revision=revision_;lock.unlock();
   std::vector<std::shared_ptr<const Frame>> next;for(auto& l:layers)next.push_back(l.visible?l.frames->get():nullptr);if(next==held&&revision==previous)continue;
-  try{auto image=composite(next,viewport);auto result=viewport==target?image:resize(*image,target);std::lock_guard<std::mutex> current(mutex_);if(quit_)return;if(revision!=revision_)continue;frames.publish(std::move(result));++composed;}catch(...){frames.clear();}held=std::move(next);previous=revision;
+  try{auto image=composite(next,viewport);auto result=viewport==target?image:resize(*image,target);std::lock_guard<std::mutex> current(mutex_);if(quit_)return;if(revision!=revision_)continue;const auto stamp=std::max(previousStamp,(revision!=previous||result->paintTime==INT64_MIN)?mediaSampleTime():result->paintTime);previousStamp=stamp;frames.publish(std::move(result),stamp);++composed;}catch(...){frames.clear();}held=std::move(next);previous=revision;
  }
 }
 }

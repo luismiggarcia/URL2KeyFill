@@ -20,7 +20,8 @@ struct Row {const char* kind;int64_t pts,duration;double value;};
 class Capture final:public IDeckLinkInputCallback {
  std::atomic<ULONG> refs_{1};bool armed_[2]={true,true};int quiet_[2]={0,0};
 public:
- std::mutex mutex;std::vector<Row> rows;uint64_t noSignal=0,errors=0,overflow=0,audioFrames=0;bool accepting=true;
+ std::mutex mutex;std::vector<Row> rows;uint64_t noSignal=0,errors=0,overflow=0,audioFrames=0;bool accepting=true,recording=false;uint64_t consecutiveVideo=0;bool sawAudio=false;
+ void beginRecording(){std::lock_guard<std::mutex> lock(mutex);rows.clear();noSignal=errors=overflow=audioFrames=0;armed_[0]=armed_[1]=true;quiet_[0]=quiet_[1]=0;recording=true;}
  Capture(){rows.reserve(30000);}
  HRESULT QueryInterface(REFIID iid,LPVOID* p)override{if(!p)return E_INVALIDARG;*p=nullptr;const auto unknown=CFUUIDGetUUIDBytes(IUnknownUUID);if(!std::memcmp(&iid,&unknown,sizeof(iid))||!std::memcmp(&iid,&IID_IDeckLinkInputCallback,sizeof(iid))){*p=static_cast<IDeckLinkInputCallback*>(this);AddRef();return S_OK;}return E_NOINTERFACE;}
  ULONG AddRef()override{return ++refs_;}ULONG Release()override{auto n=--refs_;if(!n)delete this;return n;}
@@ -28,8 +29,10 @@ public:
  HRESULT VideoInputFormatChanged(BMDVideoInputFormatChangedEvents,IDeckLinkDisplayMode*,BMDDetectedVideoInputFormatFlags)override{std::lock_guard<std::mutex> lock(mutex);++errors;return S_OK;}
  HRESULT VideoInputFrameArrived(IDeckLinkVideoInputFrame* video,IDeckLinkAudioInputPacket* audio)override{
   std::lock_guard<std::mutex> lock(mutex);if(!accepting)return S_OK;
+  if(video){if(video->GetFlags()&bmdFrameHasNoInputSource)consecutiveVideo=0;else ++consecutiveVideo;}if(audio&&audio->GetSampleFrameCount()>0)sawAudio=true;
+  if(!recording)return S_OK;
   if(video){
-   if(video->GetFlags()&bmdFrameHasNoInputSource)++noSignal;
+   if(video->GetFlags()&bmdFrameHasNoInputSource){++noSignal;BMDTimeValue pts=-1,d=0;video->GetStreamTime(&pts,&d,48000);add("no_signal",pts,d,0);}
    else {
     BMDTimeValue pts=0,duration=0;IDeckLinkVideoBuffer* buffer=nullptr;
     if(video->GetPixelFormat()!=bmdFormat8BitYUV||video->GetStreamTime(&pts,&duration,48000)!=S_OK||video->QueryInterface(IID_IDeckLinkVideoBuffer,reinterpret_cast<void**>(&buffer))!=S_OK)++errors;
@@ -69,10 +72,21 @@ int main(int argc,char** argv){
   check(input->EnableVideoInput(display,bmdFormat8BitYUV,bmdVideoInputFlagDefault),"EnableVideoInput");video=true;
   check(input->EnableAudioInput(bmdAudioSampleRate48kHz,bmdAudioSampleType32bitInteger,2),"EnableAudioInput");audio=true;
   check(input->SetCallback(capture),"SetCallback");callback=true;check(input->StartStreams(),"StartStreams");started=true;
+  // Let the SDI receiver lock before establishing the measurement timeline.
+  const auto lockDeadline=std::chrono::steady_clock::now()+std::chrono::seconds(6);bool locked=false;
+  const auto needed=mode=="1080p25"?25u:mode=="1080p50"?50u:60u;
+  while(!interrupted&&std::chrono::steady_clock::now()<lockDeadline){
+   {std::lock_guard<std::mutex> lock(capture->mutex);locked=capture->consecutiveVideo>=needed&&capture->sawAudio;}
+   if(locked)break;std::this_thread::sleep_for(std::chrono::milliseconds(20));
+  }
+  if(!locked)throw std::runtime_error("SDI input failed to lock for one second with audio");
+  check(input->StopStreams(),"Stop lock acquisition");started=false;check(input->FlushStreams(),"Flush lock acquisition");capture->beginRecording();
+  check(input->StartStreams(),"Start locked capture");started=true;
   std::fprintf(stderr,"READY SDI capture %s, %.0f seconds\n",mode.c_str(),seconds);std::fflush(stderr);
   const auto start=std::chrono::steady_clock::now();while(!interrupted&&std::chrono::duration<double>(std::chrono::steady_clock::now()-start).count()<seconds)std::this_thread::sleep_for(std::chrono::milliseconds(50));
   result=0;
  }catch(const std::exception& e){std::fprintf(stderr,"FAIL %s\n",e.what());}
+ if(started){std::lock_guard<std::mutex> lock(capture->mutex);capture->recording=false;}
  if(started&&input->StopStreams()!=S_OK)result=1;
  if(callback&&input->SetCallback(nullptr)!=S_OK)result=1;
  {std::lock_guard<std::mutex> lock(capture->mutex);capture->accepting=false;

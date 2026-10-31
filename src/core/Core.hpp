@@ -5,6 +5,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <deque>
+#include <optional>
 #include <mutex>
 #include <condition_variable>
 
@@ -36,20 +38,35 @@ struct Frame {
     Size size;
     size_t stride;
     uint64_t sequence=0;
+    int64_t paintTime=INT64_MIN; // Uptime samples at paint arrival, not a decoded content PTS.
     std::vector<uint8_t> pixels;
     explicit Frame(Size s, uint64_t sequence=0);
-    static std::shared_ptr<const Frame> copy(Size, const void*, size_t stride, uint64_t sequence);
+    static std::shared_ptr<const Frame> copy(Size, const void*, size_t stride, uint64_t sequence, int64_t paintTime=INT64_MIN);
 };
 struct FrameSignal {
     std::mutex mutex;std::condition_variable cv;uint64_t revision=1;
     void notify(){ {std::lock_guard<std::mutex> lock(mutex);++revision;}cv.notify_one();}
+};
+struct TimedFrame {std::shared_ptr<const Frame> frame;int64_t time=INT64_MIN;std::shared_ptr<const std::vector<uint8_t>> prepared;};
+class FrameHistory {
+    mutable std::mutex mutex_;std::deque<TimedFrame> frames_;size_t bytes_=0,maxFrames_=0,maxBytes_=0;int64_t maxSpan_=24000;uint64_t generation_=0;std::optional<bool> argb_;
+    void trim();
+public:
+    void configure(size_t frames,size_t bytes,int64_t span=24000);
+    void prepareOutput(std::optional<bool> argb,size_t budget);
+    void publish(std::shared_ptr<const Frame>,int64_t time);
+    TimedFrame at(int64_t time,int64_t maxAhead=0)const;
+    void clear();
+    size_t bytes()const;
 };
 class LatestFrame {
     std::shared_ptr<const Frame> frame_;
     std::mutex observersMutex_;
     std::vector<std::weak_ptr<FrameSignal>> observers_;
 public:
-    void publish(std::shared_ptr<const Frame> f) {
+    mutable FrameHistory history;
+    void publish(std::shared_ptr<const Frame> f,int64_t time=INT64_MIN) {
+        history.publish(f,time==INT64_MIN&&f?f->paintTime:time);
         std::atomic_store(&frame_, std::move(f));
         std::lock_guard<std::mutex> lock(observersMutex_);
         for(auto it=observers_.begin();it!=observers_.end();){if(auto signal=it->lock()){signal->notify();++it;}else it=observers_.erase(it);}

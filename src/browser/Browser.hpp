@@ -19,9 +19,10 @@ class Browser final: public CefClient, public CefRenderHandler, public CefLifeSp
     Size size_;
     int frameRate_=60;
     CefRefPtr<CefBrowser> browser_;
-    uint64_t sequence_=0;
+    uint64_t sequence_=0;bool syncWhite_=false;
     bool failed_=false, closing_=false;
 public:
+    std::atomic<bool> syncDiagnostic{false};std::atomic<int64_t> syncFlashPts{INT64_MIN};std::atomic<uint64_t> syncFlashCount{0};
     std::string message="Starting browser…";
     std::function<void()> closed;
     Browser(LatestFrame& f,Size s,std::shared_ptr<AudioLane> audio):frames_(f),audio_(std::move(audio)),size_(s){}

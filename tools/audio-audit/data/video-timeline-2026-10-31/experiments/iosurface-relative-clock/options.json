@@ -1,0 +1,6 @@
+{
+  "U2K_VIDEO_SHARED_TEXTURE": "1",
+  "shipped": false,
+  "reason": "relative timestamp lacks an exposed absolute epoch; one audio recovery observed",
+  "app_sha256": "616f871b8ab0f011b693988661adb2553649dbf2496e28d99f0c81b833565e22"
+}

@@ -125,6 +125,13 @@ int main(){try{
  out.assign(960,0);late.mix(48492,480,1,out);REQUIRE(late.missingFrames==24);
  gap=late.takeReadWindow().gap;REQUIRE(gap.sequence==2);late.clear();
  late.push(stereo,480,2,1000);REQUIRE(!late.takeReadWindow().gap.recoveryPublished);
+ // Source pulse diagnostics use accepted sample PTS and are independent of output reads.
+ AudioLane sourceProbe;sourceProbe.syncDiagnostic=true;sourceProbe.push(stereo,480,2,1000);
+ REQUIRE(sourceProbe.syncPulsePts==48000);REQUIRE(sourceProbe.syncPulseCount==1);
+ sourceProbe.push(stereo,480,2,1010);REQUIRE(sourceProbe.syncPulseCount==1);
+ for(int i=0;i<10;++i)sourceProbe.push(data,480,2,1020+i*10);
+ sourceProbe.push(stereo,480,2,1120);REQUIRE(sourceProbe.syncPulseCount==2);REQUIRE(sourceProbe.outputReads==0);
+ sourceProbe.clear();REQUIRE(sourceProbe.syncPulsePts==INT64_MIN);
  // Exercise clear/publication/read interleaving with immutable source buffers.
  AudioLane concurrent;std::atomic<bool> start{false},finished{false};
  std::thread producer([&]{while(!start.load())std::this_thread::yield();for(int i=0;i<500;++i)concurrent.push(stereo,480,2,1000+i*10);finished=true;});

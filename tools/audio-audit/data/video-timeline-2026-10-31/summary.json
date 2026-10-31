@@ -1,0 +1,182 @@
+{
+  "base_commit": "9b37f78",
+  "app_sha256": "4a3bde14913b1079924b3063ed32fd36834562f3ac032726708d2d731e179217",
+  "capture_sha256": "a6100cd387f7f0eeda5be8c8ecf108bfd82ba43f3507a38bcac1c2fe5c4bbbd3",
+  "source_sha256": {
+    "src/core/Core.hpp": "4f8dd8c9e071541ac5c14b3d6040099d2cf47ce66f194713352c417ed69ad119",
+    "src/core/Core.cpp": "58da6b49ebdfae51d8bbb0e159a8480b9195eff69958e6816710049114d7d73a",
+    "src/core/Scene.cpp": "73415656b592e896fe0cfa830718fdc7cd989923a50ba03934c1ac74a4bf076f",
+    "src/core/Scene.hpp": "5140cbd46c769d63b925c3325db0e72d524a74b113e68e420cc6128d9caa25ad",
+    "src/browser/Browser.cpp": "39914b301eb68b300f6a427a33c1b2ed17d35429228a12f04550f1bc8d47b8a3",
+    "src/browser/Browser.hpp": "cd31e854ef695fa30cea1ea53eefd454e1472b55775ba8107e362a428f833b72",
+    "src/output/DeckLink.cpp": "673880450bbe40b1010e7fb49131b75a1a2d540c4c3a21525ee9a3612650a55a",
+    "src/output/Output.hpp": "257316575229c448c167540f65d124fabf62bd5f472e2aa2b9dfb092e63d457f",
+    "src/platform/mac/Main.mm": "1dee8dd10883abb80bd40f50f5b7e9e259e48137939a8069fac47a04617712cc"
+  },
+  "policy": {
+    "selection": "nearest available, future bounded to half an output frame; ties past",
+    "raw_history_bytes": 201326592,
+    "live_raw_and_sdr_bytes": 402653184,
+    "max_frames": 16,
+    "source_age_ms": 60
+  },
+  "acceptance": "Temporal selection and preparation implemented; final content A/V acceptance remains open. Paint arrival is not a content PTS.",
+  "cases": {
+    "loop25-a": {
+      "health": {
+        "missing_total": 0,
+        "api_errors": 0,
+        "recoveries": 0,
+        "dropped_video": 0,
+        "late_video": 0,
+        "clock_resets": 0,
+        "video_history_misses": 0,
+        "video_history_startup_misses": 0,
+        "video_conversion_fallbacks": 0,
+        "video_history_bytes": 232243200,
+        "video_prepared_reads": 751,
+        "scheduled_activity": 1,
+        "video_worker_qos": 1
+      },
+      "capture_pairs_per_channel": 21,
+      "pipeline": {
+        "source_flash_minus_audio": {
+          "pairs": 22,
+          "median_ms": 33.64583333333333,
+          "min_ms": 32.8125,
+          "max_ms": 34.354166666666664
+        },
+        "scheduled_audio_minus_video": {
+          "pairs": 21,
+          "median_ms": -24.458333333333332,
+          "min_ms": -24.458333333333332,
+          "max_ms": -24.458333333333332
+        },
+        "captured_audio_minus_video_ms": -23.875,
+        "captured_minus_scheduled_ms": 0.5833333333333321,
+        "captured_minus_scheduled_range_ms": [
+          0.5833333333333321,
+          0.5833333333333321
+        ],
+        "limits": "Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+      }
+    },
+    "loop25-b": {
+      "health": {
+        "missing_total": 0,
+        "api_errors": 0,
+        "recoveries": 0,
+        "dropped_video": 0,
+        "late_video": 0,
+        "clock_resets": 0,
+        "video_history_misses": 0,
+        "video_history_startup_misses": 0,
+        "video_conversion_fallbacks": 0,
+        "video_history_bytes": 232243200,
+        "video_prepared_reads": 751,
+        "scheduled_activity": 1,
+        "video_worker_qos": 1
+      },
+      "capture_pairs_per_channel": 21,
+      "pipeline": {
+        "source_flash_minus_audio": {
+          "pairs": 23,
+          "median_ms": 18.0,
+          "min_ms": 16.979166666666668,
+          "max_ms": 20.145833333333332
+        },
+        "scheduled_audio_minus_video": {
+          "pairs": 23,
+          "median_ms": -2.625,
+          "min_ms": -2.625,
+          "max_ms": -2.625
+        },
+        "captured_audio_minus_video_ms": -2.0625,
+        "captured_minus_scheduled_ms": 0.5625,
+        "captured_minus_scheduled_range_ms": [
+          0.5625,
+          0.5625
+        ],
+        "limits": "Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+      }
+    },
+    "loop50-a": {
+      "health": {
+        "missing_total": 0,
+        "api_errors": 0,
+        "recoveries": 0,
+        "dropped_video": 0,
+        "late_video": 0,
+        "clock_resets": 0,
+        "video_history_misses": 0,
+        "video_history_startup_misses": 0,
+        "video_conversion_fallbacks": 0,
+        "video_history_bytes": 265420800,
+        "video_prepared_reads": 1252,
+        "scheduled_activity": 1,
+        "video_worker_qos": 1
+      },
+      "capture_pairs_per_channel": 15,
+      "pipeline": {
+        "source_flash_minus_audio": {
+          "pairs": 17,
+          "median_ms": 32.166666666666664,
+          "min_ms": 29.541666666666668,
+          "max_ms": 55.291666666666664
+        },
+        "scheduled_audio_minus_video": {
+          "pairs": 16,
+          "median_ms": -35.0,
+          "min_ms": -55.0,
+          "max_ms": -35.0
+        },
+        "captured_audio_minus_video_ms": -34.416666666666664,
+        "captured_minus_scheduled_ms": null,
+        "captured_minus_scheduled_range_ms": [
+          -19.416666666666664,
+          20.583333333333336
+        ],
+        "limits": "Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+      }
+    },
+    "loop50-b": {
+      "health": {
+        "missing_total": 0,
+        "api_errors": 0,
+        "recoveries": 0,
+        "dropped_video": 0,
+        "late_video": 0,
+        "clock_resets": 0,
+        "video_history_misses": 0,
+        "video_history_startup_misses": 0,
+        "video_conversion_fallbacks": 0,
+        "video_history_bytes": 265420800,
+        "video_prepared_reads": 1252,
+        "scheduled_activity": 1,
+        "video_worker_qos": 1
+      },
+      "capture_pairs_per_channel": 16,
+      "pipeline": {
+        "source_flash_minus_audio": {
+          "pairs": 18,
+          "median_ms": 44.08333333333333,
+          "min_ms": 40.9375,
+          "max_ms": 46.541666666666664
+        },
+        "scheduled_audio_minus_video": {
+          "pairs": 18,
+          "median_ms": -46.25,
+          "min_ms": -46.25,
+          "max_ms": -46.25
+        },
+        "captured_audio_minus_video_ms": -45.645833333333336,
+        "captured_minus_scheduled_ms": 0.6041666666666643,
+        "captured_minus_scheduled_range_ms": [
+          0.6041666666666643,
+          0.6041666666666643
+        ],
+        "limits": "Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+      }
+    }
+  }
+}

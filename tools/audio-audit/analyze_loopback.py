@@ -31,6 +31,11 @@ def analyse(rows, warmup=3):
         previous, previous_pts = white, pts
     if len(flashes) < 5:
         raise ValueError('Need at least five clean flash onsets after warmup; check Fill versus Key')
+    no_signal = [int(r['pts_48k']) for r in rows if r['kind'] == 'no_signal']
+    # A loss/relock before the last measured pulse can change stream phase even
+    # if later timestamps look continuous. Do not certify this recording.
+    if no_signal:
+        raise ValueError('Input lost/reacquired signal in measurement recording; repeat capture after lock')
     channels = {}
     for channel in ('audio_L', 'audio_R'):
         audio = sorted(int(r['pts_48k']) for r in rows if r['kind'] == channel)

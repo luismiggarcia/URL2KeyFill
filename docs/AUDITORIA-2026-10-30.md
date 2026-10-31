@@ -1229,3 +1229,110 @@ vídeo com o áudio (P5), começando por carimbo temporal/histórico limitado e 
 entre instante de conteúdo e apresentação. Repetir loopbacks por vários arranques
 para validar o residual e a quantização. Não avançar automaticamente para essa
 implementação nem considerar este passo como correção completa do sincronismo A/V.
+
+### 10.9 Resposta de implementação — seleção temporal de vídeo e prazo SDI (31/10)
+
+**Estado: infraestrutura P5 implementada e ensaiada; sincronismo final de conteúdo
+A/V ainda não aceite.** Este passo foi autorizado pelo Luis. A chegada de uma imagem
+CEF não identifica o instante do conteúdo nela representado; alinhar carimbos de
+chegada não resolve, por si só, o desfasamento observado. Não foi aplicado um offset
+fixo para esconder esse residual. A aplicação instalada não foi substituída.
+
+**Alterações concretas.** `OnPaint` recebe um carimbo de chegada no domínio comum
+48 kHz/uptime. Resize preserva-o; composição usa o mais recente das fontes. Uma
+reconfiguração invalida o histórico e estabelece uma barreira temporal. O monitor
+continua a usar a imagem mais recente; a saída escolhe a imagem histórica mais
+próxima de `audioSourceOrigin + tempo SDI agendado`, com antecedência máxima de meio
+frame, sem esperar por futuras imagens, e empate a favor do passado. O mapeamento
+atual é 1:1: a futura correção adaptativa de taxa terá de atualizar áudio e vídeo.
+Falta de imagem adequada ou tamanho incompatível produz transparente e contadores
+separados de arranque/regime. Imagens estáticas continuam reutilizáveis.
+
+Histórico limitado a 16 entradas, janela nominal de 500 ms preservando o predecessor
+estático, 192 MiB de imagens raw ou 384 MiB incluindo SDR durante a saída. O limite de
+memória pode reduzir a cobertura temporal em resoluções elevadas; não constitui
+aceitação UHD/8K. A conversão SDR é preparada pelo produtor, fora do mutex do
+histórico, e no START para imagens já existentes. O worker copia pixels preparados,
+incluindo stride SDK, e conta qualquer fallback de conversão. STOP liberta a cache
+SDR. O caso simples de uma única fonte com tamanho correto conserva a reutilização
+da imagem imutável, evitando recomposição. Não se acrescentou DSP nem processamento
+de áudio: retirou-se conversão repetida do caminho com prazo, em troca de RAM limitada.
+
+Durante SDI ativo, incluindo PAUSE, o macOS mantém uma atividade user-initiated /
+latency-critical e o worker pede QoS user-interactive. STOP, erro e saída libertam a
+atividade. Isto protege a execução contra suspensão por inatividade/App Nap; não
+impede suspensão forçada nem prova que App Nap tenha causado as falhas anteriores.
+A deteção de suspensão existente mantém-se. Referência:
+[Apple, atividades da aplicação](https://developer.apple.com/library/archive/documentation/Performance/Conceptual/power_efficiency_guidelines_osx/PrioritizeWorkAtTheAppLevel.html).
+
+**Protocolo corrigido de medição.** A entrada espera um segundo consecutivo de sinal
+válido (deadline seis segundos), faz Stop/Flush/Start e só então inicia a medição.
+O runner termina a captura um segundo antes de parar a saída. Qualquer no-signal
+registado dentro da medição invalida-a; o próprio StopStreams já não cria um evento
+artificial no fim. Settle aceita 1–10 segundos. O analisador de pipeline rejeita
+mudanças de origem de áudio e não subtrai medianas como atraso exato quando janelas
+contêm fases discretas diferentes. A instrumentação de flashes/pulsos só está ativa
+no teste CLI, sem análise adicional de pixels/amostras no uso normal.
+
+**Quatro ensaios finais independentes**, mesma candidata
+SHA-256 `4a3bde14913b1079924b3063ed32fd36834562f3ac032726708d2d731e179217`,
+SDI OUT→IN do HD Mini, sem caffeinate externo. Valores negativos significam áudio
+antes do vídeo. A coluna da origem compara chegada do flash com PTS do áudio, não
+PTS real do conteúdo visual.
+
+| Ensaio | Pares capturados/canal | Origem flash−áudio, mediana | A−V agendado, mediana | A−V capturado, mediana |
+|---|---:|---:|---:|---:|
+| 1080p25 A | 21 | +33,646 ms | −24,458 ms | −23,875 ms |
+| 1080p25 B | 21 | +18,000 ms | −2,625 ms | −2,063 ms |
+| 1080p50 A | 15 | +32,167 ms | −35,000 ms | −34,417 ms |
+| 1080p50 B | 16 | +44,083 ms | −46,250 ms | −45,646 ms |
+
+Nos quatro: zero amostras de áudio em falta, erros API, recuperações, resets de
+relógio, vídeo late/dropped, falhas de histórico em arranque/regime ou fallback SDR.
+Atividade e pedido de QoS confirmados ativos, atividade libertada em STOP. Memória
+retida máxima observada: 232 243 200 bytes a 25p / 265 420 800 a 50p.
+Nos casos de fase única, captura menos agendamento foi +0,563 a +0,604 ms, incluindo
+a entrada e os limiares de deteção. Em 50p A, agendamento varia −55/−35 ms: a diferença
+conservadora é [−19,417; +20,583] ms; não se afirma um atraso exato pela diferença
+das medianas. Estes ensaios mostram cumprimento do agendamento nesta amostra,
+**não conteúdo A/V finalmente alinhado**. Também não medem latência absoluta
+host→fio, drift com relógio independente ou sincronismo com um recetor externo.
+As fases distintas impedem comparar diretamente estas medianas com as da §10.8
+como uma redução controlada de atraso.
+
+**Ensaios rejeitados e limites, preservados na evidência:**
+
+- Histórico raw com conversão no worker: 17 drops a 50p. Cache SDR sem a proteção
+  final de atividade: outro caso com cinco drops, três late e duas recuperações de
+  áudio. Não foram usados para aceitar o resultado nem omitidos dos dados.
+- Um arranque demorou 432 s, registou suspensão/reset de relógio e não capturou
+  conteúdo. Descartado; não valida tolerância a suspensão durante saída ativa.
+- Entrada sem estabilização apresentou 11 no-signal e divergência de 42,646 ms entre
+  agendamento e captura. Num controlo com saída de referência contínua, quatro
+  reinícios só da entrada deram 0,688 / 10,917 / 0,667 / 0,667 ms; o segundo teve
+  22 no-signal. Após estabilização/reset, quatro reinícios deram 0,667 / 0,688 /
+  0,688 / 0,688 ms. Isto apoia o novo protocolo nesta amostra, sem atribuir
+  exclusivamente a causa ao relógio da entrada ou excluir interação do hardware.
+- Experiência IOSurface/OnAcceleratedPaint: timestamp relativo ao início da captura,
+  sem origem absoluta exposta no caminho ensaiado; houve ainda uma recuperação de
+  áudio. Experiência totalmente revertida, com patch guardado como evidência.
+  Não se introduziu ancoragem heurística à primeira chegada nem offset por camada.
+
+**Validação:** build nativa completa e assinatura local, CTest 4/4, nove testes do
+loopback, quatro do pipeline, SceneEvents com TSan e ASan/UBSan e smoke da interface/
+monitor passaram. Os testes cobrem limites/empates/antecedência, imagens estáticas,
+revisões, orçamento, concorrência clear/publish/read, equivalência SDR BGRA/ARGB e
+libertação da cache. O smoke normal cobre composição/alpha/visibilidade e ciclo do
+monitor. Não há aceitação de carga prolongada, UHD ou drift independente nesta etapa.
+
+Evidência: `tools/audio-audit/data/video-timeline-2026-10-31/`, incluindo resumo,
+hashes, quatro casos finais, controlos de reinício da entrada, experiências
+rejeitadas e logs dos sanitizers/smoke. A candidata final usa o caminho CPU original;
+o executável reconstruído coincide byte a byte com o testado.
+
+**O que proponho a seguir, aguardando confirmação do Luis:** preparar uma referência
+A/V com PTS de conteúdo conhecidos, reproduzi-la pelo mesmo CEF e comparar conteúdo,
+chegada, agendamento e loopback em vários arranques. Só depois decidir entre obter
+um relógio de conteúdo utilizável, alterar a fonte de teste ou calibrar um residual
+comprovadamente estável. P4 de taxa adaptativa e a aceitação final P5 continuam
+pendentes; esta etapa não os declara concluídos.

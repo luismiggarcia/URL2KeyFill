@@ -1,0 +1,197 @@
+{
+  "sign": "positive = audio later than video",
+  "measurement": "output plus input relative A/V; uncalibrated input",
+  "video_frame_ms": 20.0,
+  "valid_video_frames": 944,
+  "video_timestamp_gaps": 0,
+  "video_timestamp_gaps_within_matched_range": 0,
+  "flashes_after_warmup": 16,
+  "channels": {
+    "audio_L": {
+      "pairs": 16,
+      "unmatched_flashes": 0,
+      "median_ms": -45.645833333333336,
+      "min_ms": -45.645833333333336,
+      "max_ms": -45.645833333333336,
+      "stdev_ms": 0.0,
+      "events": [
+        {
+          "video_pts_48k": 171840,
+          "audio_pts_48k": 169649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 219840,
+          "audio_pts_48k": 217649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 267840,
+          "audio_pts_48k": 265649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 315840,
+          "audio_pts_48k": 313649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 363840,
+          "audio_pts_48k": 361649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 411840,
+          "audio_pts_48k": 409649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 459840,
+          "audio_pts_48k": 457649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 507840,
+          "audio_pts_48k": 505649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 555840,
+          "audio_pts_48k": 553649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 603840,
+          "audio_pts_48k": 601649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 651840,
+          "audio_pts_48k": 649649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 699840,
+          "audio_pts_48k": 697649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 747840,
+          "audio_pts_48k": 745649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 795840,
+          "audio_pts_48k": 793649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 843840,
+          "audio_pts_48k": 841649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 891840,
+          "audio_pts_48k": 889649,
+          "audio_minus_video_ms": -45.645833333333336
+        }
+      ]
+    },
+    "audio_R": {
+      "pairs": 16,
+      "unmatched_flashes": 0,
+      "median_ms": -45.645833333333336,
+      "min_ms": -45.645833333333336,
+      "max_ms": -45.645833333333336,
+      "stdev_ms": 0.0,
+      "events": [
+        {
+          "video_pts_48k": 171840,
+          "audio_pts_48k": 169649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 219840,
+          "audio_pts_48k": 217649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 267840,
+          "audio_pts_48k": 265649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 315840,
+          "audio_pts_48k": 313649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 363840,
+          "audio_pts_48k": 361649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 411840,
+          "audio_pts_48k": 409649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 459840,
+          "audio_pts_48k": 457649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 507840,
+          "audio_pts_48k": 505649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 555840,
+          "audio_pts_48k": 553649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 603840,
+          "audio_pts_48k": 601649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 651840,
+          "audio_pts_48k": 649649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 699840,
+          "audio_pts_48k": 697649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 747840,
+          "audio_pts_48k": 745649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 795840,
+          "audio_pts_48k": 793649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 843840,
+          "audio_pts_48k": 841649,
+          "audio_minus_video_ms": -45.645833333333336
+        },
+        {
+          "video_pts_48k": 891840,
+          "audio_pts_48k": 889649,
+          "audio_minus_video_ms": -45.645833333333336
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Periodic 1 Hz pattern: nearest pairing assumes offset within 400 ms; larger offsets are ambiguous.",
+    "Browser visual onset is frame-quantised; this does not establish sub-frame source synchrony.",
+    "Input A/V offset requires a known scheduled reference; no input correction applied.",
+    "Shared-device loopback does not test drift between independent devices."
+  ]
+}

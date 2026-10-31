@@ -10,6 +10,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+import threading
 from analyze_loopback import analyse
 
 
@@ -25,11 +26,11 @@ def main():
     source.add_argument('--reference', help='Path to decklink_clock with --av-reference support')
     p.add_argument('--mode', choices=['1080p25', '1080p50', '1080p5994'], default='1080p25')
     p.add_argument('--seconds', type=int, default=30)
-    p.add_argument('--settle-seconds', type=float, default=4, help='Start playback first and settle before capture; 0 reproduces capture-first')
+    p.add_argument('--settle-seconds', type=float, default=4, help='Start playback first and settle 1..10 seconds before locked capture')
     p.add_argument('--directory', required=True, help='New output directory; never overwritten')
     args = p.parse_args()
-    if not 0 <= args.settle_seconds <= 10:
-        p.error('--settle-seconds must be 0..10')
+    if not 1 <= args.settle_seconds <= 10:
+        p.error('--settle-seconds must be 1..10 with the locked input probe')
     if not 15 <= args.seconds <= 240:
         p.error('--seconds must be 15..240')
     root = Path(args.directory).resolve()
@@ -43,6 +44,7 @@ def main():
                     playback_sha256=digest(playback), capture_sha256=digest(capture), capture_command=cap_cmd, playback_command=play_cmd)
     (root/'manifest.json').write_text(json.dumps(metadata, indent=2)+'\n')
     children = []
+    stop_timer = None
     try:
         with (root/'capture.log').open('w') as cl, (root/'playback.log').open('w') as pl:
             env = os.environ.copy()
@@ -58,6 +60,7 @@ def main():
                     if play.poll() is not None or time.monotonic() > deadline:
                         raise RuntimeError('Playback did not become ready; inspect playback.log')
                     time.sleep(.05)
+                play_ready = time.monotonic()
                 time.sleep(args.settle_seconds)
                 if play.poll() is not None:
                     raise RuntimeError('Playback stopped before input start; inspect playback.log')
@@ -71,6 +74,15 @@ def main():
             if play is None:
                 play = subprocess.Popen(play_cmd, stdout=pl, stderr=pl, env=env)
                 children.append(play)
+            # End input measurement before playback disables/reconfigures SDI.
+            # No-signal timestamps during receiver reacquisition are not media times.
+            remaining = play_ready+args.seconds-1-time.monotonic()
+            if remaining < 8:
+                raise RuntimeError('Too little locked recording time; use --seconds 25 or longer')
+            metadata['input_recording_limit_s'] = remaining
+            stop_timer = threading.Timer(remaining, lambda: cap.terminate() if cap.poll() is None else None)
+            stop_timer.daemon = True
+            stop_timer.start()
             metadata['playback_exit'] = play.wait(timeout=args.seconds+50)
             metadata['capture_exit'] = cap.wait(timeout=25)
         if metadata['playback_exit'] or metadata['capture_exit']:
@@ -86,6 +98,8 @@ def main():
         for channel, data in result['channels'].items():
             print(f"{channel}: audio - video = {data['median_ms']:.3f} ms, {data['pairs']} pairs")
     finally:
+        if stop_timer is not None:
+            stop_timer.cancel()
         for child in children:
             if child.poll() is None:
                 child.terminate()

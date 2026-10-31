@@ -1,4 +1,5 @@
 #include "Browser.hpp"
+#include "core/MediaClock.hpp"
 #include "include/wrapper/cef_stream_resource_handler.h"
 #include "include/cef_stream.h"
 #include <stdexcept>
@@ -23,7 +24,9 @@ void Browser::load(const std::string& url,Size size){
 void Browser::close(){closing_=true;if(browser_)browser_->GetHost()->CloseBrowser(true);}
 void Browser::OnPaint(CefRefPtr<CefBrowser>,PaintElementType type,const RectList&,const void* p,int w,int h){
     if(type!=PET_VIEW||failed_||w!=size_.width||h!=size_.height)return;
-    try{frames_.publish(Frame::copy({w,h},p,size_t(w)*4,++sequence_));}catch(const std::exception& e){message=e.what();frames_.clear();audio_->clear();}
+    const auto paintTime=mediaSampleTime();
+    if(syncDiagnostic){const auto pixel=static_cast<const uint8_t*>(p)+(size_t(h/2)*w+w/2)*4;const bool white=pixel[0]>200&&pixel[1]>200&&pixel[2]>200&&pixel[3]>200;if(white&&!syncWhite_){syncFlashPts=paintTime;++syncFlashCount;}syncWhite_=white;}
+    try{frames_.publish(Frame::copy({w,h},p,size_t(w)*4,++sequence_,paintTime));}catch(const std::exception& e){message=e.what();frames_.clear();audio_->clear();}
 }
 void Browser::OnLoadingStateChange(CefRefPtr<CefBrowser>,bool loading,bool,bool){if(loading){failed_=false;message="Loading…";}else if(!failed_)message="Page loaded";}
 void Browser::OnLoadError(CefRefPtr<CefBrowser>,CefRefPtr<CefFrame> f,ErrorCode code,const CefString& text,const CefString&){if(!f->IsMain()||code==ERR_ABORTED)return;failed_=true;frames_.clear();audio_->clear();message="Load error: "+text.ToString();}

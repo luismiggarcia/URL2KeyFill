@@ -23,10 +23,11 @@ class AudioLane {
     std::mutex mutex_;std::deque<AudioPacket> packets_,meterPackets_;
     bool sourceSeen_=false;int64_t firstSample_=0;
     bool timelineReady_=false;int64_t nextSample_=0,lastRawStart_=0;int lastFrames_=0;
-    AudioReadWindow readWindow_;AudioGap gap_;
+    AudioReadWindow readWindow_;AudioGap gap_;int syncQuiet_=4800;
     std::atomic<float> peakLeft_{0},peakRight_{0};
     void sum(int64_t,size_t,float,std::vector<float>&,bool prune,bool mono,bool left=true,bool right=true);
 public:
+    std::atomic<bool> syncDiagnostic{false};std::atomic<int64_t> syncPulsePts{INT64_MIN};std::atomic<uint64_t> syncPulseCount{0};
     std::atomic<uint64_t> received{0},discarded{0},nonZero{0},unusedExpired{0},outputOverruns{0};
     std::atomic<bool> outputExpected{false};
     std::atomic<int64_t> latestTimestamp{0};

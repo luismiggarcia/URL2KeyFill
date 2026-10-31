@@ -1,0 +1,25 @@
+{
+  "mode": "1080p25",
+  "seconds": 30,
+  "settle_seconds": 4,
+  "source": "application",
+  "playback_sha256": "2cc2263db5e95678dcf1ccb1641b9ce18e421a1468e9f8343640eeb13c5873d9",
+  "capture_sha256": "945fb5271d5e42eb07bba45741a588764ca7f192263382c1f2c325bdace9858b",
+  "capture_command": [
+    "/private/tmp/u2k-decklink-capture-checked",
+    "--seconds",
+    "40",
+    "--mode",
+    "1080p25",
+    "--csv",
+    "/private/tmp/u2k-history-final/loop25-a/capture.csv"
+  ],
+  "playback_command": [
+    "/private/tmp/u2k-history-final/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+    "--sdi-av-test",
+    "--hardware-test-mode",
+    "1080p25",
+    "--audio-baseline-seconds",
+    "30"
+  ]
+}
