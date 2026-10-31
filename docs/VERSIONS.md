@@ -50,3 +50,14 @@ Download the ZIP, extract it and open URL2KeyFill.app. SHA256SUMS.txt contains t
 - POWER uses an inline SVG symbol with the green LED illumination prepared in the standalone studio-button component.
 
 Validation: native application build, JavaScript syntax check and CTest (5/5). The no-device UI/CEF smoke test reported all checks as PASS but exited with status 1; a clean smoke-test exit remains unverified.
+
+## 0.5.2
+
+- Shared gain sliders/faders with clickable dB markers, aligned scales and double-click reset to 0 dB.
+- Unified stereo audio meters across the main panel, layer buttons, layer editor and audio drawer. Layer buttons use the approved 17 × 33 px compact meter; the editor uses a horizontal meter.
+- Consistent meter backgrounds, colour zones, peak indication and mono/mute states, retaining the existing RMS calibration and native gain routing.
+- Includes the unpublished 0.5.1 improvements: ADD LAYER opens the new layer for editing, and the POWER symbol uses green LED illumination.
+
+Validation: native Release arm64 build with DeckLink enabled; CTest (5/5); browser integration checks with a simulated native bridge, including gain routing, all horizontal markers, numeric dB entry, reset, mono/mute, RMS calibration and layout at 1050 and 1280 px. No new physical SDI or listening validation was performed for this UI release.
+
+macOS Apple Silicon (M1 and later), macOS 13 or later. Ad-hoc signed; not Apple notarized. The ZIP includes the application; SHA256SUMS.txt contains its checksum.
