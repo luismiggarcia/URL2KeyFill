@@ -24,6 +24,7 @@ def main():
     source = p.add_mutually_exclusive_group(required=True)
     source.add_argument('--app', help='Path to app Contents/MacOS/URL2KeyFill')
     source.add_argument('--reference', help='Path to decklink_clock with --av-reference support')
+    p.add_argument('--source-url', help='Diagnostic source override, only with --app')
     p.add_argument('--mode', choices=['1080p25', '1080p50', '1080p5994'], default='1080p25')
     p.add_argument('--seconds', type=int, default=30)
     p.add_argument('--settle-seconds', type=float, default=4, help='Start playback first and settle 1..10 seconds before locked capture')
@@ -33,6 +34,8 @@ def main():
         p.error('--settle-seconds must be 1..10 with the locked input probe')
     if not 15 <= args.seconds <= 240:
         p.error('--seconds must be 15..240')
+    if args.source_url and not args.app:
+        p.error('--source-url requires --app')
     root = Path(args.directory).resolve()
     root.mkdir(parents=True, exist_ok=False)
     capture = str(Path(args.capture).resolve())
@@ -40,6 +43,8 @@ def main():
     cap_cmd = [capture, '--seconds', str(args.seconds+10), '--mode', args.mode, '--csv', str(root/'capture.csv')]
     play_cmd = ([playback, '--sdi-av-test', '--hardware-test-mode', args.mode, '--audio-baseline-seconds', str(args.seconds)] if args.app else
                 [playback, '--av-reference', '1', '--mode', args.mode, '--seconds', str(args.seconds), '--csv', str(root/'clock.csv')])
+    if args.source_url:
+        play_cmd += ['--sdi-av-source-url', args.source_url]
     metadata = dict(mode=args.mode, seconds=args.seconds, settle_seconds=args.settle_seconds, source='application' if args.app else 'scheduled SDK reference',
                     playback_sha256=digest(playback), capture_sha256=digest(capture), capture_command=cap_cmd, playback_command=play_cmd)
     (root/'manifest.json').write_text(json.dumps(metadata, indent=2)+'\n')

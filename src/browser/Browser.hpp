@@ -1,6 +1,7 @@
 #pragma once
 #include "core/Scene.hpp"
 #include "include/cef_audio_handler.h"
+#include "include/cef_display_handler.h"
 #include "include/cef_permission_handler.h"
 #include "include/cef_app.h"
 #include "include/cef_client.h"
@@ -11,7 +12,7 @@
 #include <chrono>
 #include <cstdlib>
 namespace u2k {
-class Browser final: public CefClient, public CefRenderHandler, public CefLifeSpanHandler, public CefLoadHandler, public CefRequestHandler, public CefAudioHandler, public CefPermissionHandler {
+class Browser final: public CefClient, public CefRenderHandler, public CefLifeSpanHandler, public CefLoadHandler, public CefRequestHandler, public CefAudioHandler, public CefPermissionHandler, public CefDisplayHandler {
     LatestFrame& frames_;
     std::shared_ptr<AudioLane> audio_;
     std::atomic<int> channels_{2};
@@ -49,6 +50,8 @@ public:
     CefRefPtr<CefRequestHandler> GetRequestHandler()override{return this;}
     void GetViewRect(CefRefPtr<CefBrowser>,CefRect& r)override{r=CefRect(0,0,size_.width,size_.height);}
     bool GetScreenInfo(CefRefPtr<CefBrowser>,CefScreenInfo& s)override{s.device_scale_factor=1;s.depth=32;s.depth_per_component=8;s.rect=s.available_rect=CefRect(0,0,size_.width,size_.height);return true;}
+    CefRefPtr<CefDisplayHandler> GetDisplayHandler()override{return this;}
+    bool OnConsoleMessage(CefRefPtr<CefBrowser>,cef_log_severity_t,const CefString&,const CefString&,int)override;
     void OnPaint(CefRefPtr<CefBrowser>,PaintElementType,const RectList&,const void*,int,int)override;
     void OnAfterCreated(CefRefPtr<CefBrowser> b)override{browser_=b;b->GetHost()->SetWindowlessFrameRate(frameRate_);if(!pendingUrl_.empty()){b->GetMainFrame()->LoadURL(pendingUrl_);pendingUrl_.clear();}if(closing_)b->GetHost()->CloseBrowser(true);}
     void OnBeforeClose(CefRefPtr<CefBrowser>)override{browser_=nullptr;if(closed)closed();}

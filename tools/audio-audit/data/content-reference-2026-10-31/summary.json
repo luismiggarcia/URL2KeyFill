@@ -1,0 +1,170 @@
+{
+  "base_commit": "32e48de",
+  "app_sha256": "2d1645c4965d015ccdc63a1bb9dc0729ab9d5280e9cdbe0fb62ba9ac93439121",
+  "source_sha256": {
+    "src/browser/Browser.cpp": "474972673fc088524a98185285e4afb7650bb61afc8587fe4eb002ea740d829d",
+    "src/browser/Browser.hpp": "d2c92fc1b63b03313cd86cbeee82703bce2b79594b7ebe7dd2d6416f1353bad9",
+    "src/platform/mac/Main.mm": "b562af9bceab9db5fe7ef8b1896931545864d0be003e00f490b0b7d8fb4171f7",
+    "tools/audio-audit/content-reference.html": "1dcf96bc8836f2ccdae53e32ca80d714a0ed308c31d590adb670f1551d6aa245",
+    "tools/audio-audit/run-content-reference.py": "5ea9ae3a0519c2278cf4da967ef1e246d895e0dbfea5302ceb0100fed4a712b8",
+    "tools/audio-audit/run-loopback.py": "a0a9e8fe4ce93cb962609bda3bf320e8df125c6cf4bb7d0468aae5a615b354bf",
+    "tools/audio-audit/verify_content_reference.py": "2bb26a56816175b83e297e68cf38dcdc4095e9f5df81d048f4d2a0131841986b",
+    "tools/audio-audit/test_content_reference.py": "bc8792358f91eb59a1d5bfe74a5421a48392fc4a547a532a3a9b3e546a098d9b"
+  },
+  "acceptance": "Known content PTS validated; final A/V acceptance still open. No production timing correction applied.",
+  "cases": {
+    "test50-a": {
+      "health": {
+        "missing_total": 0.0,
+        "api_errors": 0.0,
+        "recoveries": 0.0,
+        "late_video": 0.0,
+        "dropped_video": 0.0,
+        "video_history_misses": 0.0,
+        "video_history_startup_misses": 0.0,
+        "video_conversion_fallbacks": 0.0,
+        "clock_resets": 0.0
+      },
+      "capture_pairs": 21,
+      "pipeline": {
+        "source_flash_minus_audio": {
+          "pairs": 21,
+          "median_ms": -22.895833333333332,
+          "min_ms": -22.958333333333332,
+          "max_ms": -20.270833333333332
+        },
+        "scheduled_audio_minus_video": {
+          "pairs": 21,
+          "median_ms": 19.8125,
+          "min_ms": 19.8125,
+          "max_ms": 19.8125
+        },
+        "captured_audio_minus_video_ms": 20.395833333333332,
+        "captured_minus_scheduled_ms": 0.5833333333333321,
+        "captured_minus_scheduled_range_ms": [
+          0.5833333333333321,
+          0.5833333333333321
+        ],
+        "limits": "Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+      },
+      "source_sha256": "2db4764955c9c8fc71ed06ad1966d75a2ab7d08c55fcc9e2fbf959d2ad354a64"
+    },
+    "test50-b": {
+      "health": {
+        "missing_total": 0.0,
+        "api_errors": 0.0,
+        "recoveries": 0.0,
+        "late_video": 0.0,
+        "dropped_video": 0.0,
+        "video_history_misses": 0.0,
+        "video_history_startup_misses": 0.0,
+        "video_conversion_fallbacks": 0.0,
+        "clock_resets": 0.0
+      },
+      "capture_pairs": 21,
+      "pipeline": {
+        "source_flash_minus_audio": {
+          "pairs": 21,
+          "median_ms": -13.625,
+          "min_ms": -13.8125,
+          "max_ms": -13.5625
+        },
+        "scheduled_audio_minus_video": {
+          "pairs": 21,
+          "median_ms": 15.8125,
+          "min_ms": 15.8125,
+          "max_ms": 15.8125
+        },
+        "captured_audio_minus_video_ms": 16.416666666666668,
+        "captured_minus_scheduled_ms": 0.6041666666666679,
+        "captured_minus_scheduled_range_ms": [
+          0.6041666666666679,
+          0.6041666666666679
+        ],
+        "limits": "Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+      },
+      "source_sha256": "2db4764955c9c8fc71ed06ad1966d75a2ab7d08c55fcc9e2fbf959d2ad354a64"
+    },
+    "test25-a": {
+      "health": {
+        "missing_total": 0.0,
+        "api_errors": 0.0,
+        "recoveries": 0.0,
+        "late_video": 0.0,
+        "dropped_video": 0.0,
+        "video_history_misses": 0.0,
+        "video_history_startup_misses": 0.0,
+        "video_conversion_fallbacks": 0.0,
+        "clock_resets": 0.0
+      },
+      "capture_pairs": 20,
+      "pipeline": {
+        "source_flash_minus_audio": {
+          "pairs": 22,
+          "median_ms": 17.229166666666668,
+          "min_ms": 16.354166666666668,
+          "max_ms": 17.416666666666668
+        },
+        "scheduled_audio_minus_video": {
+          "pairs": 21,
+          "median_ms": -25.083333333333332,
+          "min_ms": -25.083333333333332,
+          "max_ms": -25.083333333333332
+        },
+        "captured_audio_minus_video_ms": -24.520833333333332,
+        "captured_minus_scheduled_ms": 0.5625,
+        "captured_minus_scheduled_range_ms": [
+          0.5625,
+          0.5625
+        ],
+        "limits": "Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+      },
+      "source_sha256": "2db4764955c9c8fc71ed06ad1966d75a2ab7d08c55fcc9e2fbf959d2ad354a64"
+    },
+    "test25-b": {
+      "health": {
+        "missing_total": 0.0,
+        "api_errors": 0.0,
+        "recoveries": 0.0,
+        "late_video": 0.0,
+        "dropped_video": 0.0,
+        "video_history_misses": 0.0,
+        "video_history_startup_misses": 0.0,
+        "video_conversion_fallbacks": 0.0,
+        "clock_resets": 0.0
+      },
+      "capture_pairs": 19,
+      "pipeline": {
+        "source_flash_minus_audio": {
+          "pairs": 22,
+          "median_ms": 15.541666666666666,
+          "min_ms": 15.083333333333334,
+          "max_ms": 15.833333333333334
+        },
+        "scheduled_audio_minus_video": {
+          "pairs": 21,
+          "median_ms": 3.75,
+          "min_ms": 3.75,
+          "max_ms": 3.75
+        },
+        "captured_audio_minus_video_ms": 4.333333333333333,
+        "captured_minus_scheduled_ms": 0.583333333333333,
+        "captured_minus_scheduled_range_ms": [
+          0.583333333333333,
+          0.583333333333333
+        ],
+        "limits": "Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+      },
+      "source_sha256": "2db4764955c9c8fc71ed06ad1966d75a2ab7d08c55fcc9e2fbf959d2ad354a64"
+    }
+  },
+  "common_media_sha256": "2db4764955c9c8fc71ed06ad1966d75a2ab7d08c55fcc9e2fbf959d2ad354a64",
+  "checks": {
+    "core_ctest": "4/4 passed",
+    "loopback_tests": "9/9 passed",
+    "pipeline_tests": "4/4 passed",
+    "reference_tests": "4/4 passed",
+    "native_ui_monitor": "passed; macOS signature-category warning retained in log",
+    "codesign_deep_strict": "passed"
+  }
+}

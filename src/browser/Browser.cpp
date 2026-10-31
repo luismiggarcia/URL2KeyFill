@@ -4,6 +4,7 @@
 #include "include/cef_stream.h"
 #include <stdexcept>
 #include <algorithm>
+#include <iostream>
 namespace u2k {
 void Browser::create(const std::string& url){
     if(!allowedUrl(url))throw std::invalid_argument("Unsupported URL.");
@@ -22,6 +23,9 @@ void Browser::load(const std::string& url,Size size){
     if(browser_->GetMainFrame()->GetURL()==url)browser_->ReloadIgnoreCache();else browser_->GetMainFrame()->LoadURL(url);
 }
 void Browser::close(){closing_=true;if(browser_)browser_->GetHost()->CloseBrowser(true);}
+bool Browser::OnConsoleMessage(CefRefPtr<CefBrowser>,cef_log_severity_t,const CefString& text,const CefString&,int){
+    const auto s=text.ToString();if(syncDiagnostic&&s.starts_with("U2K_REFERENCE "))std::cerr<<"REFERENCE host_samples="<<mediaSampleTime()<<' '<<s<<std::endl;return false;
+}
 void Browser::OnPaint(CefRefPtr<CefBrowser>,PaintElementType type,const RectList&,const void* p,int w,int h){
     if(type!=PET_VIEW||failed_||w!=size_.width||h!=size_.height)return;
     const auto paintTime=mediaSampleTime();

@@ -1,0 +1,21 @@
+{
+  "source_flash_minus_audio": {
+    "pairs": 21,
+    "median_ms": -13.625,
+    "min_ms": -13.8125,
+    "max_ms": -13.5625
+  },
+  "scheduled_audio_minus_video": {
+    "pairs": 21,
+    "median_ms": 15.8125,
+    "min_ms": 15.8125,
+    "max_ms": 15.8125
+  },
+  "captured_audio_minus_video_ms": 16.416666666666668,
+  "captured_minus_scheduled_ms": 0.6041666666666679,
+  "captured_minus_scheduled_range_ms": [
+    0.6041666666666679,
+    0.6041666666666679
+  ],
+  "limits": "Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+}

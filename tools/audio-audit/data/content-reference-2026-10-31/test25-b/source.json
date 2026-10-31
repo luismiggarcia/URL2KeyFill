@@ -1,0 +1,18 @@
+{
+  "kind": "muxed-content-reference",
+  "video_codec": "VP8",
+  "audio_codec": "PCM_S16LE",
+  "fps": 50,
+  "seconds": 60,
+  "rate": 48000,
+  "width": 1920,
+  "height": 1080,
+  "first_flash_s": 1,
+  "flash_period_s": 1,
+  "flash_duration_s": 0.04,
+  "audio_first_above_threshold_sample": 5,
+  "threshold": 0.003,
+  "media_sha256": "2db4764955c9c8fc71ed06ad1966d75a2ab7d08c55fcc9e2fbf959d2ad354a64",
+  "bytes": 22143882,
+  "source_decoded_images_verified": 2
+}

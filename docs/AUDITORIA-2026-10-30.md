@@ -1336,3 +1336,82 @@ chegada, agendamento e loopback em vários arranques. Só depois decidir entre o
 um relógio de conteúdo utilizável, alterar a fonte de teste ou calibrar um residual
 comprovadamente estável. P4 de taxa adaptativa e a aceitação final P5 continuam
 pendentes; esta etapa não os declara concluídos.
+
+### 10.10 Resposta — referência com PTS de conteúdo conhecidos (31/10)
+
+**Etapa autorizada concluída; diagnóstico, sem nova compensação de produção.**
+Foi acrescentada uma referência com vídeo VP8 e PCM16 estéreo no mesmo Matroska,
+reproduzida num elemento `<video>` pelo CEF normal. Evita gerar o flash consultando
+`AudioContext.currentTime`, como faz o teste anterior. A combinação de codecs e
+contentor é suportada pelo Chromium e foi confirmada na build CEF instalada
+([documentação Chromium](https://www.chromium.org/audio-video/)). Não requer ffmpeg,
+instalações ou serviços externos: o próprio CEF codifica duas imagens keyframe
+independentes, valida-as com VideoDecoder, constrói o ficheiro e reproduz o Blob.
+O servidor temporário está ligado apenas a 127.0.0.1 e guarda a evidência da fonte.
+
+**Referência verificável:** 60 segundos, 1920×1080, 50 fps, áudio PCM16 L=R a 48 kHz,
+preto no primeiro segundo; depois flash branco e impulso de 40 ms a cada segundo.
+Vídeo com PTS em passos de 20 ms; áudio em blocos contíguos de 960 samples. O início
+matemático do impulso coincide com o flash. O primeiro sample acima do limiar
+0,003 FS é o quinto, logo o detetor deve medir **+0,104167 ms na fonte**, antes de
+qualquer reprodução/transporte. Um verificador Python separado percorre o EBML,
+valida codecs/formato, todos os PTS, identidade das imagens VP8 e a forma de onda
+PCM, canais, silêncio e os 59 onsets. A página valida o centro preto/branco das duas
+imagens após descodificação; não se afirma uma descodificação independente dos 3000
+frames. O ficheiro exato está preservado, comprimido, na evidência.
+
+A fonte foi idêntica nos quatro arranques, SHA-256
+`2db4764955c9c8fc71ed06ad1966d75a2ab7d08c55fcc9e2fbf959d2ad354a64`.
+A candidata testada tem SHA-256
+`2d1645c4965d015ccdc63a1bb9dc0729ab9d5280e9cdbe0fb62ba9ac93439121`.
+O hash exato do executável está também nos manifests/resumo; estes são a referência
+mecânica para identificação da build.
+
+| Ensaio de 30 s | Pares/canal | Chegada flash−PTS áudio, mediana | A−V agendado | A−V capturado |
+|---|---:|---:|---:|---:|
+| 1080p50 A | 21 | −22,896 ms | +19,813 ms | +20,396 ms |
+| 1080p50 B | 21 | −13,625 ms | +15,813 ms | +16,417 ms |
+| 1080p25 A | 20 | +17,229 ms | −25,083 ms | −24,521 ms |
+| 1080p25 B | 19 | +15,542 ms | +3,750 ms | +4,333 ms |
+
+Positivo significa áudio depois do vídeo. Todos tiveram zero amostras em falta,
+erros API, recuperações, late/dropped SDI, resets, falhas de histórico ou fallback
+SDR. A diferença captura−agendamento foi +0,563 a +0,604 ms, incluindo a entrada
+não calibrada e os limiares. Não se deve subtrair automaticamente esse valor como
+latência do recetor. Os eventos `requestVideoFrameCallback` preservam mediaTime,
+presentationTime e expectedDisplayTime no log; não se confundem com PTS absoluto
+nativo nem são usados para corrigir imagens. Há saltos na apresentação inicial da
+fonte; a aceitação dos contadores SDI não significa zero frames omitidos no browser.
+As janelas analisadas excluem o aquecimento inicial, como na etapa anterior.
+
+**Conclusão factual:** o desfasamento variável continua com conteúdo cujo alinhamento
+no ficheiro é conhecido. A fonte anterior não pode, portanto, ser a única explicação.
+O agendador/captura reproduz o desfasamento previsto pelo mapeamento atual, mas a
+chegada de OnPaint ainda representa a entrega da imagem e não o seu PTS de conteúdo.
+A fase de apresentação/seleção é relevante, incluindo a quantização de 40/20 ms.
+Estes quatro arranques não isolam causalmente cada buffer CEF/OS nem demonstram
+latência absoluta ou drift independente. A variação observada **não sustenta um
+offset fixo universal, nem sequer uma calibração estável por modo nesta amostra**.
+Reduzir reservas de áudio indiscriminadamente não resolve a ausência de PTS visual
+nem tem validação nesta etapa. Não foram alterados mixer, reservas, atraso de fonte
+ou política temporal de saída da §10.9.
+
+**Implementação e validação:** override `--sdi-av-source-url` exclusivo de
+`--sdi-av-test`; logging de referência exclusivo desse diagnóstico; runner local,
+fonte HTML e verificador independente. Build nativa e assinatura verificada,
+CTest 4/4, analisadores 9+4 testes e verificador 4 testes passaram. Este último usa
+o ficheiro preservado e rejeita truncagem, timebase e sample rate incorretos. Smoke
+normal da interface/monitor/CEF passou. O log contém um aviso de validação de
+assinatura macOS; a verificação codesign e o processo completo terminaram com sucesso.
+
+Evidência: `tools/audio-audit/data/content-reference-2026-10-31/`, com fonte comum,
+manifests, hashes, CSV/logs, verificação e decomposição de cada arranque. A aplicação
+instalada não foi substituída; os processos de teste terminaram.
+
+**Próximo passo proposto, pendente de confirmação do Luis:** protótipo de associação
+entre cada imagem efetivamente recebida por OnPaint e o seu PTS de conteúdo, primeiro
+nesta referência controlada, com identificação inequívoca de frame. Verificar se a
+seleção por conteúdo reduz o residual aos limites de quantização, e depois avaliar
+como obter essa informação para fontes reais. Uma página arbitrária pode não expor
+um relógio de conteúdo utilizável; não se promete uma correção universal baseada
+apenas em requestVideoFrameCallback ou num offset medido num arranque.

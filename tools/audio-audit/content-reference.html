@@ -1,0 +1,71 @@
+<!doctype html><meta charset="utf-8"><title>Referência A/V com PTS</title>
+<style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}video{width:100%;height:100%;object-fit:fill}</style>
+<video id="video" playsinline></video>
+<script>
+'use strict';
+(async()=>{
+ const log=x=>console.log('U2K_REFERENCE '+JSON.stringify(x));
+ try {
+ const fps=50, seconds=60, rate=48000, width=1920,height=1080;
+ const cat=(...parts)=>{const out=new Uint8Array(parts.reduce((n,p)=>n+p.length,0));let i=0;for(const p of parts){out.set(p,i);i+=p.length;}return out;};
+ const bytes=(n,size)=>{const a=new Uint8Array(size);for(let i=size-1;i>=0;i--){a[i]=n%256;n=Math.floor(n/256);}return a;};
+ const vint=n=>{for(let k=1;k<=7;k++)if(n<2**(7*k)-1){const a=bytes(n,k);a[0]|=1<<(8-k);return a;}throw Error('EBML size overflow');};
+ const el=(id,p)=>cat(bytes(id,Math.ceil(Math.log2(id+1)/8)),vint(p.length),p);
+ const uint=(id,n)=>el(id,bytes(n,Math.max(1,Math.ceil(Math.log2(n+1)/8))));
+ const str=(id,s)=>el(id,new TextEncoder().encode(s));
+ const float=(id,n)=>{const b=new ArrayBuffer(8);new DataView(b).setFloat64(0,n);return el(id,new Uint8Array(b));};
+ const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+ const g=canvas.getContext('2d',{willReadFrequently:true}),encoded=[];
+ let encoderError;
+ const encoder=new VideoEncoder({output:c=>{const data=new Uint8Array(c.byteLength);c.copyTo(data);encoded.push({data,timestamp:c.timestamp,type:c.type});},error:e=>encoderError=e});
+ encoder.configure({codec:'vp8',width,height,bitrate:1000000,framerate:fps,latencyMode:'realtime'});
+ for(let i=0;i<2;i++){
+  g.fillStyle=i?'white':'black';g.fillRect(0,0,width,height);
+  const f=new VideoFrame(canvas,{timestamp:i*20000,duration:20000});encoder.encode(f,{keyFrame:true});f.close();
+ }
+ await encoder.flush();encoder.close();if(encoderError)throw encoderError;
+ encoded.sort((a,b)=>a.timestamp-b.timestamp);
+ if(encoded.length!==2||encoded.some(c=>c.type!=='key'))throw Error('Expected two independent VP8 keyframes');
+ // Decode both compressed images before accepting them as a source reference.
+ let decoded=0,decodeError;const decoder=new VideoDecoder({output:f=>{g.drawImage(f,0,0);const p=g.getImageData(width/2,height/2,1,1).data;const white=f.timestamp===20000;if((white&&p[0]<240)||(!white&&p[0]>16))decodeError=Error('Decoded luma mismatch');decoded++;f.close();},error:e=>decodeError=e});
+ decoder.configure({codec:'vp8',codedWidth:width,codedHeight:height});
+ for(const c of encoded)decoder.decode(new EncodedVideoChunk({type:'key',timestamp:c.timestamp,data:c.data}));
+ await decoder.flush();decoder.close();if(decodeError)throw decodeError;if(decoded!==2)throw Error('Missing decoded source frames');
+ const audio=new Uint8Array(rate*4),view=new DataView(audio.buffer);let firstAbove=null;
+ for(let i=0;i<rate;i++){
+  const t=i/rate,v=t<.04?Math.round(32767*10**(-18/20)*Math.sin(2*Math.PI*1000*t)*Math.max(0,Math.min(1,t/.002,(.04-t)/.002))):0;
+  view.setInt16(i*4,v,true);view.setInt16(i*4+2,v,true);if(firstAbove===null&&Math.abs(v/32768)>.003)firstAbove=i;
+ }
+ const header=el(0x1a45dfa3,cat(uint(0x4286,1),uint(0x42f7,1),uint(0x42f2,4),uint(0x42f3,8),str(0x4282,'matroska'),uint(0x4287,4),uint(0x4285,2)));
+ const info=el(0x1549a966,cat(uint(0x2ad7b1,1000000),float(0x4489,seconds*1000),str(0x4d80,'URL2KeyFill content reference'),str(0x5741,'URL2KeyFill content reference')));
+ const tracks=el(0x1654ae6b,cat(
+  el(0xae,cat(uint(0xd7,1),uint(0x73c5,1),uint(0x83,1),str(0x86,'V_VP8'),uint(0x23e383,20000000),el(0xe0,cat(uint(0xb0,width),uint(0xba,height))))),
+  el(0xae,cat(uint(0xd7,2),uint(0x73c5,2),uint(0x83,2),str(0x86,'A_PCM/INT/LIT'),el(0xe1,cat(float(0xb5,rate),uint(0x9f,2),uint(0x6264,16)))))
+ ));
+ const block=(track,t,data)=>el(0xa3,cat(new Uint8Array([0x80|track]),bytes(t,2),new Uint8Array([0x80]),data));
+ const clusters=[];
+ for(let second=0;second<seconds;second++){
+  const blocks=[];
+  for(let f=0;f<fps;f++){
+   const white=second>0&&f<2;
+   blocks.push(block(1,f*20,encoded[white?1:0].data));
+   blocks.push(block(2,f*20,second>0?audio.subarray(f*960*4,(f+1)*960*4):new Uint8Array(960*4)));
+  }
+  clusters.push(el(0x1f43b675,cat(uint(0xe7,second*1000),...blocks)));
+ }
+ const media=cat(header,el(0x18538067,cat(info,tracks,...clusters)));
+ const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',media)),v=>v.toString(16).padStart(2,'0')).join('');
+ const manifest={kind:'muxed-content-reference',video_codec:'VP8',audio_codec:'PCM_S16LE',fps,seconds,rate,width,height,first_flash_s:1,flash_period_s:1,flash_duration_s:.04,audio_first_above_threshold_sample:firstAbove,threshold:.003,media_sha256:hash,bytes:media.length,source_decoded_images_verified:decoded};
+ for(const [path,body,type] of [['reference.mkv',media,'video/x-matroska'],['source.json',JSON.stringify(manifest),'application/json']]){
+  const response=await fetch('/'+path,{method:'POST',body,headers:{'Content-Type':type}});if(!response.ok)throw Error('Cannot preserve source evidence');
+ }
+ log(manifest);
+ const video=document.getElementById('video');let lastSecond=-1,callbacks=0;
+ video.onerror=()=>log({error:'media playback',code:video.error?.code,message:video.error?.message});
+ video.onwaiting=()=>log({event:'waiting',media_time:video.currentTime});
+ video.onended=()=>log({event:'ended',quality:video.getVideoPlaybackQuality()});
+ function frame(now,m){callbacks++;const second=Math.floor(m.mediaTime+1e-6);if(second!==lastSecond){log({event:'video-frame',media_time:m.mediaTime,presentation_time_ms:m.presentationTime,expected_display_time_ms:m.expectedDisplayTime,callback_now_ms:now,presented_frames:m.presentedFrames,callbacks});lastSecond=second;}video.requestVideoFrameCallback(frame);}
+ video.requestVideoFrameCallback(frame);video.src=URL.createObjectURL(new Blob([media],{type:'video/x-matroska'}));await video.play();log({event:'playing',media_time:video.currentTime});
+ } catch(e){log({error:String(e),stack:e.stack});document.body.textContent=String(e);}
+})();
+</script>

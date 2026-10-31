@@ -303,3 +303,42 @@ Run `PYTHONDONTWRITEBYTECODE=1 python3 tools/audio-audit/test_pipeline_sync.py`
 (four tests), alongside `test_loopback.py` (nine tests). Final evidence, rejected
 experiments and fixed-output/input-restart controls are under
 `data/video-timeline-2026-10-31/`; acceptance remains partial as explained in audit §10.9.
+
+### Known-content-PTS control through CEF
+
+`run-content-reference.py` serves `content-reference.html` on an ephemeral loopback
+port and runs the normal app loopback with `--sdi-av-source-url`. The override is
+accepted only with `--sdi-av-test`; ordinary sessions keep their saved URLs. Close
+other hardware owners before running. Example (same signed app/capture probe as above):
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 tools/audio-audit/run-content-reference.py \
+  --app /tmp/candidate/URL2KeyFill.app/Contents/MacOS/URL2KeyFill \
+  --capture /tmp/u2k-decklink-capture --mode 1080p50 --seconds 30 \
+  --directory /tmp/known-content-50-a
+```
+
+Use a new directory for each start, repeat at 25p/50p; seconds accepts 25–45 because
+the source is finite (60 seconds, no loop seam). The page encodes black/white VP8
+keyframes with WebCodecs, checks decoded centre luma, then muxes 50 fps video with
+48 kHz stereo PCM16 in Matroska. Both tracks have explicit contiguous PTS. No encoder
+or package installation is needed. Browser startup must finish within the runner's
+normal readiness deadline. The server binds only 127.0.0.1, accepts two fixed evidence
+uploads, and stops after the runner. The media stays in memory during playback.
+
+The first second is silent black. From second one, a 40 ms flash and 40 ms, 1 kHz
+pulse repeat each second. The .003 FS detector first crosses at sample five: the
+expected source A−V is +0.104167 ms. `reference.mkv` and `source.json` preserve the
+exact generated media and hash. `verified-source.json` is independently computed by
+`verify_content_reference.py`, which inspects EBML, all block PTS and raw PCM samples.
+It checks VP8 payload identity, not an independent decode of all video frames.
+`requestVideoFrameCallback` diagnostic records in playback.log expose media/display
+times for analysis; console arrival is stamped in host samples but is not treated
+as paint/content PTS or used for correction. Browser frame skips remain distinct
+from SDK dropped-video counters.
+
+Run `PYTHONDONTWRITEBYTECODE=1 python3 tools/audio-audit/test_content_reference.py`
+for four verifier checks against the retained compressed source and damaged variants.
+Evidence lives in `data/content-reference-2026-10-31/`. Audit §10.10 records variable
+residuals even with known file PTS: this control does not establish a universal fixed
+offset, independent input calibration or final content synchronization acceptance.
