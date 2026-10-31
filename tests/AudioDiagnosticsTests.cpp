@@ -132,6 +132,17 @@ int main(){try{
  for(int i=0;i<10;++i)sourceProbe.push(data,480,2,1020+i*10);
  sourceProbe.push(stereo,480,2,1120);REQUIRE(sourceProbe.syncPulseCount==2);REQUIRE(sourceProbe.outputReads==0);
  sourceProbe.clear();REQUIRE(sourceProbe.syncPulsePts==INT64_MIN);
+ // The diagnostic audio clock identifies sample positions across callback boundaries.
+ ReferenceAudioClock reference;
+ auto marker=[&](int id,int64_t origin,bool corrupt=false){const uint64_t word=(uint64_t(0x55324b46)<<32)|(uint64_t(id)<<16)|uint16_t((id^0xa55a)^(corrupt?1:0));for(int i=0;i<960;++i){const int bit=i>=200&&i<264?int((word>>(263-i))&1):0;reference.sample(int16_t(bit),origin+int64_t(id)*960+i);}};
+ marker(0,48000);marker(1,48000);REQUIRE(reference.origin==INT64_MIN);marker(2,48000);REQUIRE(reference.origin==48000);REQUIRE(reference.matches==3);
+ marker(3,48000,true);REQUIRE(reference.matches==3);marker(4,48000);REQUIRE(reference.mismatches==0);REQUIRE(reference.skipped==1);REQUIRE(reference.origin==48000);marker(5,48000);marker(6,48000);REQUIRE(reference.origin==48000);
+ marker(7,48010);REQUIRE(reference.origin==INT64_MIN);REQUIRE(reference.mismatches==1);reference.clear();REQUIRE(reference.matches==0);REQUIRE(reference.origin==INT64_MIN);
+ // Full AudioLane normalization retains marker timing when the marker straddles packets.
+ AudioLane identified;identified.referenceDiagnostic=true;std::vector<float> coded(4*960,0);
+ for(int id=0;id<4;++id){const uint64_t word=(uint64_t(0x55324b46)<<32)|(uint64_t(id)<<16)|uint16_t(id^0xa55a);for(int b=0;b<64;++b)coded[id*960+200+b]=float((word>>(63-b))&1)/32768.f;}
+ for(int offset=0;offset<4*960;offset+=240){const float* channels[]={coded.data()+offset,coded.data()+offset};identified.push(channels,240,2,1000+offset/48);}
+ REQUIRE(identified.referenceClock.origin==48000);REQUIRE(identified.referenceClock.matches==4);identified.clear();REQUIRE(identified.referenceClock.origin==INT64_MIN);
  // Exercise clear/publication/read interleaving with immutable source buffers.
  AudioLane concurrent;std::atomic<bool> start{false},finished{false};
  std::thread producer([&]{while(!start.load())std::this_thread::yield();for(int i=0;i<500;++i)concurrent.push(stereo,480,2,1000+i*10);finished=true;});

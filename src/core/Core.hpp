@@ -38,10 +38,11 @@ struct Frame {
     Size size;
     size_t stride;
     uint64_t sequence=0;
+    int64_t contentTime=INT64_MIN; // Experimental identified-reference PTS in the audio source domain; unset normally.
     int64_t paintTime=INT64_MIN; // Uptime samples at paint arrival, not a decoded content PTS.
     std::vector<uint8_t> pixels;
     explicit Frame(Size s, uint64_t sequence=0);
-    static std::shared_ptr<const Frame> copy(Size, const void*, size_t stride, uint64_t sequence, int64_t paintTime=INT64_MIN);
+    static std::shared_ptr<const Frame> copy(Size, const void*, size_t stride, uint64_t sequence, int64_t paintTime=INT64_MIN, int64_t contentTime=INT64_MIN);
 };
 struct FrameSignal {
     std::mutex mutex;std::condition_variable cv;uint64_t revision=1;

@@ -30,8 +30,10 @@ int main(){try{
  REQUIRE(history.at(160,50).frame==second); // Nearest available future frame is bounded.
  REQUIRE(history.at(150,50).frame==first); // Exact ties prefer the past.
  REQUIRE(history.at(160,20).frame==first); // Never exceed permitted anticipation.
- auto resized=resize(*first,{2,2});REQUIRE(resized->paintTime==100);
- auto mixed=composite({first,second},{1,1});REQUIRE(mixed->paintTime==200);
+ first->contentTime=50;auto resized=resize(*first,{2,2});REQUIRE(resized->paintTime==100);REQUIRE(resized->contentTime==50);
+ auto copied=Frame::copy(first->size,first->pixels.data(),first->stride,1,100,50);REQUIRE(copied->paintTime==100);REQUIRE(copied->contentTime==50);
+ REQUIRE(composite({first},{1,1})->contentTime==50);
+ auto mixed=composite({first,second},{1,1});REQUIRE(mixed->paintTime==200);REQUIRE(mixed->contentTime==INT64_MIN);
  history.publish(first,10000);REQUIRE(history.at(9999).frame==second);
  auto third=std::make_shared<Frame>(Size{1,1});third->paintTime=10020;history.publish(third,10020);
  REQUIRE(history.bytes()<=12);REQUIRE(history.at(10019).frame==first);
@@ -52,6 +54,12 @@ int main(){try{
  std::thread historyWriter([&]{for(int i=0;i<5000;++i)concurrentHistory.publish(i%2?first:second,i);done=true;});
  std::thread historyReader([&]{while(!done){auto selected=concurrentHistory.at(2500);if(selected.frame&&selected.time>2500)bad=true;if(concurrentHistory.bytes()>64)bad=true;}});
  for(int i=0;i<500;++i){concurrentHistory.clear();concurrentHistory.prepareOutput(i%3?std::optional<bool>(bool(i%2)):std::nullopt,64);}historyWriter.join();historyReader.join();REQUIRE(!bad);
+ // Visual identifiers survive decoding thresholds and reject wrong geometry/checksums.
+ auto coded=std::make_shared<Frame>(Size{1920,1080});for(size_t i=3;i<coded->pixels.size();i+=4)coded->pixels[i]=255;
+ const int code=1234;const uint64_t word=(uint64_t(0xa65c)<<24)|(uint64_t(code)<<12)|((code^0xb6d)&0xfff);
+ for(int b=0;b<40;++b)for(int row=0;row<2;++row){auto p=coded->pixels.data()+size_t(72+row*12)*coded->stride+(114+b*36)*4;for(int c=0;c<3;++c)p[c]=(word>>(39-b))&1?250:5;}
+ REQUIRE(referenceFrameId(coded->pixels.data(),1920,1080,coded->stride)==code);REQUIRE(!referenceFrameId(coded->pixels.data(),1280,720,coded->stride));
+ coded->pixels[size_t(72)*coded->stride+114*4]=128;coded->pixels[size_t(72)*coded->stride+114*4+1]=128;coded->pixels[size_t(72)*coded->stride+114*4+2]=128;REQUIRE(!referenceFrameId(coded->pixels.data(),1920,1080,coded->stride));
  // Publication after subscriber destruction must never access a dead Scene.
  source->publish(second);source->clear();
  // Race publication with reconfiguration and Scene destruction.

@@ -1415,3 +1415,105 @@ seleção por conteúdo reduz o residual aos limites de quantização, e depois 
 como obter essa informação para fontes reais. Uma página arbitrária pode não expor
 um relógio de conteúdo utilizável; não se promete uma correção universal baseada
 apenas em requestVideoFrameCallback ou num offset medido num arranque.
+
+### 10.11 Resposta — associação inequívoca de imagem a PTS, protótipo autorizado (31/10)
+
+**Protótipo concluído; sincronismo final continua por aceitar.** Foi demonstrado
+que uma imagem recebida por OnPaint pode ser associada ao seu PTS de conteúdo
+quando a fonte fornece uma identificação verificável. Isto não acrescenta PTS a
+páginas arbitrárias. A seleção normal continua por chegada; o caminho experimental
+exige flags CLI explícitas e a referência controlada, sem alteração à aplicação
+instalada, às reservas SDI ou ao atraso de fonte de 60 ms.
+
+**Protocolo da prova.** Nova referência VP8/PCM de 60 s, 50 fps, com vídeo 320×180
+escalado pelo browser para 1920×1080. Cada imagem contém header de 16 bits, ID de
+12 bits e verificação de 12 bits num código visual; o ID determina PTS = ID×960
+samples. Cada um dos 3000 frames é keyframe e foi descodificado no CEF antes da
+reprodução, validando ID, PTS e centro preto/branco. OnPaint lê duas linhas do código
+nos pixels efetivamente recebidos, rejeitando níveis ambíguos, geometria ou check
+inválidos. Não associa o frame a uma mensagem JavaScript próxima no tempo.
+
+Os blocos PCM de 20 ms transportam header de 32 bits, ID absoluto de 16 bits e check
+de 16 bits no bit menos significativo dos samples 200–263, igualmente em L/R.
+A alteração é no máximo um LSB PCM16 (−90,3 dBFS), abaixo do limiar do detetor, sem
+mudar o início do impulso no sample cinco. É uma marca digital exclusiva do teste,
+sem DSP novo no áudio normal. Um verificador separado confirma os 3000 IDs PCM,
+PTS contíguos, forma de onda e 59 onsets; o vídeo tem payloads distintos e a validação
+descodificada de todos os IDs fica no manifesto/log da fonte.
+
+O relógio de diagnóstico reconhece a posição absoluta de cada marca no áudio aceite
+pela AudioLane. Origem = PTS do sample reconhecido − posição no bloco − ID×960.
+Exige três marcas consistentes; não usa a primeira chegada nem conta impulsos para
+adivinhar o segundo. Marcas ausentes com origem posterior consistente são contadas
+à parte; ordem/origem incoerente invalida o relógio. O ensaio por conteúdo não inicia
+sem relógio e interrompe a medição se ele se perder ou mudar. Algumas marcas não
+foram reconhecidas, incluindo durante o arranque: não se declara preservação bit a
+bit de todo o PCM pelo CEF. Os IDs absolutos reconhecidos dispensam essa suposição.
+
+`Frame.paintTime` conserva a chegada; `Frame.contentTime` é separado e só é definido
+neste modo. Copy/resize e alias de fonte única preservam-no; composição de várias
+fontes deixa-o indefinido. O histórico usa contentTime quando existe, mantendo as
+barreiras de configuração, limites de RAM e preparação SDR. Os IDs efetivamente
+selecionados são guardados num buffer de diagnóstico pré-reservado de 4096 entradas
+e escritos após STOP, sem I/O de log no prazo do worker SDI. O log de OnPaint é
+exclusivo do diagnóstico. O analisador verifica **todos** os agendamentos da janela
+7–29 s, sem lacunas: 1100 a 50p ou 550 a 25p, além da concordância marcas/impulsos,
+origem estável e saúde I/O. O horizonte de 4096 registos limita esta instrumentação.
+
+**Comparação na mesma candidata e no mesmo ficheiro**, seis ensaios de 30 s.
+SHA-256 da candidata: `e5bf0fee773d5be8fcfe89e19afa87c63f27eefa3b9ddb59235843fe0b0b7637`.
+SHA-256 comum da fonte: `251697aae5992e03e1004be26d7ae0c38381b4ac30bb3640e45b8ab813ba0a1f`.
+A fonte nova é distinta da §10.10; a comparação controlada desta etapa é entre as
+linhas seguintes, não uma redução isolada face aos números da fonte anterior.
+
+| Modo / seleção | Pares/canal | A−V agendado | A−V capturado |
+|---|---:|---:|---:|
+| 50p / chegada | 21 | +17,167 ms | +17,771 ms |
+| 50p / conteúdo A | 21 | −5,479 ms | −4,875 ms |
+| 50p / conteúdo B | 21 | −6,063 ms | −5,458 ms |
+| 25p / chegada | 20 | −36,500 ms | −35,917 ms |
+| 25p / conteúdo A | 21 | −16,396 ms | −15,813 ms |
+| 25p / conteúdo B | 20 | −30,292 ms | −29,729 ms |
+
+Positivo = áudio depois do vídeo. Todos: zero áudio em falta, erros API,
+recuperações, resets, vídeo SDI late/dropped, falhas de histórico ou fallback SDR.
+Nenhuma mudança da origem de conteúdo foi aceite. Houve uma marca intermédia de
+áudio não reconhecida por ensaio, contada sem a confundir com mudança de relógio.
+Captura−agendamento ficou +0,563 a +0,604 ms, incluindo entrada/limiares; não é uma
+calibração independente da entrada nem uma correção aplicada ao resultado.
+
+**O que os IDs esclarecem:** a 50p, o primeiro frame branco recebido correspondeu
+ao início do flash; a seleção por conteúdo teve erro constante −5,583/−6,167 ms
+face ao alvo, compatível com a quantização disponível nesta amostra. A 25p, os três
+ensaios receberam primeiro o frame branco **20 ms depois do início de conteúdo do
+flash**: o primeiro frame da fonte de 50 fps não entrou na pintura de 25 fps.
+No conteúdo B, o frame selecionado estava 10,396 ms antes do alvo; somando o início
+visual disponível 20 ms tardio, prevê-se A−V de −30,292 ms, tal como agendado e
+capturado. Portanto, **PTS correto é necessário para esta prova, mas não basta
+para recuperar frames que o CEF não entregou nem para fechar o sincronismo a 25p**.
+Não se aplica um offset fixo, não se declara eliminada a quantização e não se aceita
+uma solução universal para fontes reais ou múltiplas camadas.
+
+Um controlo exploratório anterior mediu +37,146 ms a 50p, mas o primeiro verificador
+de relógio confundia um ID de marca ausente com mudança de origem. A origem observada
+continuava igual. A classificação foi corrigida e repetiu-se o controlo na candidata
+final; o caso exploratório, com outro hash, foi preservado e excluído da comparação.
+
+**Validação:** build nativa/assinatura local verificada, CTest 4/4, testes Python
+9+4+6+7, AudioDiagnostics e SceneEvents com ASan/UBSan e smoke normal da interface/
+monitor passaram. Testes cobrem marcas atravessando packets, origem inconsistente,
+ID/check inválido, clear, geometria/limiares, preservação de PTS e ausência de PTS
+composto, stamp incorreto, desacordo com impulsos, I/O degradado e lacunas na
+cobertura de agendamento. Não houve ensaio prolongado, drift independente ou teste
+de páginas reais com este contrato de conteúdo; o formato visual é específico de
+1920×1080 e não se generaliza a outras viewports.
+
+Evidência: `tools/audio-audit/data/identified-pts-2026-10-31/`, com fonte comprimida,
+hashes, seis casos finais, identificadores de publicação/agendamento, verificação,
+caso exploratório e logs de checks. Os processos de ensaio terminaram.
+
+**Próximo passo proposto, aguardando confirmação do Luis:** repetir a prova com a
+cadência da fonte igual à saída (25 fps→25p), para isolar a omissão do primeiro frame
+do flash e separar esse efeito da quantização SDI. Só depois escolher o contrato
+viável de timestamps para fontes reais. O protótipo não é promovido automaticamente
+a comportamento de produção; P4 e aceitação final P5 continuam pendentes.

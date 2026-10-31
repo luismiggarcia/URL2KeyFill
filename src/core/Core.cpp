@@ -82,12 +82,12 @@ TimedFrame FrameHistory::at(int64_t time,int64_t maxAhead)const{
  return selected;
 }
 Frame::Frame(Size s,uint64_t seq):size(s),stride(size_t(s.width)*4),sequence(seq){validate(s);pixels.resize(stride*s.height,0);}
-std::shared_ptr<const Frame> Frame::copy(Size s,const void* p,size_t row,uint64_t seq,int64_t paintTime) {
+std::shared_ptr<const Frame> Frame::copy(Size s,const void* p,size_t row,uint64_t seq,int64_t paintTime,int64_t contentTime) {
     validate(s);if(!p||row<size_t(s.width)*4)throw std::invalid_argument("Invalid BGRA buffer.");
-    auto f=std::make_shared<Frame>(s,seq);f->paintTime=paintTime;for(int y=0;y<s.height;y++)std::memcpy(f->pixels.data()+y*f->stride,static_cast<const uint8_t*>(p)+y*row,f->stride);return f;
+    auto f=std::make_shared<Frame>(s,seq);f->paintTime=paintTime;f->contentTime=contentTime;for(int y=0;y<s.height;y++)std::memcpy(f->pixels.data()+y*f->stride,static_cast<const uint8_t*>(p)+y*row,f->stride);return f;
 }
 std::shared_ptr<const Frame> resize(const Frame& src,Size dest) {
-    auto out=std::make_shared<Frame>(dest,src.sequence);out->paintTime=src.paintTime;auto r=fit(src.size,dest);
+    auto out=std::make_shared<Frame>(dest,src.sequence);out->paintTime=src.paintTime;out->contentTime=src.contentTime;auto r=fit(src.size,dest);
     if(src.size==dest){out->pixels=src.pixels;return out;}
     for(int y=0;y<r.height;y++) {
         double sy=std::clamp((y+0.5)*src.size.height/r.height-0.5,0.,double(src.size.height-1));

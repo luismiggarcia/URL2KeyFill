@@ -32,6 +32,19 @@ Three owned SDK frames are scheduled with `ScheduleVideoFrame`. Video callbacks 
 
 Scene publication also maintains a bounded temporal history. `OnPaint` is stamped on arrival in the shared 48 kHz uptime domain; this is **not decoded content PTS**. Resize preserves it and multi-layer composition uses the newest child stamp. Configuration revisions clear the history and establish a publication barrier. The local monitor still reads the latest immutable frame directly.
 
+Only the identified-reference CLI prototype may set `Frame.contentTime`, separately
+from `paintTime`. A fixed visual barcode identifies each actual OnPaint image; a
+PCM least-significant-bit marker identifies its absolute audio content position.
+After three consistent audio markers, content PTS is mapped into the existing audio
+source domain. Copy/resize and the single-source alias preserve it; multi-source
+composition leaves it unset. Scene history uses contentTime when present, keeping
+revision barriers and normal bounds. Missing markers with consistent subsequent
+positions are counted; origin changes invalidate the prototype clock and terminate
+the content test. Neither decoder runs for ordinary pages. A bounded diagnostic
+schedule buffer is dumped after stopping output, recording selected IDs for the
+proof. This is an opt-in experiment for a fixed protocol/viewport, not generic
+media-element support or an automatic per-layer offset.
+
 SDI selects the nearest available historical frame to `audioSourceOrigin + scheduledStreamTime`, allowing at most half an output frame ahead and favouring the past on ties. No renderer wait is introduced. The audio mapping is currently rate 1:1; future adaptive rate correction must update both destinations. Missing/wrong-size history produces transparent black and separate startup/steady counters. Static frames remain reusable. History is limited to 16 entries, a nominal 500 ms span (retaining a static predecessor), and 192 MiB raw / 384 MiB raw-plus-prepared during output. These are ceilings, not guaranteed temporal coverage at arbitrary resolutions.
 
 SDR conversion runs on publication, outside the history mutex; START primes retained frames before playback. Prepared immutable BGRA/ARGB pixels are reused by the scheduling worker; fallback conversion is counted. STOP releases prepared caches and restores the raw budget. This exchanges bounded RAM for less deadline work; large stacks/UHD still need physical performance validation. macOS holds a scoped user-initiated, latency-critical process activity while SDI is active, including PAUSE, and requests user-interactive QoS for the video worker. STOP, errors and quit release the activity. This does not prevent forced sleep or establish App Nap as the cause of any historical failure.
@@ -54,7 +67,7 @@ DeckLink audio uses 48 kHz, 32-bit integer stereo and timestamped scheduling. De
 
 The callback retains the output interface, is stopped/detached before release, and fatal API errors cause controlled shutdown. Cleanup only disables resources successfully enabled by this backend. Diagnostics distinguish captured/scheduled frames, missing coverage, pre-source padding, clock recoveries/API errors and hard-clipped samples. Monitoring remains a separate destination; its real-time buffer/rate redesign is pending.
 
-This establishes a shared scheduling timeline. Same-device SDI loopback has exercised it at 1080p25/50, but final content A/V acceptance remains open: paint arrival is not a content timestamp, and source phase varies across starts. A known-PTS VP8/PCM Matroska control through the same CEF path also showed start-dependent residuals (audit §10.10). Diagnostic media/display timestamps are logged but do not yet identify the content PTS of each native paint. No fixed compensating offset is applied. This does not constitute independent external A/V sync measurement. Browser/OS/device latency and the receiver's processing require loopback/listening tests. Pause, visibility and mute changes take effect after already scheduled buffers drain.
+This establishes a shared scheduling timeline. Same-device SDI loopback has exercised it at 1080p25/50, but final content A/V acceptance remains open: paint arrival is not a content timestamp, and source phase varies across starts. A known-PTS VP8/PCM Matroska control through the same CEF path also showed start-dependent residuals (audit §10.10). Diagnostic media/display timestamps alone do not identify each native paint. An explicitly enabled, controlled-source prototype now identifies pixel frames and PCM sample positions (audit §10.11); it is not enabled for normal pages. No fixed compensating offset is applied. This does not constitute independent external A/V sync measurement. Browser/OS/device latency and the receiver's processing require loopback/listening tests. Pause, visibility and mute changes take effect after already scheduled buffers drain.
 
 ## Persistence, first run and failure handling
 

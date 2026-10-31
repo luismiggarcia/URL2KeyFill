@@ -1,0 +1,32 @@
+{
+  "mode": "1080p25",
+  "seconds": 30,
+  "settle_seconds": 4,
+  "source": "application",
+  "playback_sha256": "e5bf0fee773d5be8fcfe89e19afa87c63f27eefa3b9ddb59235843fe0b0b7637",
+  "capture_sha256": "a6100cd387f7f0eeda5be8c8ecf108bfd82ba43f3507a38bcac1c2fe5c4bbbd3",
+  "capture_command": [
+    "/private/tmp/u2k-capture-final",
+    "--seconds",
+    "40",
+    "--mode",
+    "1080p25",
+    "--csv",
+    "/private/tmp/u2k-identified-final/content25-a/loopback/capture.csv"
+  ],
+  "playback_command": [
+    "/private/tmp/u2k-identified-final/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+    "--sdi-av-test",
+    "--hardware-test-mode",
+    "1080p25",
+    "--audio-baseline-seconds",
+    "30",
+    "--sdi-av-source-url",
+    "http://127.0.0.1:52478/",
+    "--sdi-av-reference-ids",
+    "--sdi-av-content-pts"
+  ],
+  "input_recording_limit_s": 23.91968274998362,
+  "playback_exit": 0,
+  "capture_exit": 0
+}

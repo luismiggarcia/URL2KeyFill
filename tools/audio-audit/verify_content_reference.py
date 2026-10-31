@@ -34,7 +34,7 @@ def elements(data):
         pos = end
 
 
-def verify(path):
+def verify(path, identified=False):
     data = Path(path).read_bytes()
     top = dict(elements(data))
     segment = list(elements(top[0x18538067]))
@@ -65,6 +65,8 @@ def verify(path):
             (video if block[0] == 0x81 else audio).append((stamp, block[4:]))
     if len(video) != 3000 or len(audio) != 3000:
         raise ValueError('Expected 60 seconds at 50 fps with matching PCM packets')
+    if identified and len({v for _, v in video}) != 3000:
+        raise ValueError('Expected 3000 distinct identified VP8 payloads')
     black, white = video[0][1], video[50][1]
     if black == white:
         raise ValueError('Missing distinct VP8 images')
@@ -73,8 +75,14 @@ def verify(path):
         if vt != i*20 or at != vt or len(pcm) != 960*4:
             raise ValueError('Non-contiguous A/V PTS or invalid PCM duration')
         is_white = i >= 50 and i % 50 < 2
-        if pixels != (white if is_white else black):
+        if not identified and pixels != (white if is_white else black):
             raise ValueError('Video content disagrees with the specified 40 ms flash PTS')
+        if identified:
+            word = 0
+            for j in range(200, 264):
+                word = (word << 1) | (struct.unpack_from('<h', pcm, j*4)[0] & 1)
+            if word >> 32 != 0x55324b46 or (word >> 16) & 0xffff != i or word & 0xffff != i ^ 0xa55a:
+                raise ValueError('PCM frame watermark disagrees with content PTS')
         for j, (left, right) in enumerate(struct.iter_unpack('<hh', pcm)):
             if left != right:
                 raise ValueError('Stereo channels differ')
@@ -95,13 +103,14 @@ def verify(path):
     if onsets != expected:
         raise ValueError('PCM onset samples differ from the reference specification')
     return dict(sha256=hashlib.sha256(data).hexdigest(), video_frames=len(video), audio_packets=len(audio),
-                pulse_count=len(onsets), first_audio_onset_sample=onsets[0], first_flash_pts_ms=1000,
+                identified=identified, pulse_count=len(onsets), first_audio_onset_sample=onsets[0], first_flash_pts_ms=1000,
                 source_audio_minus_video_ms=5/48, all_packet_pts_contiguous=True,
                 limits='VP8 payload identity/PTS and raw PCM checked; decoded image luma is checked separately by the CEF source page.')
 
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--identified', action='store_true')
     p.add_argument('media')
     args = p.parse_args()
-    print(json.dumps(verify(args.media), indent=2))
+    print(json.dumps(verify(args.media, identified=args.identified), indent=2))

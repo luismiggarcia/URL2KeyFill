@@ -43,5 +43,34 @@ class ContentReferenceTests(unittest.TestCase):
             self.inspect(damaged)
 
 
+class IdentifiedReferenceTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.media = gzip.decompress((Path(__file__).parent/'data/identified-pts-2026-10-31/reference.mkv.gz').read_bytes())
+
+    def inspect(self, data):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/'identified.mkv'
+            path.write_bytes(data)
+            return verify(path, identified=True)
+
+    def test_known_identified_source(self):
+        result = self.inspect(self.media)
+        self.assertTrue(result['identified'])
+        self.assertEqual(result['video_frames'], 3000)
+        self.assertAlmostEqual(result['source_audio_minus_video_ms'], 5/48)
+
+    def test_corrupt_audio_identifier(self):
+        word = (0x55324b46 << 32) | 0xa55a
+        marker = b''.join(bytes([((word >> b) & 1), 0])*2 for b in range(63, -1, -1))
+        offset = self.media.find(marker)
+        self.assertGreaterEqual(offset, 0)
+        damaged = bytearray(self.media)
+        damaged[offset+32*4] ^= 1
+        damaged[offset+32*4+2] ^= 1
+        with self.assertRaisesRegex(ValueError, 'watermark'):
+            self.inspect(bytes(damaged))
+
+
 if __name__ == '__main__':
     unittest.main()

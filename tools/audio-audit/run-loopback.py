@@ -24,6 +24,8 @@ def main():
     source = p.add_mutually_exclusive_group(required=True)
     source.add_argument('--app', help='Path to app Contents/MacOS/URL2KeyFill')
     source.add_argument('--reference', help='Path to decklink_clock with --av-reference support')
+    p.add_argument('--reference-ids', action='store_true', help='Decode the controlled reference frame/sample IDs')
+    p.add_argument('--content-pts', action='store_true', help='Select by identified content PTS; requires --reference-ids')
     p.add_argument('--source-url', help='Diagnostic source override, only with --app')
     p.add_argument('--mode', choices=['1080p25', '1080p50', '1080p5994'], default='1080p25')
     p.add_argument('--seconds', type=int, default=30)
@@ -36,6 +38,8 @@ def main():
         p.error('--seconds must be 15..240')
     if args.source_url and not args.app:
         p.error('--source-url requires --app')
+    if (args.reference_ids and not args.source_url) or (args.content_pts and not args.reference_ids):
+        p.error('--reference-ids requires --source-url; --content-pts requires --reference-ids')
     root = Path(args.directory).resolve()
     root.mkdir(parents=True, exist_ok=False)
     capture = str(Path(args.capture).resolve())
@@ -45,6 +49,10 @@ def main():
                 [playback, '--av-reference', '1', '--mode', args.mode, '--seconds', str(args.seconds), '--csv', str(root/'clock.csv')])
     if args.source_url:
         play_cmd += ['--sdi-av-source-url', args.source_url]
+    if args.reference_ids:
+        play_cmd += ['--sdi-av-reference-ids']
+    if args.content_pts:
+        play_cmd += ['--sdi-av-content-pts']
     metadata = dict(mode=args.mode, seconds=args.seconds, settle_seconds=args.settle_seconds, source='application' if args.app else 'scheduled SDK reference',
                     playback_sha256=digest(playback), capture_sha256=digest(capture), capture_command=cap_cmd, playback_command=play_cmd)
     (root/'manifest.json').write_text(json.dumps(metadata, indent=2)+'\n')

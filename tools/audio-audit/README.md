@@ -342,3 +342,48 @@ for four verifier checks against the retained compressed source and damaged vari
 Evidence lives in `data/content-reference-2026-10-31/`. Audit §10.10 records variable
 residuals even with known file PTS: this control does not establish a universal fixed
 offset, independent input calibration or final content synchronization acceptance.
+
+### Identified-frame/content-PTS prototype (controlled source only)
+
+Add `--selection arrival` or `--selection content` to `run-content-reference.py` to
+use `content-pts-reference.html`. Both choices play the **same** identified source;
+only `content` selects historical images by content PTS. CLI reference decoding is
+explicitly gated by `--sdi-av-reference-ids` plus `--sdi-av-test` and a source URL;
+`--sdi-av-content-pts` additionally enables the experimental selection. Ordinary
+pages do not enable these decoders or acquire content timestamps.
+
+The source is 320×180/50 fps VP8, scaled by the browser to 1920×1080. Each frame
+contains a 40-cell barcode (16-bit header, 12-bit frame ID, 12-bit check) at fixed
+coordinates. Every compressed frame is independently decodable, and all 3000 IDs,
+PTS and flash pixels are checked with VideoDecoder before playback. Native OnPaint
+reads two rows with conservative black/white thresholds and verifies ID/checksum.
+The barcode identifies the actual pixels, not a JavaScript callback's arrival.
+
+Each 20 ms PCM block carries the matching absolute ID (32-bit header, 16-bit ID,
+16-bit check) in the least significant bits of samples 200–263, identically on L/R.
+This changes each sample by at most one PCM16 LSB (−90.3 dBFS), below the pulse
+threshold, and leaves pulse onset sample five unchanged. It is a diagnostic digital
+watermark, not a production audio effect. No resampling/gain changes are allowed for
+this proof. AudioLane uses accepted, normalized sample positions to recover the
+content-to-audio-source origin; three consistent identified markers are required.
+Missing watermark IDs with consistent timestamps are counted separately; clock
+changes/reordering invalidate the origin. The content test stops if its origin is
+lost or changes. It does not infer an origin from the first callback or from pulse
+counts.
+
+`Frame.paintTime` remains paint arrival. The experimental `Frame.contentTime` holds
+identified content PTS in the existing audio source domain. Single-source aliasing
+and resize preserve it; multi-source composition leaves it unset. Scene history
+uses it when present, retaining existing revision barriers, count/byte limits and
+SDR preparation. This protocol is not available for arbitrary layered pages.
+
+`REFERENCE_PAINT` records association at the source. A bounded 4096-record buffer
+retains actual scheduled image IDs/times, then writes `REFERENCE_SCHEDULE` after
+output has stopped; it does not write logs from the video deadline. Source paint
+logging is diagnostic-only. `analyze_identified_sync.py RUN --selection content`
+checks content stamps, marker/pulse agreement, stable origins and I/O health, and
+reports selected-content error and predicted/captured A/V. It refuses incorrect
+stamps and avoids assuming that capture and scheduling windows match exactly.
+Use `test_identified_sync.py` (seven tests) and `test_content_reference.py` (six tests,
+including both source formats and a damaged audio ID). Physical evidence is in
+`data/identified-pts-2026-10-31/`; final interpretation is inline in audit §10.11.

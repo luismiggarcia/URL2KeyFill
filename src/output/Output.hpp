@@ -14,6 +14,7 @@ public:
     virtual void audio(std::shared_ptr<AudioMixer>)=0;
     virtual void audioSourceAge(uint32_t samples)=0;
     virtual void syncDiagnostic(bool){}
+    virtual void referenceDiagnostic(bool){}
     virtual void stop()=0;
     virtual OutputStatus status() const=0;
 };

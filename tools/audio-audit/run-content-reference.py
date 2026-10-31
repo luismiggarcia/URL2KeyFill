@@ -11,6 +11,7 @@ import threading
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--selection', choices=['arrival', 'content'], help='Use the identified reference, selecting arrival or experimental content PTS')
     p.add_argument('--app', required=True)
     p.add_argument('--capture', required=True)
     p.add_argument('--mode', choices=['1080p25', '1080p50'], required=True)
@@ -21,7 +22,7 @@ def main():
         p.error('--seconds must be 25..45 for the finite 60-second reference')
     root = Path(args.directory).resolve()
     root.mkdir(parents=True, exist_ok=False)
-    page = Path(__file__).with_name('content-reference.html').read_bytes()
+    page = Path(__file__).with_name('content-pts-reference.html' if args.selection else 'content-reference.html').read_bytes()
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -62,14 +63,18 @@ def main():
                    '--app', args.app, '--capture', args.capture, '--mode', args.mode,
                    '--seconds', str(args.seconds), '--directory', str(root/'loopback'),
                    '--source-url', f'http://127.0.0.1:{server.server_port}/']
+        if args.selection:
+            command += ['--reference-ids']
+        if args.selection == 'content':
+            command += ['--content-pts']
         (root/'command.json').write_text(json.dumps(command, indent=2)+'\n')
         result = subprocess.call(command)
         if (root/'reference.mkv').exists():
             from verify_content_reference import verify
-            verified = verify(root/'reference.mkv')
+            verified = verify(root/'reference.mkv', identified=bool(args.selection))
             (root/'verified-source.json').write_text(json.dumps(verified, indent=2)+'\n')
             source = json.loads((root/'source.json').read_text())
-            if source['media_sha256'] != verified['sha256'] or source['source_decoded_images_verified'] != 2:
+            if source['media_sha256'] != verified['sha256'] or source['source_decoded_images_verified'] != (3000 if args.selection else 2):
                 raise ValueError('Source manifest disagrees with the independent verification')
         elif result == 0:
             raise ValueError('Missing source evidence')

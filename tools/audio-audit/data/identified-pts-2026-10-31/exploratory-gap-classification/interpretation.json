@@ -1,0 +1,4 @@
+{
+  "acceptance": "Not part of final comparison",
+  "reason": "Early diagnostic treated a missing watermark ID as an origin change. Actual observed origin remained equal; final code distinguishes a skipped ID from inconsistent sample positions. Different exploratory executable is identified by manifest."
+}

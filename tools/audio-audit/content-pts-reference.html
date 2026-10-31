@@ -1,0 +1,78 @@
+<!doctype html><meta charset="utf-8"><title>Referência A/V com PTS</title>
+<style>html,body{margin:0;width:100%;height:100%;background:#000;overflow:hidden}video{width:100%;height:100%;object-fit:fill}</style>
+<video id="video" playsinline></video>
+<script>
+'use strict';
+(async()=>{
+ const log=x=>console.log('U2K_REFERENCE '+JSON.stringify(x));
+ try {
+ const fps=50, seconds=60, rate=48000, width=320,height=180;
+ const cat=(...parts)=>{const out=new Uint8Array(parts.reduce((n,p)=>n+p.length,0));let i=0;for(const p of parts){out.set(p,i);i+=p.length;}return out;};
+ const bytes=(n,size)=>{const a=new Uint8Array(size);for(let i=size-1;i>=0;i--){a[i]=n%256;n=Math.floor(n/256);}return a;};
+ const vint=n=>{for(let k=1;k<=7;k++)if(n<2**(7*k)-1){const a=bytes(n,k);a[0]|=1<<(8-k);return a;}throw Error('EBML size overflow');};
+ const el=(id,p)=>cat(bytes(id,Math.ceil(Math.log2(id+1)/8)),vint(p.length),p);
+ const uint=(id,n)=>el(id,bytes(n,Math.max(1,Math.ceil(Math.log2(n+1)/8))));
+ const str=(id,s)=>el(id,new TextEncoder().encode(s));
+ const float=(id,n)=>{const b=new ArrayBuffer(8);new DataView(b).setFloat64(0,n);return el(id,new Uint8Array(b));};
+ const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+ const g=canvas.getContext('2d',{willReadFrequently:true}),encoded=[];
+ let encoderError;
+ const encoder=new VideoEncoder({output:c=>{const data=new Uint8Array(c.byteLength);c.copyTo(data);encoded.push({data,timestamp:c.timestamp,type:c.type});},error:e=>encoderError=e});
+ encoder.configure({codec:'vp8',width,height,bitrate:1000000,framerate:fps,latencyMode:'realtime'});
+ const idAt=(pixels,scale=1)=>{let bits=0n;for(let b=0;b<40;b++){const x=(19+b*6)*scale,y=12*scale,p=(y*width*scale+x)*4;const v=(pixels[p]+pixels[p+1]+pixels[p+2])/3;if(v>192)bits=(bits<<1n)|1n;else if(v<64)bits<<=1n;else throw Error('Ambiguous decoded barcode');}const id=Number((bits>>12n)&4095n);if((bits>>24n)!==0xa65cn||Number(bits&4095n)!==((id^0xb6d)&4095))throw Error('Decoded barcode checksum');return id;};
+ for(let i=0;i<seconds*fps;i++){
+  const white=i>=fps&&i%fps<2;g.fillStyle=white?'white':'black';g.fillRect(0,0,width,height);
+  const word=(0xa65cn<<24n)|(BigInt(i)<<12n)|BigInt((i^0xb6d)&4095);
+  for(let b=0;b<40;b++){g.fillStyle=(word>>BigInt(39-b))&1n?'white':'black';g.fillRect(16+b*6,8,6,8);}
+  const f=new VideoFrame(canvas,{timestamp:i*20000,duration:20000});encoder.encode(f,{keyFrame:true});f.close();
+  if(i%50===49)await encoder.flush();
+ }
+ await encoder.flush();encoder.close();if(encoderError)throw encoderError;
+ encoded.sort((a,b)=>a.timestamp-b.timestamp);
+ if(encoded.length!==seconds*fps||encoded.some(c=>c.type!=='key'))throw Error('Expected independent VP8 keyframes');
+ let decoded=0,decodeError;
+ const decoder=new VideoDecoder({output:f=>{try{g.drawImage(f,0,0);const pixels=g.getImageData(0,0,width,height).data,id=idAt(pixels);if(id!==f.timestamp/20000)throw Error('Decoded barcode disagrees with PTS');const p=(Math.floor(height/2)*width+Math.floor(width/2))*4,white=id>=fps&&id%fps<2;if((white&&pixels[p]<240)||(!white&&pixels[p]>16))throw Error('Decoded luma mismatch');decoded++;}catch(e){decodeError=e;}finally{f.close();}},error:e=>decodeError=e});
+ decoder.configure({codec:'vp8',codedWidth:width,codedHeight:height});
+ for(let i=0;i<encoded.length;i++){const c=encoded[i];decoder.decode(new EncodedVideoChunk({type:'key',timestamp:c.timestamp,data:c.data}));if(i%50===49)await decoder.flush();}
+ await decoder.flush();decoder.close();if(decodeError)throw decodeError;if(decoded!==seconds*fps)throw Error('Missing decoded source frames');
+ const audio=new Uint8Array(rate*4),view=new DataView(audio.buffer);let firstAbove=null;
+ for(let i=0;i<rate;i++){
+  const t=i/rate,v=t<.04?Math.round(32767*10**(-18/20)*Math.sin(2*Math.PI*1000*t)*Math.max(0,Math.min(1,t/.002,(.04-t)/.002))):0;
+  view.setInt16(i*4,v,true);view.setInt16(i*4+2,v,true);if(firstAbove===null&&Math.abs(v/32768)>.003)firstAbove=i;
+ }
+ const header=el(0x1a45dfa3,cat(uint(0x4286,1),uint(0x42f7,1),uint(0x42f2,4),uint(0x42f3,8),str(0x4282,'matroska'),uint(0x4287,4),uint(0x4285,2)));
+ const info=el(0x1549a966,cat(uint(0x2ad7b1,1000000),float(0x4489,seconds*1000),str(0x4d80,'URL2KeyFill content reference'),str(0x5741,'URL2KeyFill content reference')));
+ const tracks=el(0x1654ae6b,cat(
+  el(0xae,cat(uint(0xd7,1),uint(0x73c5,1),uint(0x83,1),str(0x86,'V_VP8'),uint(0x23e383,20000000),el(0xe0,cat(uint(0xb0,width),uint(0xba,height))))),
+  el(0xae,cat(uint(0xd7,2),uint(0x73c5,2),uint(0x83,2),str(0x86,'A_PCM/INT/LIT'),el(0xe1,cat(float(0xb5,rate),uint(0x9f,2),uint(0x6264,16)))))
+ ));
+ const block=(track,t,data)=>el(0xa3,cat(new Uint8Array([0x80|track]),bytes(t,2),new Uint8Array([0x80]),data));
+ const clusters=[];
+ for(let second=0;second<seconds;second++){
+  const blocks=[];
+  for(let f=0;f<fps;f++){
+   const id=second*fps+f;
+   blocks.push(block(1,f*20,encoded[id].data));
+   const pcm=second>0?audio.slice(f*960*4,(f+1)*960*4):new Uint8Array(960*4),pv=new DataView(pcm.buffer);
+   const word=(0x55324b46n<<32n)|(BigInt(id)<<16n)|BigInt(id^0xa55a);
+   for(let b=0;b<64;b++)for(let channel=0;channel<2;channel++){const offset=(200+b)*4+channel*2,value=pv.getInt16(offset,true),bit=Number((word>>BigInt(63-b))&1n);pv.setInt16(offset,(value&~1)|bit,true);}
+   blocks.push(block(2,f*20,pcm));
+  }
+  clusters.push(el(0x1f43b675,cat(uint(0xe7,second*1000),...blocks)));
+ }
+ const media=cat(header,el(0x18538067,cat(info,tracks,...clusters)));
+ const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',media)),v=>v.toString(16).padStart(2,'0')).join('');
+ const manifest={kind:'identified-content-reference',reference_ids:true,visual_header:'a65c',visual_id_bits:12,visual_checksum_xor:'b6d',audio_header:'55324b46',audio_id_bits:16,audio_checksum_xor:'a55a',audio_marker_start_sample:200,video_codec:'VP8',audio_codec:'PCM_S16LE',fps,seconds,rate,width,height,first_flash_s:1,flash_period_s:1,flash_duration_s:.04,audio_first_above_threshold_sample:firstAbove,threshold:.003,media_sha256:hash,bytes:media.length,source_decoded_images_verified:decoded};
+ for(const [path,body,type] of [['reference.mkv',media,'video/x-matroska'],['source.json',JSON.stringify(manifest),'application/json']]){
+  const response=await fetch('/'+path,{method:'POST',body,headers:{'Content-Type':type}});if(!response.ok)throw Error('Cannot preserve source evidence');
+ }
+ log(manifest);
+ const video=document.getElementById('video');let lastSecond=-1,callbacks=0;
+ video.onerror=()=>log({error:'media playback',code:video.error?.code,message:video.error?.message});
+ video.onwaiting=()=>log({event:'waiting',media_time:video.currentTime});
+ video.onended=()=>log({event:'ended',quality:video.getVideoPlaybackQuality()});
+ function frame(now,m){callbacks++;const second=Math.floor(m.mediaTime+1e-6);if(second!==lastSecond){log({event:'video-frame',media_time:m.mediaTime,presentation_time_ms:m.presentationTime,expected_display_time_ms:m.expectedDisplayTime,callback_now_ms:now,presented_frames:m.presentedFrames,callbacks});lastSecond=second;}video.requestVideoFrameCallback(frame);}
+ video.requestVideoFrameCallback(frame);video.src=URL.createObjectURL(new Blob([media],{type:'video/x-matroska'}));await video.play();log({event:'playing',media_time:video.currentTime});
+ } catch(e){log({error:String(e),stack:e.stack});document.body.textContent=String(e);}
+})();
+</script>

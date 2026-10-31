@@ -23,6 +23,7 @@ class Browser final: public CefClient, public CefRenderHandler, public CefLifeSp
     uint64_t sequence_=0;bool syncWhite_=false;
     bool failed_=false, closing_=false;
 public:
+    bool referenceDiagnostic=false,referenceUsePts=false;int lastReferenceId=-1;
     std::atomic<bool> syncDiagnostic{false};std::atomic<int64_t> syncFlashPts{INT64_MIN};std::atomic<uint64_t> syncFlashCount{0};
     std::string message="Starting browser…";
     std::function<void()> closed;

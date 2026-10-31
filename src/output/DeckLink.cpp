@@ -5,6 +5,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <algorithm>
 #include <array>
+#include <iostream>
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
@@ -128,6 +129,7 @@ class DeckLink final:public Output {
     mutable std::mutex messageMutex_;std::string message_="Output stopped.";
     std::shared_ptr<const Frame> cachedSource_;std::vector<uint8_t> converted_;bool cachedAir_=false;
     std::thread worker_;Mode mode_;const LatestFrame* source_=nullptr;uint64_t next_=0;
+    bool referenceDiagnostic_=false;std::vector<std::array<int64_t,5>> referenceSchedule_;
     bool syncDiagnostic_=false,syncWhite_=false;std::atomic<int64_t> scheduledFlashPts_{INT64_MIN};std::atomic<uint64_t> scheduledFlashCount_{0};
     std::atomic<uint64_t> historyMisses_{0},historyReads_{0},historyStartupMisses_{0},preparedReads_{0},conversionFallbacks_{0};std::atomic<int64_t> selectedAge_{INT64_MIN};
     uint32_t sourceAge_=2880; // Provisional 60 ms on raw PTS; independent of the SDI reserve.
@@ -147,6 +149,7 @@ class DeckLink final:public Output {
                 if(!image){if(audioCallback_->clockCalibrated)++historyMisses_;else ++historyStartupMisses_;selectedAge_=INT64_MIN;}
                 else selectedAge_=target-selected.time;
             }
+            if(referenceDiagnostic_&&referenceSchedule_.size()<4096&&image){const auto id=referenceFrameId(image->pixels.data(),image->size.width,image->size.height,image->stride);if(id)referenceSchedule_.push_back({mode_.rate.timestamp(next_+CompletionState::startupLeadFrames)*48000/mode_.rate.scale,int64_t(*id),audioCallback_->sourceOrigin.load(),image->paintTime,image->contentTime});}
             const bool air=air_;
             if(syncDiagnostic_){bool white=false;if(air&&image&&image->size==mode_.size){const auto pixel=image->pixels.data()+(size_t(image->size.height/2)*image->size.width+image->size.width/2)*4;white=pixel[0]>200&&pixel[1]>200&&pixel[2]>200&&pixel[3]>200;}if(white&&!syncWhite_){scheduledFlashPts_=mode_.rate.timestamp(next_+CompletionState::startupLeadFrames)*48000/mode_.rate.scale;++scheduledFlashCount_;}syncWhite_=white;}
             const size_t length=size_t(f->GetRowBytes())*f->GetHeight();
@@ -260,6 +263,7 @@ public:
                 const auto before=mediaSampleTime();check(output_->DisplayVideoFrameSync(pool_.front().get()),"Prepare physical video output");state_->warmupSamples=mediaSampleTime()-before;state_->warmupFrames=1;
             }
             mixer_->enabled=true;audioCallback_=Com<AudioCallback>(new AudioCallback(output_.get(),mixer_,mode_,sourceAge_));
+            referenceSchedule_.clear();if(referenceDiagnostic_)referenceSchedule_.reserve(4096);
             historyMisses_=0;historyStartupMisses_=0;preparedReads_=0;conversionFallbacks_=0;historyReads_=0;selectedAge_=INT64_MIN;syncWhite_=false;scheduledFlashPts_=INT64_MIN;scheduledFlashCount_=0;
             for(auto& f:pool_)schedule(f.get());
             check(output_->SetAudioCallback(audioCallback_.get()),"Register SDI audio callback");
@@ -272,6 +276,7 @@ public:
             message(mode_.keying?"SDI active · Fill + Key · stereo audio":"SDI active · Fill only · stereo audio");
         }catch(...){stop();throw;}
     }
+    void referenceDiagnostic(bool enabled)override{if(running_)throw std::runtime_error("Stop output before changing reference diagnostics.");referenceDiagnostic_=enabled;}
     void syncDiagnostic(bool enabled)override{if(running_)throw std::runtime_error("Stop output before changing diagnostics.");syncDiagnostic_=enabled;}
     void onAir(bool value)override{air_=value;if(audioCallback_)audioCallback_->programActive=value;}
     void audio(std::shared_ptr<AudioMixer> mixer)override{if(running_)throw std::runtime_error("Stop output before changing the audio mixer.");mixer_=std::move(mixer);}
@@ -282,6 +287,7 @@ public:
         // A failed Enable on an occupied device must not disable another owner's output.
         if(output_){if(audioCallbackSet_)output_->SetAudioCallback(nullptr);if(audioEnabled_)output_->DisableAudioOutput();if(playbackStarted_)output_->StopScheduledPlayback(0,nullptr,mode_.rate.scale);if(videoCallbackSet_)output_->SetScheduledFrameCompletionCallback(nullptr);if(keyer_&&keyerEnabled_)keyer_->Disable();if(videoEnabled_)output_->DisableVideoOutput();}
         videoEnabled_=audioEnabled_=videoCallbackSet_=audioCallbackSet_=keyerEnabled_=playbackStarted_=false;
+        for(const auto& r:referenceSchedule_)std::cerr<<"REFERENCE_SCHEDULE stream_samples="<<r[0]<<" id="<<r[1]<<" audio_output_origin="<<r[2]<<" paint_samples="<<r[3]<<" content_time="<<r[4]<<'\n';referenceSchedule_.clear();
         running_=false;air_=true;mixer_->enabled=true;audioCallback_=Com<AudioCallback>();if(source_)source_->history.prepareOutput(std::nullopt,192*1024*1024);source_=nullptr;cachedSource_.reset();converted_.clear();pool_.clear();callback_=Com<Callback>();keyer_=Com<IDeckLinkKeyer>();output_=Com<IDeckLinkOutput>();device_=Com<IDeckLink>();
     }
     OutputStatus status()const override{std::lock_guard<std::mutex> l(messageMutex_);return {running_,air_,state_->completed,state_->late,state_->dropped,message_,audioCallback_?audioCallback_->frames.load():0,audioCallback_?audioCallback_->errors.load():0,audioCallback_?audioCallback_->recoveries.load():0,audioCallback_?audioCallback_->bufferedFrames.load():0,audioCallback_?audioCallback_->targetFrames():0,sourceAge_,audioCallback_?audioCallback_->readAge.load():INT64_MIN,audioCallback_?audioCallback_->clockCalibrated.load():false,audioCallback_?audioCallback_->startupShift.load():0,audioCallback_?audioCallback_->streamQueuePhase.load():0,audioCallback_?audioCallback_->prerollAudio.load():0,audioCallback_?audioCallback_->prerollVideo.load():0,state_->firstDroppedFrame.load(),state_->warmupFrames.load(),state_->warmupSamples.load(),CompletionState::startupLeadFrames,audioCallback_?audioCallback_->startupPaddingWritten.load():0,historyReads_.load(),historyMisses_.load(),selectedAge_.load(),source_?source_->history.bytes():0,audioCallback_?audioCallback_->sourceOrigin.load():0,scheduledFlashPts_.load(),scheduledFlashCount_.load(),historyStartupMisses_.load(),preparedReads_.load(),conversionFallbacks_.load(),state_->workerQos.load()};}

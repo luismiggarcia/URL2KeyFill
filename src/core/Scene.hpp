@@ -1,5 +1,6 @@
 #pragma once
 #include "Core.hpp"
+#include "ReferenceTiming.hpp"
 #include <mutex>
 #include <deque>
 #include <thread>
@@ -27,6 +28,7 @@ class AudioLane {
     std::atomic<float> peakLeft_{0},peakRight_{0};
     void sum(int64_t,size_t,float,std::vector<float>&,bool prune,bool mono,bool left=true,bool right=true);
 public:
+    std::atomic<bool> referenceDiagnostic{false};ReferenceAudioClock referenceClock;
     std::atomic<bool> syncDiagnostic{false};std::atomic<int64_t> syncPulsePts{INT64_MIN};std::atomic<uint64_t> syncPulseCount{0};
     std::atomic<uint64_t> received{0},discarded{0},nonZero{0},unusedExpired{0},outputOverruns{0};
     std::atomic<bool> outputExpected{false};

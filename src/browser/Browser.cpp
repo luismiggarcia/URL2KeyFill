@@ -28,9 +28,15 @@ bool Browser::OnConsoleMessage(CefRefPtr<CefBrowser>,cef_log_severity_t,const Ce
 }
 void Browser::OnPaint(CefRefPtr<CefBrowser>,PaintElementType type,const RectList&,const void* p,int w,int h){
     if(type!=PET_VIEW||failed_||w!=size_.width||h!=size_.height)return;
-    const auto paintTime=mediaSampleTime();
+    const auto paintTime=mediaSampleTime();int64_t contentTime=INT64_MIN;
+    if(referenceDiagnostic){
+        const auto id=referenceFrameId(static_cast<const uint8_t*>(p),w,h,size_t(w)*4);const auto origin=audio_->referenceClock.origin.load();
+        if(id){if(origin!=INT64_MIN&&referenceUsePts)contentTime=origin+int64_t(*id)*960;
+            if(int(*id)!=lastReferenceId){std::cerr<<"REFERENCE_PAINT host_samples="<<paintTime<<" id="<<*id<<" content_samples="<<int64_t(*id)*960<<" audio_origin="<<origin<<" clock_matches="<<audio_->referenceClock.matches<<" clock_skipped="<<audio_->referenceClock.skipped<<" clock_mismatches="<<audio_->referenceClock.mismatches<<" selection="<<(referenceUsePts?"content":"arrival")<<std::endl;lastReferenceId=*id;}}
+        else if(lastReferenceId>=0)std::cerr<<"REFERENCE_INVALID host_samples="<<paintTime<<std::endl;
+    }
     if(syncDiagnostic){const auto pixel=static_cast<const uint8_t*>(p)+(size_t(h/2)*w+w/2)*4;const bool white=pixel[0]>200&&pixel[1]>200&&pixel[2]>200&&pixel[3]>200;if(white&&!syncWhite_){syncFlashPts=paintTime;++syncFlashCount;}syncWhite_=white;}
-    try{frames_.publish(Frame::copy({w,h},p,size_t(w)*4,++sequence_,paintTime));}catch(const std::exception& e){message=e.what();frames_.clear();audio_->clear();}
+    try{frames_.publish(Frame::copy({w,h},p,size_t(w)*4,++sequence_,paintTime,contentTime));}catch(const std::exception& e){message=e.what();frames_.clear();audio_->clear();}
 }
 void Browser::OnLoadingStateChange(CefRefPtr<CefBrowser>,bool loading,bool,bool){if(loading){failed_=false;message="Loading…";}else if(!failed_)message="Page loaded";}
 void Browser::OnLoadError(CefRefPtr<CefBrowser>,CefRefPtr<CefFrame> f,ErrorCode code,const CefString& text,const CefString&){if(!f->IsMain()||code==ERR_ABORTED)return;failed_=true;frames_.clear();audio_->clear();message="Load error: "+text.ToString();}
