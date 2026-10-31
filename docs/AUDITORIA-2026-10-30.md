@@ -1048,3 +1048,95 @@ Passou o critério de zero lacunas nesta repetição. Não houve evento para o n
 diagnóstico caracterizar: a causa histórica das 12 amostras continua por confirmar.
 Não se declara resolvida a falha transitória nem aceite o sincronismo físico A/V.
 Mantêm-se pendentes compensação adaptativa de deriva e os restantes itens do plano.
+
+### 10.7 Loopback SDI físico disponível — medição e conclusão
+
+O Luis ligou SDI OUT a SDI IN do mesmo UltraStudio HD Mini. **Captura e reprodução
+simultâneas funcionaram neste equipamento/configuração**. Foram acrescentados:
+
+- `decklink_capture.cpp`: entrada YUV 8-bit e áudio estéreo int32/48 kHz, com
+  timestamps SDK de imagem e áudio na escala 48000. Recolhe luminância no centro
+  do flash e onsets de áudio em memória limitada; exporta depois de parar. Não
+  ativa/desativa saída nem muda o perfil duplex ou as ligações configuradas.
+- `--sdi-av-test`: uma única fonte bundled de sincronismo, no percurso normal
+  CEF → composição/mistura → DeckLink; sessão smoke temporária, sem carregar a
+  sessão de produção. Mantêm-se J=60 ms e as reservas existentes.
+- `decklink_clock --av-reference 1`: referência sem CEF/mixer, com flash e som
+  agendados na mesma timeline SDK. Na versão final, inicia reprodução a partir do
+  callback de preroll quando o SDK reporta reservas suficientes, seguindo o exemplo
+  `Mac/Samples/SignalGenerator` do SDK. O modo histórico de relógio/silêncio mantém-se.
+- `run-loopback.py` e `analyze_loopback.py`: arranque coordenado, hashes/exit codes,
+  logs e pares de eventos. O sinal positivo significa áudio depois da imagem.
+  O analisador exige pelo menos cinco pares, ignora transições de vídeo sem frame
+  predecessor contíguo e distingue gaps globais de gaps entre os pares medidos.
+
+**Protocolo e ressalva de arranque.** Ativar a entrada antes de existir sinal deu
+resultados diferentes entre arranques, mesmo na referência SDK: +20,69 e +80,67 ms
+nos ensaios exploratórios de 50p. Foram preservados mas não usados como calibração.
+Repetir com saída já estabilizada antes da captura deu ~0,7 ms na referência, a
+25p e 50p. A causa exata desta dependência do arranque — relógio/reaquisição/driver
+ou interação entre entrada e saída — não ficou isolada; não se atribui apenas aos
+timestamps da captura. O runner final espera a confirmação de saída ativa e mais
+4 s antes de abrir a entrada. A referência final usa ainda preroll por prontidão.
+
+**Resultados aceites neste protocolo (valores brutos; referência não subtraída):**
+
+| Percurso | Cadência | Arranque | Pares por canal | Áudio − vídeo |
+|---|---|---|---:|---:|
+| Aplicação | 1080p25 | A | 19 | +86,69 ms |
+| Aplicação | 1080p25 | B | 17 | +42,13 ms |
+| Aplicação | 1080p50 | A | 19 | +54,33 ms |
+| Aplicação | 1080p50 | B | 8 | +71,44 ms |
+| Referência SDK | 1080p25 | Final | 12 | +0,67 ms |
+| Referência SDK | 1080p50 | Final | 9 | +0,73 ms |
+
+L e R coincidiram. Dentro de cada execução, os pares detetados deram o mesmo valor;
+**entre arranques, o offset da aplicação mudou**. Não houve gaps de timestamps de
+vídeo entre os pares medidos. Os reportes globais podem incluir reaquisição ao
+arrancar/parar; esses contadores não são uma contagem de frames SDI perdidos na saída.
+A telemetria dos ensaios aceites da aplicação não registou lacunas de áudio, erros
+API, recuperações ou vídeo tardio. A 25p não houve vídeo perdido; **cada ensaio a
+50p registou uma perda de vídeo já no arranque**, antes da captura estabilizada.
+Mantém-se portanto o problema inicial a 50p anteriormente observado; os timestamps
+contínuos entre pares capturados não anulam essa perda na saída. O desfasamento
+A/V não é identificado apenas pelos contadores de continuidade.
+
+Uma repetição de 15 s a 25p foi rejeitada por ter menos de cinco flashes após
+warmup. O flash de 40 ms nem sempre apareceu na captura a 25p, sem que o contador
+SDI marcasse perdas; não se conclui só daqui onde se perdeu a atualização visual.
+A repetição prolongada de 30 s passou o critério, sem mudar o sinal nem baixar o
+mínimo de pares. A evidência rejeitada também foi preservada.
+
+**Limites da conclusão.** Isto mede desfasamento relativo no percurso combinado
+saída + entrada, não latência absoluta host→cabo nem atraso isolado da entrada.
+A referência direta demonstra um residual pequeno nesse percurso sob o protocolo,
+mas não é uma calibração independente só do ADC/capturador. O flash browser é
+quantizado em frames (40 ms a 25p; 20 ms a 50p); timestamps/limiar dão casas decimais,
+não essa precisão para o instante original de conteúdo. A envolvente/limiar de
+áudio também contribui para o residual pequeno. O padrão de 1 Hz tem ambiguidade
+de ciclo; emparelhamento pressupõe |offset| <400 ms. Não se mede deriva entre dois
+equipamentos independentes usando o mesmo dispositivo como emissor/recetor.
+
+**Conclusão de implementação.** A ausência de cortes P2 está verificada nos ensaios
+referidos, mas **o sincronismo físico A/V da aplicação não está aceite**. Os valores
+não sustentam uma compensação global fixa de 80 ms. O código seleciona a última
+imagem disponível (`Frame` tem sequência, sem timestamp de conteúdo), enquanto o
+áudio tem timeline/reserva/idade explícitas; isso confirma uma assimetria no código,
+mas não quantifica por si só toda a causa dos offsets medidos. Prosseguir com:
+
+1. Rever prontidão/preroll e relação de fase no arranque da aplicação, comparando
+   com o exemplo SDK e registando a associação usada na seleção de ambos os meios.
+2. Implementar o alinhamento previsto em P5: carimbo temporal de imagem preservado
+   na composição, histórico limitado e seleção para o mesmo instante pretendido
+   que o áudio. Um carimbo de chegada do paint é uma aproximação, não PTS de conteúdo;
+   explicitar essa incerteza e calibrar o residual por cadência/percurso.
+3. Validar a correção por vários arranques a 25/50p e pela captura estabilizada,
+   antes de reduzir reservas. Não reduzir J=60 ms arbitrariamente para esconder
+   o desfasamento: o máximo bruto de chegada medido antes era ~51,3 ms. Os passos
+   de deriva, previsibilidade e qualidade do plano continuam pendentes.
+
+**Evidência:** `tools/audio-audit/data/loopback-2026-10-31/`, incluindo CSVs/logs
+comprimidos, manifests com hashes, resultados por pulso, resumo e ensaio rejeitado.
+Build completa passou, probes compilaram com `-Wall -Wextra`, oito testes do
+analisador e CTest 4/4 passaram. Não foi aplicada compensação A/V neste passo nem
+substituída a aplicação instalada. Os ensaios pararam e libertaram o dispositivo.

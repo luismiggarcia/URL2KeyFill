@@ -1,0 +1,230 @@
+{
+  "measurement": "relative A/V, combined output/input, not absolute latency",
+  "positive": "audio follows video",
+  "app_source_sha256": "d038e9193a39cfe6f098dee0c292f61643cfb9f256064955a20e4a46c3c2028d",
+  "cases": {
+    "app25-a": {
+      "audio_L": {
+        "pairs": 19,
+        "unmatched_flashes": 0,
+        "median_ms": 86.6875,
+        "min_ms": 86.6875,
+        "max_ms": 86.6875,
+        "stdev_ms": 0.0
+      },
+      "audio_R": {
+        "pairs": 19,
+        "unmatched_flashes": 0,
+        "median_ms": 86.6875,
+        "min_ms": 86.6875,
+        "max_ms": 86.6875,
+        "stdev_ms": 0.0
+      },
+      "video_gaps_within_matched_range": 0,
+      "output_telemetry": {
+        "missing_total": 0,
+        "api_errors": 0,
+        "recoveries": 0,
+        "late_video": 0,
+        "dropped_video": 0,
+        "first_drop_report_elapsed_s": null
+      }
+    },
+    "app25-b": {
+      "audio_L": {
+        "pairs": 17,
+        "unmatched_flashes": 0,
+        "median_ms": 42.125,
+        "min_ms": 42.125,
+        "max_ms": 42.125,
+        "stdev_ms": 0.0
+      },
+      "audio_R": {
+        "pairs": 17,
+        "unmatched_flashes": 0,
+        "median_ms": 42.125,
+        "min_ms": 42.125,
+        "max_ms": 42.125,
+        "stdev_ms": 0.0
+      },
+      "video_gaps_within_matched_range": 0,
+      "output_telemetry": {
+        "missing_total": 0,
+        "api_errors": 0,
+        "recoveries": 0,
+        "late_video": 0,
+        "dropped_video": 0,
+        "first_drop_report_elapsed_s": null
+      }
+    },
+    "app50-a": {
+      "audio_L": {
+        "pairs": 19,
+        "unmatched_flashes": 0,
+        "median_ms": 54.333333333333336,
+        "min_ms": 54.333333333333336,
+        "max_ms": 54.333333333333336,
+        "stdev_ms": 0.0
+      },
+      "audio_R": {
+        "pairs": 19,
+        "unmatched_flashes": 0,
+        "median_ms": 54.333333333333336,
+        "min_ms": 54.333333333333336,
+        "max_ms": 54.333333333333336,
+        "stdev_ms": 0.0
+      },
+      "video_gaps_within_matched_range": 0,
+      "output_telemetry": {
+        "missing_total": 0,
+        "api_errors": 0,
+        "recoveries": 0,
+        "late_video": 0,
+        "dropped_video": 1,
+        "first_drop_report_elapsed_s": 1.1028
+      }
+    },
+    "app50-b": {
+      "audio_L": {
+        "pairs": 8,
+        "unmatched_flashes": 0,
+        "median_ms": 71.4375,
+        "min_ms": 71.4375,
+        "max_ms": 71.4375,
+        "stdev_ms": 0.0
+      },
+      "audio_R": {
+        "pairs": 8,
+        "unmatched_flashes": 0,
+        "median_ms": 71.4375,
+        "min_ms": 71.4375,
+        "max_ms": 71.4375,
+        "stdev_ms": 0.0
+      },
+      "video_gaps_within_matched_range": 0,
+      "output_telemetry": {
+        "missing_total": 0,
+        "api_errors": 0,
+        "recoveries": 0,
+        "late_video": 0,
+        "dropped_video": 1,
+        "first_drop_report_elapsed_s": 1.089657
+      }
+    },
+    "reference25": {
+      "audio_L": {
+        "pairs": 12,
+        "unmatched_flashes": 0,
+        "median_ms": 0.6666666666666666,
+        "min_ms": 0.6666666666666666,
+        "max_ms": 0.6666666666666666,
+        "stdev_ms": 0.0
+      },
+      "audio_R": {
+        "pairs": 12,
+        "unmatched_flashes": 0,
+        "median_ms": 0.6666666666666666,
+        "min_ms": 0.6666666666666666,
+        "max_ms": 0.6666666666666666,
+        "stdev_ms": 0.0
+      },
+      "video_gaps_within_matched_range": 0
+    },
+    "reference50": {
+      "audio_L": {
+        "pairs": 9,
+        "unmatched_flashes": 0,
+        "median_ms": 0.7291666666666666,
+        "min_ms": 0.7291666666666666,
+        "max_ms": 0.7291666666666666,
+        "stdev_ms": 0.0
+      },
+      "audio_R": {
+        "pairs": 9,
+        "unmatched_flashes": 0,
+        "median_ms": 0.7291666666666666,
+        "min_ms": 0.7291666666666666,
+        "max_ms": 0.7291666666666666,
+        "stdev_ms": 0.0
+      },
+      "video_gaps_within_matched_range": 0
+    },
+    "rejected-short-app25": {
+      "rejected": "Need at least five clean flash onsets after warmup; check Fill versus Key"
+    },
+    "exploratory-capture-first-reference50-a": {
+      "audio_L": {
+        "pairs": 17,
+        "unmatched_flashes": 0,
+        "median_ms": 20.6875,
+        "min_ms": 20.6875,
+        "max_ms": 20.6875,
+        "stdev_ms": 0.0
+      },
+      "audio_R": {
+        "pairs": 17,
+        "unmatched_flashes": 0,
+        "median_ms": 20.6875,
+        "min_ms": 20.6875,
+        "max_ms": 20.6875,
+        "stdev_ms": 0.0
+      },
+      "video_gaps_within_matched_range": 0
+    },
+    "exploratory-capture-first-reference50-b": {
+      "audio_L": {
+        "pairs": 12,
+        "unmatched_flashes": 0,
+        "median_ms": 80.66666666666667,
+        "min_ms": 80.66666666666667,
+        "max_ms": 80.66666666666667,
+        "stdev_ms": 0.0
+      },
+      "audio_R": {
+        "pairs": 12,
+        "unmatched_flashes": 0,
+        "median_ms": 80.66666666666667,
+        "min_ms": 80.66666666666667,
+        "max_ms": 80.66666666666667,
+        "stdev_ms": 0.0
+      },
+      "video_gaps_within_matched_range": 0
+    },
+    "exploratory-signal-first-reference25": {
+      "audio_L": {
+        "pairs": 17,
+        "unmatched_flashes": 0,
+        "median_ms": 0.7083333333333334,
+        "min_ms": 0.7083333333333334,
+        "max_ms": 0.7083333333333334,
+        "stdev_ms": 0.0
+      },
+      "audio_R": {
+        "pairs": 17,
+        "unmatched_flashes": 0,
+        "median_ms": 0.7083333333333334,
+        "min_ms": 0.7083333333333334,
+        "max_ms": 0.7083333333333334,
+        "stdev_ms": 0.0
+      }
+    },
+    "exploratory-signal-first-reference50": {
+      "audio_L": {
+        "pairs": 12,
+        "unmatched_flashes": 0,
+        "median_ms": 0.6875,
+        "min_ms": 0.6875,
+        "max_ms": 0.6875,
+        "stdev_ms": 0.0
+      },
+      "audio_R": {
+        "pairs": 12,
+        "unmatched_flashes": 0,
+        "median_ms": 0.6875,
+        "min_ms": 0.6875,
+        "max_ms": 0.6875,
+        "stdev_ms": 0.0
+      }
+    }
+  }
+}

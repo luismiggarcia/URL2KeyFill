@@ -176,3 +176,62 @@ missing read is retained, sequence jumps expose overwritten reads, and recovery 
 characterises a missing tail, not an internal gap. Generation prevents matching a
 restarted stream. No file I/O or allocation is added to the missing-read diagnostic.
 The extra packet clock reads have not yet been benchmarked on hardware.
+
+### Physical SDI loopback A/V measurement
+
+Connect **SDI Fill OUT → SDI IN** on the HD Mini. These probes require actual
+simultaneous input/output support; they never change the duplex profile. Close
+other owners of the input/output first. The capture tool enables only input and
+cleans up only resources it enabled. It stores bounded in-memory measurements,
+then writes CSV after stopping capture (no disk writes in input callbacks).
+
+Build the two probes on macOS with the same SDK as the app:
+
+```sh
+clang++ -std=c++20 -O2 -I third_party/DeckLinkSDK/Mac/include \
+  tools/audio-audit/decklink_capture.cpp third_party/DeckLinkSDK/Mac/include/DeckLinkAPIDispatch.cpp \
+  -framework CoreFoundation -o /tmp/u2k-decklink-capture
+clang++ -std=c++20 -O2 -I third_party/DeckLinkSDK/Mac/include \
+  tools/audio-audit/decklink_clock.cpp third_party/DeckLinkSDK/Mac/include/DeckLinkAPIDispatch.cpp \
+  -framework CoreFoundation -o /tmp/u2k-decklink-reference
+```
+
+Run `run-loopback.py` with `--capture /tmp/u2k-decklink-capture`, a **new**
+`--directory`, `--mode 1080p25|1080p50|1080p5994` and `--seconds 30`, plus either:
+
+- `--app /absolute/path/URL2KeyFill.app/Contents/MacOS/URL2KeyFill`: runs the
+  actual app with `--sdi-av-test`, one bundled sync source, temporary smoke
+  settings and the normal mixer/compositor/output. No saved production session is loaded.
+- `--reference /tmp/u2k-decklink-reference`: schedules white video for 40 ms and
+  a stereo 1 kHz pulse with a 2 ms envelope every second on the SDK output timeline,
+  without CEF or the app mixer. Its A/V-reference mode starts playback from the audio
+  preroll callback only after the SDK reports enough buffered audio and video, as in
+  the bundled SDK SignalGenerator example. This is a comparison of the combined output/input
+  path, not an independent calibration of input alone. Compare the same mode and
+  repeat after restarts; do not assume an identical offset across modes.
+
+By default the runner starts playback and waits 4 s before enabling input, so the
+input locks to an established signal. `--settle-seconds 0` reproduces capture-first
+startup for diagnostics; its offsets must not be assumed to be valid calibration.
+The runner waits for input readiness, hashes both executables, captures exit codes,
+and saves logs, timestamps, per-pulse results and app telemetry. `analyze_loopback.py`
+can also analyse a captured CSV directly. Positive `audio_minus_video_ms` means
+sound follows the detected white frame. Luma threshold is 200 in the centre patch;
+audio onset is the first sample above .003 FS, rearmed after 100 ms of quiet.
+The envelope and threshold introduce a small onset bias also present in the SDK
+reference. Both SDK input timestamps use a 48 kHz scale; callback arrival times are
+not used as media times. The input format is fixed 8-bit YUV with stereo 32-bit PCM.
+Input selection is left at the device's existing connection setting (must be SDI).
+
+This records measurement features, not full pictures or raw sound. It is **relative
+A/V through output plus input**, not host-to-wire latency. The browser visual flash
+is frame-quantised and its generation is not a laboratory reference. The existing
+40 ms flash can be missed by CEF painting at 25 fps; captures with fewer than five
+clean paired flashes after warmup are rejected. Use the default 30 s or longer;
+shorter runs can legitimately fail this quality check. A 1 Hz pattern
+has cycle ambiguity; nearest pairing assumes an offset within 400 ms. Global input
+timestamp gaps include startup/stop; the analyser separately reports gaps within the
+matched pulse range. This same-device test does not validate independent clock drift.
+The short clock-rate fits printed by the SDK reference are not used as ppm evidence.
+
+Validate the analyser with `PYTHONDONTWRITEBYTECODE=1 python3 tools/audio-audit/test_loopback.py`.
