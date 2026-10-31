@@ -1,0 +1,307 @@
+{
+  "sign": "positive = audio later than video",
+  "measurement": "output plus input relative A/V; uncalibrated input",
+  "video_frame_ms": 40.0,
+  "valid_video_frames": 749,
+  "video_timestamp_gaps": 0,
+  "video_timestamp_gaps_within_matched_range": 0,
+  "flashes_after_warmup": 27,
+  "channels": {
+    "audio_L": {
+      "pairs": 27,
+      "unmatched_flashes": 0,
+      "median_ms": -18.083333333333332,
+      "min_ms": -19.020833333333332,
+      "max_ms": 22.229166666666668,
+      "stdev_ms": 12.629014423758518,
+      "events": [
+        {
+          "video_pts_48k": 159360,
+          "audio_pts_48k": 158447,
+          "audio_minus_video_ms": -19.020833333333332
+        },
+        {
+          "video_pts_48k": 207360,
+          "audio_pts_48k": 206450,
+          "audio_minus_video_ms": -18.958333333333332
+        },
+        {
+          "video_pts_48k": 255360,
+          "audio_pts_48k": 254453,
+          "audio_minus_video_ms": -18.895833333333332
+        },
+        {
+          "video_pts_48k": 303360,
+          "audio_pts_48k": 302457,
+          "audio_minus_video_ms": -18.8125
+        },
+        {
+          "video_pts_48k": 351360,
+          "audio_pts_48k": 350460,
+          "audio_minus_video_ms": -18.75
+        },
+        {
+          "video_pts_48k": 399360,
+          "audio_pts_48k": 398463,
+          "audio_minus_video_ms": -18.6875
+        },
+        {
+          "video_pts_48k": 447360,
+          "audio_pts_48k": 446467,
+          "audio_minus_video_ms": -18.604166666666668
+        },
+        {
+          "video_pts_48k": 495360,
+          "audio_pts_48k": 494470,
+          "audio_minus_video_ms": -18.541666666666668
+        },
+        {
+          "video_pts_48k": 541440,
+          "audio_pts_48k": 542473,
+          "audio_minus_video_ms": 21.520833333333332
+        },
+        {
+          "video_pts_48k": 591360,
+          "audio_pts_48k": 590476,
+          "audio_minus_video_ms": -18.416666666666668
+        },
+        {
+          "video_pts_48k": 639360,
+          "audio_pts_48k": 638479,
+          "audio_minus_video_ms": -18.354166666666668
+        },
+        {
+          "video_pts_48k": 687360,
+          "audio_pts_48k": 686482,
+          "audio_minus_video_ms": -18.291666666666668
+        },
+        {
+          "video_pts_48k": 735360,
+          "audio_pts_48k": 734485,
+          "audio_minus_video_ms": -18.229166666666668
+        },
+        {
+          "video_pts_48k": 783360,
+          "audio_pts_48k": 782489,
+          "audio_minus_video_ms": -18.145833333333332
+        },
+        {
+          "video_pts_48k": 831360,
+          "audio_pts_48k": 830492,
+          "audio_minus_video_ms": -18.083333333333332
+        },
+        {
+          "video_pts_48k": 879360,
+          "audio_pts_48k": 878495,
+          "audio_minus_video_ms": -18.020833333333332
+        },
+        {
+          "video_pts_48k": 927360,
+          "audio_pts_48k": 926498,
+          "audio_minus_video_ms": -17.958333333333332
+        },
+        {
+          "video_pts_48k": 975360,
+          "audio_pts_48k": 974501,
+          "audio_minus_video_ms": -17.895833333333332
+        },
+        {
+          "video_pts_48k": 1021440,
+          "audio_pts_48k": 1022504,
+          "audio_minus_video_ms": 22.166666666666668
+        },
+        {
+          "video_pts_48k": 1069440,
+          "audio_pts_48k": 1070507,
+          "audio_minus_video_ms": 22.229166666666668
+        },
+        {
+          "video_pts_48k": 1119360,
+          "audio_pts_48k": 1118510,
+          "audio_minus_video_ms": -17.708333333333332
+        },
+        {
+          "video_pts_48k": 1167360,
+          "audio_pts_48k": 1166513,
+          "audio_minus_video_ms": -17.645833333333332
+        },
+        {
+          "video_pts_48k": 1215360,
+          "audio_pts_48k": 1214516,
+          "audio_minus_video_ms": -17.583333333333332
+        },
+        {
+          "video_pts_48k": 1263360,
+          "audio_pts_48k": 1262519,
+          "audio_minus_video_ms": -17.520833333333332
+        },
+        {
+          "video_pts_48k": 1311360,
+          "audio_pts_48k": 1310522,
+          "audio_minus_video_ms": -17.458333333333332
+        },
+        {
+          "video_pts_48k": 1359360,
+          "audio_pts_48k": 1358524,
+          "audio_minus_video_ms": -17.416666666666668
+        },
+        {
+          "video_pts_48k": 1407360,
+          "audio_pts_48k": 1406527,
+          "audio_minus_video_ms": -17.354166666666668
+        }
+      ]
+    },
+    "audio_R": {
+      "pairs": 27,
+      "unmatched_flashes": 0,
+      "median_ms": -18.083333333333332,
+      "min_ms": -19.020833333333332,
+      "max_ms": 22.229166666666668,
+      "stdev_ms": 12.629014423758518,
+      "events": [
+        {
+          "video_pts_48k": 159360,
+          "audio_pts_48k": 158447,
+          "audio_minus_video_ms": -19.020833333333332
+        },
+        {
+          "video_pts_48k": 207360,
+          "audio_pts_48k": 206450,
+          "audio_minus_video_ms": -18.958333333333332
+        },
+        {
+          "video_pts_48k": 255360,
+          "audio_pts_48k": 254453,
+          "audio_minus_video_ms": -18.895833333333332
+        },
+        {
+          "video_pts_48k": 303360,
+          "audio_pts_48k": 302457,
+          "audio_minus_video_ms": -18.8125
+        },
+        {
+          "video_pts_48k": 351360,
+          "audio_pts_48k": 350460,
+          "audio_minus_video_ms": -18.75
+        },
+        {
+          "video_pts_48k": 399360,
+          "audio_pts_48k": 398463,
+          "audio_minus_video_ms": -18.6875
+        },
+        {
+          "video_pts_48k": 447360,
+          "audio_pts_48k": 446467,
+          "audio_minus_video_ms": -18.604166666666668
+        },
+        {
+          "video_pts_48k": 495360,
+          "audio_pts_48k": 494470,
+          "audio_minus_video_ms": -18.541666666666668
+        },
+        {
+          "video_pts_48k": 541440,
+          "audio_pts_48k": 542473,
+          "audio_minus_video_ms": 21.520833333333332
+        },
+        {
+          "video_pts_48k": 591360,
+          "audio_pts_48k": 590476,
+          "audio_minus_video_ms": -18.416666666666668
+        },
+        {
+          "video_pts_48k": 639360,
+          "audio_pts_48k": 638479,
+          "audio_minus_video_ms": -18.354166666666668
+        },
+        {
+          "video_pts_48k": 687360,
+          "audio_pts_48k": 686482,
+          "audio_minus_video_ms": -18.291666666666668
+        },
+        {
+          "video_pts_48k": 735360,
+          "audio_pts_48k": 734485,
+          "audio_minus_video_ms": -18.229166666666668
+        },
+        {
+          "video_pts_48k": 783360,
+          "audio_pts_48k": 782489,
+          "audio_minus_video_ms": -18.145833333333332
+        },
+        {
+          "video_pts_48k": 831360,
+          "audio_pts_48k": 830492,
+          "audio_minus_video_ms": -18.083333333333332
+        },
+        {
+          "video_pts_48k": 879360,
+          "audio_pts_48k": 878495,
+          "audio_minus_video_ms": -18.020833333333332
+        },
+        {
+          "video_pts_48k": 927360,
+          "audio_pts_48k": 926498,
+          "audio_minus_video_ms": -17.958333333333332
+        },
+        {
+          "video_pts_48k": 975360,
+          "audio_pts_48k": 974501,
+          "audio_minus_video_ms": -17.895833333333332
+        },
+        {
+          "video_pts_48k": 1021440,
+          "audio_pts_48k": 1022504,
+          "audio_minus_video_ms": 22.166666666666668
+        },
+        {
+          "video_pts_48k": 1069440,
+          "audio_pts_48k": 1070507,
+          "audio_minus_video_ms": 22.229166666666668
+        },
+        {
+          "video_pts_48k": 1119360,
+          "audio_pts_48k": 1118510,
+          "audio_minus_video_ms": -17.708333333333332
+        },
+        {
+          "video_pts_48k": 1167360,
+          "audio_pts_48k": 1166513,
+          "audio_minus_video_ms": -17.645833333333332
+        },
+        {
+          "video_pts_48k": 1215360,
+          "audio_pts_48k": 1214516,
+          "audio_minus_video_ms": -17.583333333333332
+        },
+        {
+          "video_pts_48k": 1263360,
+          "audio_pts_48k": 1262519,
+          "audio_minus_video_ms": -17.520833333333332
+        },
+        {
+          "video_pts_48k": 1311360,
+          "audio_pts_48k": 1310522,
+          "audio_minus_video_ms": -17.458333333333332
+        },
+        {
+          "video_pts_48k": 1359360,
+          "audio_pts_48k": 1358524,
+          "audio_minus_video_ms": -17.416666666666668
+        },
+        {
+          "video_pts_48k": 1407360,
+          "audio_pts_48k": 1406527,
+          "audio_minus_video_ms": -17.354166666666668
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Periodic 1 Hz pattern: nearest pairing assumes offset within 400 ms; larger offsets are ambiguous.",
+    "Browser visual onset is frame-quantised; this does not establish sub-frame source synchrony.",
+    "Input A/V offset requires a known scheduled reference; no input correction applied.",
+    "Shared-device loopback does not test drift between independent devices."
+  ]
+}

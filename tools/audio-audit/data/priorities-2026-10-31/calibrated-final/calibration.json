@@ -1,0 +1,49 @@
+{
+  "initial_av": {
+    "pairs": 7,
+    "unmatched_flashes": 0,
+    "median_ms": -15.708333333333334,
+    "min_ms": -55.708333333333336,
+    "max_ms": -15.645833333333334,
+    "stdev_ms": 14.001960580041427,
+    "events": [
+      {
+        "video_pts_48k": 314880,
+        "audio_pts_48k": 312206,
+        "audio_minus_video_ms": -55.708333333333336
+      },
+      {
+        "video_pts_48k": 360960,
+        "audio_pts_48k": 360206,
+        "audio_minus_video_ms": -15.708333333333334
+      },
+      {
+        "video_pts_48k": 456960,
+        "audio_pts_48k": 456206,
+        "audio_minus_video_ms": -15.708333333333334
+      },
+      {
+        "video_pts_48k": 600960,
+        "audio_pts_48k": 600206,
+        "audio_minus_video_ms": -15.708333333333334
+      },
+      {
+        "video_pts_48k": 648960,
+        "audio_pts_48k": 648206,
+        "audio_minus_video_ms": -15.708333333333334
+      },
+      {
+        "video_pts_48k": 696960,
+        "audio_pts_48k": 696207,
+        "audio_minus_video_ms": -15.6875
+      },
+      {
+        "video_pts_48k": 792960,
+        "audio_pts_48k": 792209,
+        "audio_minus_video_ms": -15.645833333333334
+      }
+    ]
+  },
+  "adjustment_ms": 36,
+  "method": "Negative midpoint of physically measured min/max; same output session"
+}

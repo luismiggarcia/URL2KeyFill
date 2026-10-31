@@ -1,0 +1,27 @@
+{
+  "active_duration_s": 119.499971,
+  "health": {
+    "missing_total": 0.0,
+    "api_errors": 0.0,
+    "recoveries": 0.0,
+    "late_video": 0.0,
+    "dropped_video": 0.0,
+    "clock_resets": 0.0,
+    "video_history_misses": 0.0,
+    "video_history_startup_misses": 0.0,
+    "video_conversion_fallbacks": 0.0
+  },
+  "first_av_ms": -45.6875,
+  "last_av_ms": -45.333333333333336,
+  "av_change_ms": 0.3541666666666643,
+  "rate_ppm_range": [
+    -7.654902,
+    15.813621
+  ],
+  "phase_error_ms_range": [
+    -0.113161,
+    1.647158
+  ],
+  "minimum_source_headroom_ms": 41.166667,
+  "limits": "One Mac/device/mode; same-device SDI captures at start/end, not continuous independent physical capture."
+}

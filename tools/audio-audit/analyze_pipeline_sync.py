@@ -38,8 +38,21 @@ def analyse(rows, capture=None):
     pulses = {int(r['source_pulse_pts']) for r in rows if int(r['source_pulse_pts'])-origin >= 7*48000}
     flashes = {int(r['source_flash_pts']) for r in rows if r.get('source_flash_pts') and int(r['source_flash_pts'])-origin >= 7*48000}
     scheduled = {int(r['scheduled_flash_pts']) for r in rows if r.get('scheduled_flash_pts') and int(r['scheduled_flash_pts']) >= 7*48000}
+    mapped_pulses = {}
+    for r in rows:
+        pulse = int(r['source_pulse_pts'])
+        if pulse not in pulses or pulse in mapped_pulses:
+            continue
+        if r.get('mapping_ratio'):
+            ratio = float(r['mapping_ratio'])
+            if not .9998 <= ratio <= 1.0002:
+                raise ValueError('Invalid source/output rate')
+            delay = max(0., float(r.get('sync_offset_ms', 0)))*48
+            mapped_pulses[pulse] = float(r['mapping_stream'])+(pulse-float(r['mapping_source'])+delay)/ratio
+        else:
+            mapped_pulses[pulse] = pulse-origin
     result = dict(source_flash_minus_audio=paired(flashes, pulses),
-                  scheduled_audio_minus_video=paired({p-origin for p in pulses}, scheduled))
+                  scheduled_audio_minus_video=paired(set(mapped_pulses.values()), scheduled))
     if capture:
         measured = capture['channels']['audio_L']['median_ms']
         result['captured_audio_minus_video_ms'] = measured
@@ -52,7 +65,7 @@ def analyse(rows, capture=None):
         else:
             result['captured_minus_scheduled_ms'] = None
         result['captured_minus_scheduled_range_ms'] = [captured.get('min_ms', measured)-scheduled['max_ms'], captured.get('max_ms', measured)-scheduled['min_ms']]
-    result['limits'] = 'Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.'
+    result['limits'] = 'Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.'
     return result
 
 

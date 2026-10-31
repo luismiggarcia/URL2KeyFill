@@ -21,17 +21,17 @@
  encoder.configure({codec:'vp8',width,height,bitrate:1000000,framerate:fps,latencyMode:'realtime'});
  const idAt=(pixels,scale=1)=>{let bits=0n;for(let b=0;b<40;b++){const x=(19+b*6)*scale,y=12*scale,p=(y*width*scale+x)*4;const v=(pixels[p]+pixels[p+1]+pixels[p+2])/3;if(v>192)bits=(bits<<1n)|1n;else if(v<64)bits<<=1n;else throw Error('Ambiguous decoded barcode');}const id=Number((bits>>12n)&4095n);if((bits>>24n)!==0xa65cn||Number(bits&4095n)!==((id^0xb6d)&4095))throw Error('Decoded barcode checksum');return id;};
  for(let i=0;i<seconds*fps;i++){
-  const white=i>=fps&&i%fps<2;g.fillStyle=white?'white':'black';g.fillRect(0,0,width,height);
-  const word=(0xa65cn<<24n)|(BigInt(i)<<12n)|BigInt((i^0xb6d)&4095);
+  const identity=i*(50/fps),white=identity>=50&&identity%50<2;g.fillStyle=white?'white':'black';g.fillRect(0,0,width,height);
+  const word=(0xa65cn<<24n)|(BigInt(identity)<<12n)|BigInt((identity^0xb6d)&4095);
   for(let b=0;b<40;b++){g.fillStyle=(word>>BigInt(39-b))&1n?'white':'black';g.fillRect(16+b*6,8,6,8);}
-  const f=new VideoFrame(canvas,{timestamp:i*20000,duration:20000});encoder.encode(f,{keyFrame:true});f.close();
+  const f=new VideoFrame(canvas,{timestamp:i*1000000/fps,duration:1000000/fps});encoder.encode(f,{keyFrame:true});f.close();
   if(i%50===49)await encoder.flush();
  }
  await encoder.flush();encoder.close();if(encoderError)throw encoderError;
  encoded.sort((a,b)=>a.timestamp-b.timestamp);
  if(encoded.length!==seconds*fps||encoded.some(c=>c.type!=='key'))throw Error('Expected independent VP8 keyframes');
  let decoded=0,decodeError;
- const decoder=new VideoDecoder({output:f=>{try{g.drawImage(f,0,0);const pixels=g.getImageData(0,0,width,height).data,id=idAt(pixels);if(id!==f.timestamp/20000)throw Error('Decoded barcode disagrees with PTS');const p=(Math.floor(height/2)*width+Math.floor(width/2))*4,white=id>=fps&&id%fps<2;if((white&&pixels[p]<240)||(!white&&pixels[p]>16))throw Error('Decoded luma mismatch');decoded++;}catch(e){decodeError=e;}finally{f.close();}},error:e=>decodeError=e});
+ const decoder=new VideoDecoder({output:f=>{try{g.drawImage(f,0,0);const pixels=g.getImageData(0,0,width,height).data,id=idAt(pixels);if(id!==f.timestamp/20000)throw Error('Decoded barcode disagrees with PTS');const p=(Math.floor(height/2)*width+Math.floor(width/2))*4,white=id>=50&&id%50<2;if((white&&pixels[p]<240)||(!white&&pixels[p]>16))throw Error('Decoded luma mismatch');decoded++;}catch(e){decodeError=e;}finally{f.close();}},error:e=>decodeError=e});
  decoder.configure({codec:'vp8',codedWidth:width,codedHeight:height});
  for(let i=0;i<encoded.length;i++){const c=encoded[i];decoder.decode(new EncodedVideoChunk({type:'key',timestamp:c.timestamp,data:c.data}));if(i%50===49)await decoder.flush();}
  await decoder.flush();decoder.close();if(decodeError)throw decodeError;if(decoded!==seconds*fps)throw Error('Missing decoded source frames');
@@ -43,16 +43,16 @@
  const header=el(0x1a45dfa3,cat(uint(0x4286,1),uint(0x42f7,1),uint(0x42f2,4),uint(0x42f3,8),str(0x4282,'matroska'),uint(0x4287,4),uint(0x4285,2)));
  const info=el(0x1549a966,cat(uint(0x2ad7b1,1000000),float(0x4489,seconds*1000),str(0x4d80,'URL2KeyFill content reference'),str(0x5741,'URL2KeyFill content reference')));
  const tracks=el(0x1654ae6b,cat(
-  el(0xae,cat(uint(0xd7,1),uint(0x73c5,1),uint(0x83,1),str(0x86,'V_VP8'),uint(0x23e383,20000000),el(0xe0,cat(uint(0xb0,width),uint(0xba,height))))),
+  el(0xae,cat(uint(0xd7,1),uint(0x73c5,1),uint(0x83,1),str(0x86,'V_VP8'),uint(0x23e383,1000000000/fps),el(0xe0,cat(uint(0xb0,width),uint(0xba,height))))),
   el(0xae,cat(uint(0xd7,2),uint(0x73c5,2),uint(0x83,2),str(0x86,'A_PCM/INT/LIT'),el(0xe1,cat(float(0xb5,rate),uint(0x9f,2),uint(0x6264,16)))))
  ));
  const block=(track,t,data)=>el(0xa3,cat(new Uint8Array([0x80|track]),bytes(t,2),new Uint8Array([0x80]),data));
  const clusters=[];
  for(let second=0;second<seconds;second++){
   const blocks=[];
-  for(let f=0;f<fps;f++){
-   const id=second*fps+f;
-   blocks.push(block(1,f*20,encoded[id].data));
+  for(let f=0;f<50;f++){
+   const id=second*50+f;
+   if(f%(50/fps)===0)blocks.push(block(1,f*20,encoded[second*fps+f/(50/fps)].data));
    const pcm=second>0?audio.slice(f*960*4,(f+1)*960*4):new Uint8Array(960*4),pv=new DataView(pcm.buffer);
    const word=(0x55324b46n<<32n)|(BigInt(id)<<16n)|BigInt(id^0xa55a);
    for(let b=0;b<64;b++)for(let channel=0;channel<2;channel++){const offset=(200+b)*4+channel*2,value=pv.getInt16(offset,true),bit=Number((word>>BigInt(63-b))&1n);pv.setInt16(offset,(value&~1)|bit,true);}

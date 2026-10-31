@@ -1,0 +1,22 @@
+[
+  "/opt/homebrew/opt/python@3.14/bin/python3.14",
+  "/Users/luisgarcia/Library/CloudStorage/OneDrive-RumosConsulting/Rumos Documents/Desenvolvimento/LG-Systems/URL2KeyFill/tools/audio-audit/run-loopback.py",
+  "--app",
+  "/tmp/u2k-delivery-final/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+  "--capture",
+  "/tmp/u2k-capture-priorities",
+  "--mode",
+  "1080p25",
+  "--seconds",
+  "30",
+  "--directory",
+  "/private/tmp/u2k-delivery-final-series/reliable25-a/loopback",
+  "--source-url",
+  "http://127.0.0.1:53617/",
+  "--timing-profile",
+  "reliable",
+  "--sync-offset-ms",
+  "0",
+  "--reference-ids",
+  "--content-pts"
+]

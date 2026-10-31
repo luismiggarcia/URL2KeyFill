@@ -1,0 +1,44 @@
+{
+  "start": {
+    "source_flash_minus_audio": {
+      "pairs": 28,
+      "median_ms": 35.3125,
+      "min_ms": 34.291666666666664,
+      "max_ms": 41.270833333333336
+    },
+    "scheduled_audio_minus_video": {
+      "pairs": 17,
+      "median_ms": -17.64983401123997,
+      "min_ms": -57.937412302101926,
+      "max_ms": -16.803970078117953
+    },
+    "captured_audio_minus_video_ms": -17.104166666666664,
+    "captured_minus_scheduled_ms": null,
+    "captured_minus_scheduled_range_ms": [
+      -41.258529921882044,
+      41.39574563543526
+    ],
+    "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+  },
+  "end": {
+    "source_flash_minus_audio": {
+      "pairs": 33,
+      "median_ms": 35.8125,
+      "min_ms": 34.416666666666664,
+      "max_ms": 41.3125
+    },
+    "scheduled_audio_minus_video": {
+      "pairs": 32,
+      "median_ms": -54.209449900993306,
+      "min_ms": -54.85611871037205,
+      "max_ms": -53.62838086059006
+    },
+    "captured_audio_minus_video_ms": -53.583333333333336,
+    "captured_minus_scheduled_ms": null,
+    "captured_minus_scheduled_range_ms": [
+      -0.43411913940993685,
+      1.7311187103720513
+    ],
+    "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+  }
+}

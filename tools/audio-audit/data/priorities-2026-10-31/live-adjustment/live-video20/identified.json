@@ -1,0 +1,19 @@
+{
+  "before_pairs": 7,
+  "after_pairs": 11,
+  "before_av_ms": 24.1875,
+  "after_av_ms": 4.229166666666667,
+  "change_ms": -19.958333333333332,
+  "requested_ms": -20,
+  "health": {
+    "missing_total": 0.0,
+    "api_errors": 0.0,
+    "recoveries": 0.0,
+    "dropped_video": 0.0,
+    "late_video": 0.0,
+    "clock_resets": 0.0,
+    "video_history_misses": 0.0,
+    "video_conversion_fallbacks": 0.0
+  },
+  "limits": "Steady windows exclude the 5 ms fade and SDK queue drain; this is not subjective validation of the transition."
+}

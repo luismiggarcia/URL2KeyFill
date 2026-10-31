@@ -1,0 +1,31 @@
+{
+  "av_quality_passed": true,
+  "av_frame_limit_ms": 40,
+  "measurement_allowance_ms": 1,
+  "active_duration_s": 164.499696,
+  "health": {
+    "missing_total": 0.0,
+    "api_errors": 0.0,
+    "recoveries": 0.0,
+    "late_video": 0.0,
+    "dropped_video": 0.0,
+    "clock_resets": 0.0,
+    "video_history_misses": 0.0,
+    "video_history_startup_misses": 0.0,
+    "video_conversion_fallbacks": 0.0
+  },
+  "first_av_ms": -1.2916666666666667,
+  "last_av_ms": -2.2916666666666665,
+  "av_change_ms": -0.9999999999999998,
+  "rate_ppm_range": [
+    -0.872296,
+    45.763427
+  ],
+  "phase_error_ms_range": [
+    -1.035065,
+    0.968618
+  ],
+  "minimum_source_headroom_ms": 38.416667,
+  "limits": "One Mac/device/mode; same-device SDI captures at start/end, not continuous independent physical capture.",
+  "post_calibration_duration_s": 133.58667566700024
+}

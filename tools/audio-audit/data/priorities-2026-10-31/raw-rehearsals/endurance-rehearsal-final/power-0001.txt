@@ -1,0 +1,6 @@
+Now drawing from 'AC Power'
+ -InternalBattery-0 (id=22413411)	90%; charging; 0:41 remaining present: true
+   pid 87583(caffeinate): [0x00021df60001a69a] 00:00:15 PreventUserIdleSystemSleep named: "caffeinate command-line tool"  
+   pid 87583(caffeinate): [0x00021df60005a69b] 00:00:15 PreventUserIdleDisplaySleep named: "caffeinate command-line tool"  
+   pid 87583(caffeinate): [0x00021df60007a69c] 00:00:15 PreventSystemSleep named: "caffeinate command-line tool"  
+   pid 87583(caffeinate): [0x00021df6000fa69d] 00:00:15 PreventDiskIdle named: "caffeinate command-line tool"  

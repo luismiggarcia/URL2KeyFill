@@ -1,0 +1,12 @@
+{
+  "sha256": "6ede0ebfe92eeb868a73049c805622544ac5d8f8e134ba79c0e3d00baaf691b3",
+  "video_frames": 1500,
+  "audio_packets": 3000,
+  "identified": true,
+  "pulse_count": 59,
+  "first_audio_onset_sample": 48005,
+  "first_flash_pts_ms": 1000,
+  "source_audio_minus_video_ms": 0.10416666666666667,
+  "all_packet_pts_contiguous": true,
+  "limits": "VP8 payload identity/PTS and raw PCM checked; decoded image luma is checked separately by the CEF source page."
+}

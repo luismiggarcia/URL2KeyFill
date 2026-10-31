@@ -1,6 +1,7 @@
 #pragma once
 #include "Core.hpp"
 #include "ReferenceTiming.hpp"
+#include "AudioResampler.hpp"
 #include <mutex>
 #include <deque>
 #include <thread>
@@ -62,6 +63,9 @@ public:
     std::atomic<int64_t> lastMixTimestamp{0};
     void inputs(std::vector<AudioInput>);
     std::vector<int32_t> mix(int64_t start,size_t frames,bool programActive=true);
+    std::vector<float> mixFloat(int64_t start,size_t frames,bool programActive=true);
+    std::vector<int32_t> mixResampled(double start,size_t frames,double ratio,const AudioResampler&,bool programActive=true);
+    std::vector<int32_t> toPCM(const std::vector<float>&);
     std::pair<float,float> sourcePeaks(int64_t start,size_t frames);
     AudioLevels sourceLevels(int64_t start,size_t frames);
 };

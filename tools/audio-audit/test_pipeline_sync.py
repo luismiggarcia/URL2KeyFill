@@ -21,6 +21,17 @@ class PipelineSyncTests(unittest.TestCase):
         self.assertLess(r['captured_minus_scheduled_range_ms'][0], .7)
         self.assertGreater(r['captured_minus_scheduled_range_ms'][1], .7)
 
+    def test_affine_mapping_and_delay(self):
+        rows = self.rows()
+        for r in rows:r.update(mapping_source='1000000',mapping_stream='0',mapping_ratio='1',sync_offset_ms='20')
+        result = analyse(rows)
+        self.assertAlmostEqual(result['scheduled_audio_minus_video']['median_ms'], 0)
+
+    def test_invalid_rate_rejected(self):
+        rows = self.rows()
+        for r in rows:r.update(mapping_source='1000000',mapping_stream='0',mapping_ratio='1.1')
+        with self.assertRaisesRegex(ValueError,'rate'):analyse(rows)
+
     def test_clock_change_rejected(self):
         rows = self.rows();rows[-1]['audio_source_origin'] = '1000480'
         with self.assertRaises(ValueError):analyse(rows)

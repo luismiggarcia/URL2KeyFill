@@ -1,0 +1,60 @@
+{
+  "selection": "content",
+  "paint_to_input_callback": {
+    "count": 1196,
+    "min_ms": 122.10416666666667,
+    "median_ms": 141.04166666666666,
+    "max_ms": 142.85416666666666
+  },
+  "content_to_input_callback": {
+    "count": 1196,
+    "min_ms": 120.375,
+    "median_ms": 121.08333333333333,
+    "max_ms": 121.9375
+  },
+  "audio_content_origin": 6734713806,
+  "health": {
+    "missing_total": 0.0,
+    "api_errors": 0.0,
+    "recoveries": 0.0,
+    "late_video": 0.0,
+    "dropped_video": 0.0,
+    "clock_resets": 0.0,
+    "video_history_misses": 0.0,
+    "video_history_startup_misses": 0.0,
+    "video_conversion_fallbacks": 0.0
+  },
+  "verified_audio_markers": 1509,
+  "skipped_audio_marker_ids": 1,
+  "source_paint_minus_content": {
+    "count": 1216,
+    "min_ms": -21.5,
+    "median_ms": -19.583333333333332,
+    "max_ms": -1.625
+  },
+  "received_flash_frame_after_content_onset": {
+    "count": 25,
+    "min_ms": 0.0,
+    "median_ms": 0.0,
+    "max_ms": 0.0
+  },
+  "selected_content_minus_target": {
+    "count": 1100,
+    "min_ms": -8.3125,
+    "median_ms": -8.3125,
+    "max_ms": -8.123677571614584
+  },
+  "scheduled_audio_minus_video": {
+    "count": 22,
+    "min_ms": -8.208333333333334,
+    "median_ms": -8.208333333333334,
+    "max_ms": -8.025041581514289
+  },
+  "captured_audio_minus_video_ms": -7.645833333333333,
+  "capture_pairs": 21,
+  "captured_minus_scheduled_range_ms": [
+    0.379208248180956,
+    0.7500000000000009
+  ],
+  "limits": "Controlled watermarked VP8/PCM reference only; no independent receiver calibration or drift acceptance. Selection windows and capture windows may differ."
+}

@@ -1,0 +1,5 @@
+{
+  "continuity_and_awake_harness": "passed",
+  "absolute_av_accepted": false,
+  "reason": "Raw source has captured offsets beyond one output frame. Earlier harness accepted only the start/end difference; final harness also checks absolute min/max and calibrates in the same running session."
+}

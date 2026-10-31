@@ -20,7 +20,7 @@ def records(log, prefix):
             for line in log.splitlines() if line.startswith(prefix+' ')]
 
 
-def analyse(log, rows, captured, selection, seconds=30):
+def analyse(log, rows, captured, selection, seconds=30, capture_rows=None):
     paint = records(log, 'REFERENCE_PAINT')
     valid = [r for r in paint if int(r['audio_origin']) != MISSING]
     origins = {int(r['audio_origin']) for r in valid}
@@ -53,9 +53,11 @@ def analyse(log, rows, captured, selection, seconds=30):
                 raise ValueError('Scheduled image is not stamped with its identified content PTS')
             if selection == 'arrival' and content_time != MISSING:
                 raise ValueError('Arrival control unexpectedly uses content PTS')
-            selected.append(actual_content-(output_origin+stream))
+            source_target=float(r.get("source_target",output_origin+stream))
+            ratio=float(r.get("source_ratio",1))
+            selected.append(actual_content-source_target)
             if white and not was_white:
-                flash_offsets.append(origin+(identity//50)*48000+5-output_origin-stream)
+                flash_offsets.append((origin+(identity//50)*48000+5-source_target+int(r.get("sync_offset",0)))/ratio)
         was_white = white
     if len(streams) < 2:
         raise ValueError('Missing scheduled content observations')
@@ -81,7 +83,18 @@ def analyse(log, rows, captured, selection, seconds=30):
         was_white = white
     observed = captured['channels']['audio_L']
     predicted = stats(flash_offsets)
-    return dict(selection=selection, audio_content_origin=origin, health=health,
+    transport = None;content_transport = None
+    if capture_rows:
+        painted = {};scheduled_ids = {int(r['id']) for r in schedules};received = {}
+        for r in paint:painted.setdefault(int(r['id']),int(r['host_samples']))
+        for r in capture_rows:
+            if r['kind']=='video_id':received.setdefault(int(float(r['value'])),int(r['host_48k']))
+        if len(received)<100 or not set(received).issubset(scheduled_ids) or not set(received).issubset(painted):
+            raise ValueError('Physical frame IDs do not match the source and scheduled images')
+        transport = stats([host-painted[identity] for identity,host in received.items()])
+        content_transport=stats([host-origin-identity*960 for identity,host in received.items()])
+        if transport['min_ms']<0:raise ValueError('Input arrived before the identified source paint')
+    return dict(selection=selection, paint_to_input_callback=transport, content_to_input_callback=content_transport, audio_content_origin=origin, health=health,
                 verified_audio_markers=max(int(r['clock_matches']) for r in valid),
                 skipped_audio_marker_ids=max(int(r.get('clock_skipped', 0)) for r in valid),
                 source_paint_minus_content=stats([int(r['host_samples'])-origin-int(r['id'])*960 for r in valid if int(r['id'])>=350]),
@@ -100,5 +113,6 @@ if __name__ == '__main__':
     args = p.parse_args()
     root = Path(args.directory)/'loopback'
     result = analyse((root/'playback.log').read_text(), list(csv.DictReader((root/'application.csv').open())),
-                     json.loads((root/'result.json').read_text()), args.selection, args.seconds)
+                     json.loads((root/'result.json').read_text()), args.selection, args.seconds,
+                     list(csv.DictReader((root/'capture.csv').open())) if 'host_48k' in (root/'capture.csv').read_text().splitlines()[0] else None)
     print(json.dumps(result, indent=2))

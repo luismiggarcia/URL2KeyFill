@@ -63,20 +63,24 @@ def verify(path, identified=False):
                 raise ValueError('Expected independent unlaced blocks')
             stamp = base+struct.unpack('>h', block[1:3])[0]
             (video if block[0] == 0x81 else audio).append((stamp, block[4:]))
-    if len(video) != 3000 or len(audio) != 3000:
-        raise ValueError('Expected 60 seconds at 50 fps with matching PCM packets')
-    if identified and len({v for _, v in video}) != 3000:
-        raise ValueError('Expected 3000 distinct identified VP8 payloads')
-    black, white = video[0][1], video[50][1]
+    video_step = int.from_bytes(tracks[1][0x23e383], 'big')//1000000
+    if video_step not in (20, 40) or len(video) != 60000//video_step or len(audio) != 3000:
+        raise ValueError('Expected 60 seconds with contiguous video/PCM packets')
+    if identified and len({v for _, v in video}) != len(video):
+        raise ValueError('Expected distinct identified VP8 payloads')
+    black, white = video[0][1], video[1000//video_step][1]
     if black == white:
         raise ValueError('Missing distinct VP8 images')
-    onsets, previous_quiet = [], 4800
-    for i, ((vt, pixels), (at, pcm)) in enumerate(zip(video, audio)):
-        if vt != i*20 or at != vt or len(pcm) != 960*4:
-            raise ValueError('Non-contiguous A/V PTS or invalid PCM duration')
-        is_white = i >= 50 and i % 50 < 2
+    for i, (vt, pixels) in enumerate(video):
+        if vt != i*video_step:
+            raise ValueError('Non-contiguous video PTS')
+        is_white = vt >= 1000 and vt % 1000 < 40
         if not identified and pixels != (white if is_white else black):
             raise ValueError('Video content disagrees with the specified 40 ms flash PTS')
+    onsets, previous_quiet = [], 4800
+    for i, (at, pcm) in enumerate(audio):
+        if at != i*20 or len(pcm) != 960*4:
+            raise ValueError('Non-contiguous audio PTS or invalid PCM duration')
         if identified:
             word = 0
             for j in range(200, 264):

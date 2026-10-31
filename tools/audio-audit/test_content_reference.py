@@ -60,6 +60,13 @@ class IdentifiedReferenceTests(unittest.TestCase):
         self.assertEqual(result['video_frames'], 3000)
         self.assertAlmostEqual(result['source_audio_minus_video_ms'], 5/48)
 
+    def test_matched_25fps_source(self):
+        source=gzip.decompress((Path(__file__).parent/'data/priorities-2026-10-31/sources/6ede0ebfe92eeb868a73049c805622544ac5d8f8e134ba79c0e3d00baaf691b3.mkv.gz').read_bytes())
+        result=self.inspect(source)
+        self.assertEqual(result['video_frames'],1500)
+        self.assertEqual(result['audio_packets'],3000)
+        self.assertEqual(result['pulse_count'],59)
+
     def test_corrupt_audio_identifier(self):
         word = (0x55324b46 << 32) | 0xa55a
         marker = b''.join(bytes([((word >> b) & 1), 0])*2 for b in range(63, -1, -1))

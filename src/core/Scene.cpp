@@ -84,13 +84,23 @@ static AudioLevels measureAudio(const std::vector<float>& samples){
 }
 AudioLevels AudioLane::sourceLevels(int64_t start,size_t n,bool mono,bool left,bool right){if(n>48000)throw std::invalid_argument("Audio meter block exceeds one second");std::vector<float> samples(n*2,0);sample(start,n,1,samples,mono,left,right);return measureAudio(samples);}
 void AudioMixer::inputs(std::vector<AudioInput> v){std::lock_guard<std::mutex> lock(mutex_);inputs_=std::move(v);}
-std::vector<int32_t> AudioMixer::mix(int64_t start,size_t n,bool programActive){
+std::vector<float> AudioMixer::mixFloat(int64_t start,size_t n,bool programActive){
  lastMixTimestamp=start;
  if(n>48000)throw std::invalid_argument("Audio block exceeds one second");
  std::vector<AudioInput> inputs;{std::lock_guard<std::mutex> lock(mutex_);inputs=inputs_;}
  std::vector<float> buffer(n*2,0);if(programActive&&enabled&&!muted)for(auto& i:inputs)if(i.enabled&&i.lane&&i.gain>0&&gain>0&&audioRouteEnabled(i.mono,i.left,i.right,mono,left,right))i.lane->mix(start,n,std::clamp(i.gain,0.f,2.f),buffer,i.mono,i.left,i.right);
  for(size_t j=0;j<n;j++){float l=buffer[j*2],r=buffer[j*2+1];if(mono)l=r=(l+r)*.5f;buffer[j*2]=left?l*gain:0;buffer[j*2+1]=right?r*gain:0;}
- uint64_t limited=0,audible=0;std::vector<int32_t> pcm(n*2);for(size_t i=0;i<pcm.size();++i){double v=buffer[i];if(std::abs(v)>1)++limited;pcm[i]=int32_t(std::clamp(v,-1.,1.)*2147483647.);if(pcm[i])++audible;}clipped+=limited;nonSilent+=audible;return pcm;
+ return buffer;
+}
+std::vector<int32_t> AudioMixer::toPCM(const std::vector<float>& buffer){
+ uint64_t limited=0,audible=0;std::vector<int32_t> pcm(buffer.size());for(size_t i=0;i<pcm.size();++i){double v=buffer[i];if(std::abs(v)>1)++limited;pcm[i]=int32_t(std::clamp(v,-1.,1.)*2147483647.);if(pcm[i])++audible;}clipped+=limited;nonSilent+=audible;return pcm;
+}
+std::vector<int32_t> AudioMixer::mix(int64_t start,size_t n,bool active){return toPCM(mixFloat(start,n,active));}
+std::vector<int32_t> AudioMixer::mixResampled(double start,size_t n,double ratio,const AudioResampler& filter,bool active){
+ if(!std::isfinite(start)||start<0||start>double(INT64_MAX/2)||!n||n>1024)throw std::invalid_argument("Invalid source position");
+ const auto first=int64_t(std::floor(start))-AudioResampler::left;
+ const auto last=int64_t(std::floor(start+double(n-1)*ratio))+AudioResampler::right+1;
+ auto input=mixFloat(first,size_t(last-first),active);if(std::all_of(input.begin(),input.end(),[](float v){return v==0;}))return std::vector<int32_t>(n*2,0);std::vector<float> result(n*2);filter.render(input.data(),input.size()/2,start-first,ratio,result.data(),n);return toPCM(result);
 }
 std::pair<float,float> AudioMixer::sourcePeaks(int64_t start,size_t n){const auto levels=sourceLevels(start,n);return {levels.peakLeft,levels.peakRight};}
 std::vector<float> AudioMixer::sample(int64_t start,size_t n,bool respectMute){

@@ -2,6 +2,8 @@
 // Captures timestamped centre-patch luminance and stereo pulse onsets in memory.
 #include "DeckLinkAPI.h"
 #include <CoreFoundation/CoreFoundation.h>
+#include <mach/mach_time.h>
+#include <optional>
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -16,8 +18,15 @@
 #include <vector>
 static std::atomic<bool> interrupted{false};
 static void check(HRESULT r,const char* what){if(r!=S_OK)throw std::runtime_error(std::string(what)+" HRESULT="+std::to_string(r));}
-struct Row {const char* kind;int64_t pts,duration;double value;};
+static int64_t hostSamples(){static const auto tb=[] {mach_timebase_info_data_t t;mach_timebase_info(&t);return t;}();return int64_t((static_cast<long double>(mach_absolute_time())*tb.numer/tb.denom)*48000/1000000000);}
+static std::optional<int> frameId(const unsigned char* bytes,int width,int height,int stride){
+ if(width!=1920||height!=1080)return {};uint64_t bits=0;
+ for(int b=0;b<40;++b){int values[2];for(int row=0;row<2;++row){const auto y=bytes[size_t(72+row*12)*stride+(114+b*36)*2+1];if(y>192)values[row]=1;else if(y<64)values[row]=0;else return {};}if(values[0]!=values[1])return {};bits=(bits<<1)|values[0];}
+ const int id=int((bits>>12)&4095);if(bits>>24!=0xa65c||id>=3000||(bits&4095)!=uint64_t((id^0xb6d)&4095))return {};return id;
+}
+struct Row {const char* kind;int64_t pts,duration;double value;int64_t host;};
 class Capture final:public IDeckLinkInputCallback {
+ int64_t callbackHost_=0;
  std::atomic<ULONG> refs_{1};bool armed_[2]={true,true};int quiet_[2]={0,0};
 public:
  std::mutex mutex;std::vector<Row> rows;uint64_t noSignal=0,errors=0,overflow=0,audioFrames=0;bool accepting=true,recording=false;uint64_t consecutiveVideo=0;bool sawAudio=false;
@@ -25,10 +34,10 @@ public:
  Capture(){rows.reserve(30000);}
  HRESULT QueryInterface(REFIID iid,LPVOID* p)override{if(!p)return E_INVALIDARG;*p=nullptr;const auto unknown=CFUUIDGetUUIDBytes(IUnknownUUID);if(!std::memcmp(&iid,&unknown,sizeof(iid))||!std::memcmp(&iid,&IID_IDeckLinkInputCallback,sizeof(iid))){*p=static_cast<IDeckLinkInputCallback*>(this);AddRef();return S_OK;}return E_NOINTERFACE;}
  ULONG AddRef()override{return ++refs_;}ULONG Release()override{auto n=--refs_;if(!n)delete this;return n;}
- void add(const char* kind,int64_t pts,int64_t duration,double value){if(rows.size()<rows.capacity())rows.push_back({kind,pts,duration,value});else ++overflow;}
+ void add(const char* kind,int64_t pts,int64_t duration,double value){if(rows.size()<rows.capacity())rows.push_back({kind,pts,duration,value,callbackHost_});else ++overflow;}
  HRESULT VideoInputFormatChanged(BMDVideoInputFormatChangedEvents,IDeckLinkDisplayMode*,BMDDetectedVideoInputFormatFlags)override{std::lock_guard<std::mutex> lock(mutex);++errors;return S_OK;}
  HRESULT VideoInputFrameArrived(IDeckLinkVideoInputFrame* video,IDeckLinkAudioInputPacket* audio)override{
-  std::lock_guard<std::mutex> lock(mutex);if(!accepting)return S_OK;
+  const auto arrival=hostSamples();std::lock_guard<std::mutex> lock(mutex);callbackHost_=arrival;if(!accepting)return S_OK;
   if(video){if(video->GetFlags()&bmdFrameHasNoInputSource)consecutiveVideo=0;else ++consecutiveVideo;}if(audio&&audio->GetSampleFrameCount()>0)sawAudio=true;
   if(!recording)return S_OK;
   if(video){
@@ -41,7 +50,7 @@ public:
        const int w=int(video->GetWidth()),h=int(video->GetHeight());double sum=0;int count=0;
        // Patch wholly inside the diagnostic flash, away from captions.
        for(int y=h/2-4;y<h/2+4;++y)for(int x=w/2-4;x<w/2+4;++x){sum+=static_cast<unsigned char*>(bytes)[y*video->GetRowBytes()+x*2+1];++count;}
-       add("video",pts,duration,sum/count);
+       add("video",pts,duration,sum/count);if(auto id=frameId(static_cast<unsigned char*>(bytes),w,h,video->GetRowBytes()))add("video_id",pts,duration,*id);
       }if(buffer->EndAccess(bmdBufferAccessRead)!=S_OK)++errors;
      }buffer->Release();}
    }
@@ -91,7 +100,7 @@ int main(int argc,char** argv){
  if(callback&&input->SetCallback(nullptr)!=S_OK)result=1;
  {std::lock_guard<std::mutex> lock(capture->mutex);capture->accepting=false;
   if(started){auto file=std::fopen(csv.c_str(),"w");if(!file){std::perror("CSV");result=1;}else{
-   std::fprintf(file,"kind,pts_48k,duration_48k,value\n");for(const auto& r:capture->rows)std::fprintf(file,"%s,%lld,%lld,%.9f\n",r.kind,(long long)r.pts,(long long)r.duration,r.value);
+   std::fprintf(file,"kind,pts_48k,duration_48k,value,host_48k\n");for(const auto& r:capture->rows)std::fprintf(file,"%s,%lld,%lld,%.9f,%lld\n",r.kind,(long long)r.pts,(long long)r.duration,r.value,(long long)r.host);
    if(std::ferror(file))result=1;if(std::fclose(file))result=1;
   }}
   std::fprintf(stderr,"rows=%zu audio_frames=%llu no_signal=%llu errors=%llu overflow=%llu\n",capture->rows.size(),capture->audioFrames,capture->noSignal,capture->errors,capture->overflow);

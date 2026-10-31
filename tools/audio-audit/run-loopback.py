@@ -24,6 +24,9 @@ def main():
     source = p.add_mutually_exclusive_group(required=True)
     source.add_argument('--app', help='Path to app Contents/MacOS/URL2KeyFill')
     source.add_argument('--reference', help='Path to decklink_clock with --av-reference support')
+    p.add_argument('--sync-change-ms', type=int, help='Apply an isolated live adjustment at 15 s')
+    p.add_argument('--timing-profile', choices=['reliable','low'], default='reliable')
+    p.add_argument('--sync-offset-ms', type=int, default=0)
     p.add_argument('--reference-ids', action='store_true', help='Decode the controlled reference frame/sample IDs')
     p.add_argument('--content-pts', action='store_true', help='Select by identified content PTS; requires --reference-ids')
     p.add_argument('--source-url', help='Diagnostic source override, only with --app')
@@ -53,6 +56,11 @@ def main():
         play_cmd += ['--sdi-av-reference-ids']
     if args.content_pts:
         play_cmd += ['--sdi-av-content-pts']
+    if args.app:
+        play_cmd += ['--timing-profile', args.timing_profile, '--sync-offset-ms', str(args.sync_offset_ms)]
+    if args.sync_change_ms is not None:
+        if not args.app:p.error('--sync-change-ms requires --app')
+        play_cmd += ['--sync-change-ms',str(args.sync_change_ms)]
     metadata = dict(mode=args.mode, seconds=args.seconds, settle_seconds=args.settle_seconds, source='application' if args.app else 'scheduled SDK reference',
                     playback_sha256=digest(playback), capture_sha256=digest(capture), capture_command=cap_cmd, playback_command=play_cmd)
     (root/'manifest.json').write_text(json.dumps(metadata, indent=2)+'\n')

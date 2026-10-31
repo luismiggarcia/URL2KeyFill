@@ -1,0 +1,75 @@
+{
+  "mode": "1080p25",
+  "seconds": 120,
+  "timing_profile": "reliable",
+  "app_sha256": "d9f73d044d33ba1968308dc172356ff06a26ce33389f23e52e42fa579fd2cd9c",
+  "capture_sha256": "9e3bf0a42aebd15ea608451c2d21f395dae9b058c0d936854626b43d3dc92ac5",
+  "command": [
+    "/private/tmp/u2k-delivery-final/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+    "--sdi-av-test",
+    "--hardware-test-mode",
+    "1080p25",
+    "--audio-baseline-seconds",
+    "165",
+    "--timing-profile",
+    "reliable",
+    "--sdi-sync-calibration-file",
+    "/private/tmp/u2k-delivery-final/calibrated-rehearsal/sync-calibration.txt"
+  ],
+  "initial_power": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=22413411)\t100%; finishing charge; 0:00 remaining present: true\n",
+  "playback_pid": 89308,
+  "awake_pid": 89309,
+  "calibration": {
+    "initial_av": {
+      "pairs": 7,
+      "unmatched_flashes": 0,
+      "median_ms": -15.708333333333334,
+      "min_ms": -55.708333333333336,
+      "max_ms": -15.645833333333334,
+      "stdev_ms": 14.001960580041427,
+      "events": [
+        {
+          "video_pts_48k": 314880,
+          "audio_pts_48k": 312206,
+          "audio_minus_video_ms": -55.708333333333336
+        },
+        {
+          "video_pts_48k": 360960,
+          "audio_pts_48k": 360206,
+          "audio_minus_video_ms": -15.708333333333334
+        },
+        {
+          "video_pts_48k": 456960,
+          "audio_pts_48k": 456206,
+          "audio_minus_video_ms": -15.708333333333334
+        },
+        {
+          "video_pts_48k": 600960,
+          "audio_pts_48k": 600206,
+          "audio_minus_video_ms": -15.708333333333334
+        },
+        {
+          "video_pts_48k": 648960,
+          "audio_pts_48k": 648206,
+          "audio_minus_video_ms": -15.708333333333334
+        },
+        {
+          "video_pts_48k": 696960,
+          "audio_pts_48k": 696207,
+          "audio_minus_video_ms": -15.6875
+        },
+        {
+          "video_pts_48k": 792960,
+          "audio_pts_48k": 792209,
+          "audio_minus_video_ms": -15.645833333333334
+        }
+      ]
+    },
+    "adjustment_ms": 36,
+    "method": "Negative midpoint of physically measured min/max; same output session"
+  },
+  "measurement_started_after_s": 31.45250037498772,
+  "playback_exit": 0,
+  "continuity_passed": true,
+  "accepted": true
+}

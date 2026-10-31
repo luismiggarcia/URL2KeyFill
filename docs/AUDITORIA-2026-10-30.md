@@ -1517,3 +1517,241 @@ cadência da fonte igual à saída (25 fps→25p), para isolar a omissão do pri
 do flash e separar esse efeito da quantização SDI. Só depois escolher o contrato
 viável de timestamps para fontes reais. O protótipo não é promovido automaticamente
 a comportamento de produção; P4 e aceitação final P5 continuam pendentes.
+
+### 10.12 Entrega autónoma por prioridades — fiabilidade, qualidade e velocidade (31/10)
+
+**Âmbito autorizado pelo Luis:** implementar e testar de seguida as alterações,
+priorizando deriva, desfasamento e latência, sem iniciar o ensaio físico de oito
+horas. Esse ensaio continua reservado para decisão posterior. A entrega implementa
+correção de deriva SDI, calibração A/V em direto, percurso de silêncio e dois perfis
+explícitos. Não declara encerradas a aceitação prolongada, a revisão do monitor
+local/P6 ou a sincronização automática de qualquer URL.
+
+#### 10.12.1 Deriva — implementação e limites verificáveis
+
+`AudioClock.hpp` introduz um mapeamento afim de samples de origem por sample do
+SDK. O controlador observa uptime e consumo efetivo da fila áudio já consultada
+pelo callback; não segue a chegada do último pacote CEF. Retém até 240 observações
+espaçadas pelo menos 0,5 s, estima taxa por regressão e corrige fase lentamente.
+Parâmetros explícitos: aquisição de taxa de pelo menos 20 s, filtro de fase de 10 s,
+banda morta de 1 ms, retorno de fase de 60 s, razão limitada a ±200 ppm e slew máximo
+de 5 ppm/s. O envelope nominal ensaiado é ±100 ppm, não uma promessa para qualquer
+placa/referência. A estimativa bruta e a incerteza são telemetria, não medição isolada
+do cristal. Só há feedforward de taxa quando a diferença excede quatro erros-padrão
+estimados e um piso de 0,5 ppm; de outro modo a estimativa ruidosa não é promovida a
+deriva. A realimentação lenta de fase continua ativa.
+
+Consultas com janela superior a 1 ms ou posições incoerentes são rejeitadas e
+contadas. Dez segundos sem observação adequada, erro de fase superior a 100 ms ou
+taxa persistentemente fora do limite solicitam recuperação contada. Após três
+recuperações por deriva na mesma execução, a saída falha de forma controlada. A
+recuperação de underrun existente continua separada. Não se promete continuidade
+fora do envelope nem se usa inserção/remoção recorrente abrupta de samples como
+controlo normal. A falha de SDK/recuperação limite não foi injetada fisicamente.
+
+As atualizações preservam a posição no cursor de áudio ainda não escrito, incluindo
+escritas parciais. Áudio e vídeo usam o mesmo mapeamento publicado por snapshots
+atómicos. O leitor de vídeo tem tentativas limitadas e conserva o último snapshot
+completo; não espera por um escritor preemptado. A telemetria também conserva o
+último snapshot completo em vez de inventar uma origem zero durante publicação.
+
+`AudioResampler.*` implementa sinc com janela Kaiser, 160 taps e 1024 fases com
+interpolação dos coeficientes. A tabela é preparada antes do playback. O lookahead
+simétrico de 80 samples (1,667 ms) é obtido do histórico dentro da margem de origem;
+o centro temporal é conservado e não se acrescenta uma FIFO escondida. A cobertura
+lida, incluindo halo, continua a produzir contadores de falta reais. A escolha é uma
+implementação própria do método de interpolação limitada em banda, não interpolação
+linear de samples. Referência do método:
+[Julius O. Smith, Windowed Sinc Interpolation](https://www.dsprelated.com/freebooks/pasp/Windowed_Sinc_Interpolation.html).
+
+**Testes finais:** oito horas simuladas por cenário, para 0/±0,42/±1/±20/±100 ppm,
+com ruído de observação e rejeições; variação sinusoidal de deriva; cenário fora da
+faixa a 999 ppm; ausência de observações; publicação concorrente; continuidade de
+mapeamento; equivalência após escrita parcial; integração com o mixer e deteção de
+lacunas. Depois dos primeiros 120 s, o maior erro de fase nos cenários constantes
+foi **1,452 ms**, sem crescimento secular nesse envelope. Não é um resultado de oito
+horas físicas. Para J=50 ms, o menor headroom modelado ficou acima de 7 ms, com o
+atraso histórico de 30,7 ms, granularidade dos pacotes e lookahead considerados.
+
+A varrida definida até 18 kHz apresentou erro máximo de ganho de cerca de
+0,00003 dB; os tons de 1/18 kHz a razões 0,9999/1/1,0001 tiveram resíduo relativo ao
+ideal abaixo de −118 dB. A banda 23,8–24 kHz ficou abaixo de −108 dB no teste.
+Passaram os critérios objetivos propostos de 0,1 dB/80 dB nestes ensaios. A execução
+Release do filtro isolado ficou perto de 0,08 ms por 1024 frames estéreo; isto não é
+o custo completo do callback nem uma garantia de deadline sob qualquer carga.
+Não substitui escuta subjetiva. Os callbacks existentes ainda incluem alocações e
+mutexes: não se declara concluído todo o redesenho real-time P3/P6.
+
+#### 10.12.2 Desfasamento — cadência correta e calibração utilizável
+
+A referência identificada passou a gerar **25 fps para 25p** e 50 fps para 50p por
+defeito. A fonte 25 fps tem 1500 frames descodificados/verificados antes de playback;
+os IDs visuais avançam dois slots de 20 ms e os 3000 blocos PCM conservam os seus
+IDs absolutos. O verificador separado valida ambos os formatos. Nos flashes
+emparelhados desta série já não apareceu a antecedência de conteúdo de 20 ms do
+primeiro frame branco observada em 50→25 na §10.11. Isto isola esse fator na fonte
+controlada, sem prometer ausência de omissões de pintura em páginas arbitrárias.
+
+A aplicação normal mantém o caminho por chegada para páginas sem PTS verificáveis.
+O caminho por conteúdo identificado continua exclusivo do diagnóstico. Não se
+ancorou qualquer página à primeira chegada nem se aplicou um offset empírico global
+por defeito. Um URL pode já conter A/V errado ou buffers próprios; não existe prova
+de que o CEF exponha os PTS de toda a composição arbitrária.
+
+Foi acrescentado em Setup/Advanced um **ajuste A/V de −200 a +200 ms**, persistido e
+válido durante PLAY. Positivo atrasa áudio; negativo atrasa vídeo através do
+histórico. O ajuste de vídeo está sujeito à cadência/frames disponíveis e à
+cobertura histórica limitada; grandes atrasos em UHD/múltiplas fontes não foram
+aceites por estes testes HD. As mudanças de áudio fazem crossfade de 240 samples
+(5 ms) entre posições, mantendo o relógio e o estado temporal. Buffers já no SDK
+precisam de drenar; não há reinício de placa, de browser ou de aquisição de relógio.
+Formato/perfil continuam a exigir STOP. A calibração acrescenta atraso em vez de
+pedir áudio futuro não disponível.
+
+**Prova de ajuste em direto**, em candidatas intermédias identificadas pelos seus
+manifests, sem mudança de sessão SDI e excluindo as janelas de transição:
+
+| Ajuste solicitado | A−V antes | A−V depois | Mudança física |
+|---|---:|---:|---:|
+| +20 ms no áudio | +31,021 ms | +50,729 ms | +19,708 ms |
+| −20 ms no vídeo | +24,188 ms | +4,229 ms | −19,958 ms |
+
+Ambos tiveram zero falhas de continuidade. O ensaio demonstra direção/efeito do
+controlo; não afirma que os valores deliberadamente aumentados sejam lip sync
+aceitável. O analisador associa flashes capturados a IDs efetivamente agendados e
+rejeita ausência do marcador, mudança errada e contadores degradados. Não houve
+escuta subjetiva da transição.
+
+#### 10.12.3 Latência e percursos simples — escolher margem antes de velocidade
+
+O perfil **Reliable**, por defeito, conserva três frames SDI e J=60 ms. O perfil
+**Low latency**, opt-in e experimental até aceitação prolongada, usa duas frames e
+J=50 ms. Ambos mantêm correção de deriva, verificação de preroll real e a antecedência
+inicial de uma frame já documentada. A pool efetiva e os limiares de áudio/vídeo são
+coordenados; não há mudança automática de reserva durante PLAY.
+
+J=40 ms passou ensaios físicos curtos exploratórios, mas foi **rejeitado** como
+perfil: o modelo com o atraso histórico, granularidade e lookahead produziu margem
+negativa. Não se escolheu o valor só porque trinta segundos não falharam. Os logs e
+as séries de 40 ms foram preservados. J=50 ms conserva margem positiva nos cenários
+definidos; não se extrapola para atrasos de produtor ilimitados ou hardware genlock
+não ensaiado.
+
+| Modo | Orçamento interno Reliable | Orçamento interno Low latency | Redução configurada |
+|---|---:|---:|---:|
+| 1080p25 | 180 ms | 130 ms | 50 ms / 27,8% |
+| 1080p50 | 120 ms | 90 ms | 30 ms / 25,0% |
+
+Estes valores somam reserva e margem após aquisição; não são latência medida de um
+URL até ao ecrã, nem incluem todos os buffers da fonte/recetor. O lookahead cabe na
+margem, sem outra reserva adicional. Os ganhos não significam essa percentagem do
+atraso total de uma página com rede/player próprios.
+
+O caso de silêncio foi simplificado: depois de verificar/contar a cobertura, se todo
+o bloco e halo forem zero, evita interpolação e conversão PCM desnecessárias. O
+mapeamento, a correção de deriva e os contadores continuam ativos; uma lacuna que
+produza zeros não é escondida. Os testes distinguem silêncio válido de cobertura
+em falta. Conservam-se o alias de fonte única, composição por eventos e cache SDR
+antes do agendamento; não se criou um atalho de áudio neutro que contorne o relógio.
+
+#### 10.12.4 Evidência física final e o que se pode assegurar
+
+Candidata final SHA-256
+`d9f73d044d33ba1968308dc172356ff06a26ce33389f23e52e42fa579fd2cd9c`, mesmo executável nos
+quatro casos, HD Mini/1080p com SDI OUT→IN e fonte identificada à cadência do modo.
+Valores negativos significam som antes da imagem. São amostras, não limites universais.
+
+| Modo / perfil | A−V capturado, mediana | Continuidade |
+|---|---:|---|
+| 25p / Reliable | −12,042 ms | zero falhas |
+| 50p / Reliable | −5,021 ms | zero falhas |
+| 25p / Low latency | +15,500 ms | zero falhas |
+| 50p / Low latency | −7,646 ms | zero falhas |
+
+Nos quatro: zero áudio em falta, erros API, recuperações, resets, vídeo SDI
+late/dropped, falhas de histórico e fallback SDR. Validaram-se as 550/1100 seleções
+da janela estável e os IDs físicos recebidos contra fonte/agendamento. Os canais
+coincidiram. A incerteza e quantização não são anuladas pelos três decimais da tabela.
+As várias séries intermédias também foram preservadas; não se escolheu apenas o
+arranque com residual mais baixo.
+
+O probe passou a registar uptime de chegada do callback e a descodificar IDs no
+YUV físico. A comparação de perfis no percurso até à captura, compensando a fase A/V
+medida, indicou **cerca de 51 ms a 25p e 30 ms a 50p** de redução, coerente com a
+configuração. A diferença usa chegada ao callback de entrada e inclui o seu atraso;
+não é medição absoluta de fio nem de ecrã. A fase A/V foi explicitamente considerada
+para não chamar redução de latência a uma mudança do frame escolhido. A fórmula e
+os números sem compensação estão no resumo JSON.
+
+O modo fracionário 1080p59,94 foi repetido no executável final com captura física;
+os resultados e contadores estão na evidência. Não foi promovido a sincronismo
+exato do CEF: a cadência de pintura continua arredondada, o agendamento SDK racional.
+
+#### 10.12.5 Ensaio noturno preparado, sem iniciar oito horas físicas
+
+`run-endurance.py` exige corrente AC, cria um processo `caffeinate` próprio ligado
+à duração da app, verifica a propriedade das assertions de sistema/idle/ecrã a cada
+15 s, acompanha crescimento da telemetria com tempo monótono, avanço dos flashes/
+impulsos e contadores de continuidade. Falta de proteção, de corrente, de fluxo,
+de prontidão do controlador ou falha I/O interrompe o seu próprio teste. Não altera
+configurações permanentes de energia. Tampa fechada, suspensão forçada, shutdown ou
+falha do sistema não podem ser impedidos por uma assertion; invalidam o ensaio.
+Os registos de energia guardam as assertions do processo de teste, não as de outras
+aplicações. O Mac deve ficar ligado à corrente, com tampa aberta e loopback ligado.
+
+**Separou-se continuidade de qualidade.** Dois ensaios iniciais de 120 s tinham
+contadores limpos, mas offsets absolutos excessivos: um ficou perto de −45 ms e outro
+mudou aproximadamente uma frame (−17→−54 ms). O primeiro runner verificava apenas a
+mudança início/fim, pelo que esses dados foram reclassificados: comprovam exercício
+do harness/proteção e continuidade curta, **não aprovação A/V**. A decomposição do
+segundo mostrou fase da fonte perto de +35 ms e troca da frame agendada, em vez de
+provar deriva secular de 36 ms em dois minutos. A estimativa curta de taxa também
+motivou a regra de confiança descrita acima.
+
+Por defeito, o runner final faz uma captura de calibração na **mesma sessão de
+saída**, calcula o negativo do centro min/max medido e comunica só esse inteiro
+limitado à instância de diagnóstico. Uma opção CLI explícita e privada desse teste
+permite ler o ficheiro de calibração; a app normal não monitora ficheiros nem expõe
+um serviço de controlo. A correção aplicada é registada e uma nova captura verifica
+o resultado depois de drenar as filas. Não é um offset adivinhado para a produção.
+A janela longa começa depois desta preparação, que tem limite de 43 s; a app corre
+até 45 s adicionais para permitir **oito horas de medição após preparação**.
+`--no-calibrate` existe só para diagnóstico bruto, sem dispensar os limites A/V.
+
+Aceitação do runner: duração suficiente após calibração, zero erros de continuidade,
+controlador pronto, capturas válidas sem gaps na região medida, coincidência estéreo,
+limite absoluto A/V de uma frame e mudança início/fim até uma frame. Declara-se
+1 ms de allowance de medição no limite absoluto. A qualidade é verificada por
+min/max dos canais, não só pela mediana. Capturas apenas no início/fim não constituem
+captura física independente contínua de oito horas.
+
+O ensaio com calibração e 120 s de janela medida passou no executável final: ajuste
+medido **+36 ms**, medianas pós-calibração de **−18,083 e −14,646 ms**, variação
+**+3,437 ms**, headroom mínimo de **36,396 ms**, fase do controlador no intervalo
+**−1,577 a +1,014 ms**, zero contadores de falha. O tempo ativo incluiu a preparação;
+a janela medida depois dela excedeu 120 s. Um ensaio anterior calibrado ficou entre
+−1,292 e −2,292 ms; ambos estão preservados, sem escolher esse melhor caso como
+garantia. Isto valida o funcionamento curto do harness/calibração, **não oito horas**.
+
+#### 10.12.6 Validação, limites e próxima decisão
+
+Build completa, assinatura local verificada, CTest 5/5, testes Python de captura,
+fontes 25/50, decomposição, ajuste em direto e harness passaram. ASan/UBSan e TSan
+foram executados nos testes do relógio/mixer/reamostrador, incluindo publicação
+concorrente. O smoke nativo verificou interface, controlos/persistência, composição,
+CEF e ciclo do monitor. A inspeção visual externa ficou bloqueada pela sessão macOS
+bloqueada; não se tentou contornar a autenticação. Não se fez escuta/lip sync humano
+com as fontes reais do Luis. O monitor local mantém a implementação anterior; as
+suas pendências de real-time/deriva própria não são dadas como resolvidas por P4 SDI.
+
+Evidência: `tools/audio-audit/data/priorities-2026-10-31/`, com hashes por candidata,
+séries exploratórias e finais, fontes deduplicadas, deriva/qualidade determinísticas,
+reclassificação dos ensaios brutos, calibrações, energia e logs de checks. Os registos
+não substituem as limitações declaradas de fonte, carga, resolução e hardware.
+
+A aplicação instalada não foi substituída. A candidata assinada está em
+`/tmp/u2k-delivery-final/URL2KeyFill.app`; fontes e ferramentas ficam no repositório.
+**O que falta decidir com o Luis:** janela para as oito horas físicas e aceitação
+visual/auditiva no recetor com fontes reais. Não há execução noturna agendada nem
+iniciada automaticamente. A entrega disponibiliza correção/calibração/perfis;
+a garantia prolongada de produção continua dependente dessa validação.

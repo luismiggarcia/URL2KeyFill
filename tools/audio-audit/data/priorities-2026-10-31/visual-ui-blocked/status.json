@@ -1,0 +1,5 @@
+{
+  "visual_inspection": "not performed: macOS session locked",
+  "automated_native_ui_smoke": "passed, see checks",
+  "stability_trace": "isolated test ran 180 s and exited normally; no physical A/V capture or visual calibration is claimed"
+}

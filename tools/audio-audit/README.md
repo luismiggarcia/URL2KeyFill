@@ -352,9 +352,9 @@ explicitly gated by `--sdi-av-reference-ids` plus `--sdi-av-test` and a source U
 `--sdi-av-content-pts` additionally enables the experimental selection. Ordinary
 pages do not enable these decoders or acquire content timestamps.
 
-The source is 320×180/50 fps VP8, scaled by the browser to 1920×1080. Each frame
+The source is 320×180 VP8 at 25 or 50 fps (matching the SDI mode by default), scaled by the browser to 1920×1080. Each frame
 contains a 40-cell barcode (16-bit header, 12-bit frame ID, 12-bit check) at fixed
-coordinates. Every compressed frame is independently decodable, and all 3000 IDs,
+coordinates. Every compressed frame is independently decodable, and all 1500/3000 video IDs,
 PTS and flash pixels are checked with VideoDecoder before playback. Native OnPaint
 reads two rows with conservative black/white thresholds and verifies ID/checksum.
 The barcode identifies the actual pixels, not a JavaScript callback's arrival.
@@ -384,6 +384,90 @@ logging is diagnostic-only. `analyze_identified_sync.py RUN --selection content`
 checks content stamps, marker/pulse agreement, stable origins and I/O health, and
 reports selected-content error and predicted/captured A/V. It refuses incorrect
 stamps and avoids assuming that capture and scheduling windows match exactly.
-Use `test_identified_sync.py` (seven tests) and `test_content_reference.py` (six tests,
+Use `test_identified_sync.py` (eleven tests) and `test_content_reference.py` (seven tests,
 including both source formats and a damaged audio ID). Physical evidence is in
 `data/identified-pts-2026-10-31/`; final interpretation is inline in audit §10.11.
+
+### Reliability, sync adjustment and explicit latency profiles
+
+The native output now corrects slow clock differences with a shared affine mapping
+and a 160-tap Kaiser sinc resampler. Reliable remains the default (3 frames / 60 ms
+source age); experimental Low latency uses 2 frames / **50 ms**. A 40 ms margin was
+rejected for the historical 30.7 ms packet-lateness envelope once packet granularity
+and interpolation lookahead are included. Neither profile disables drift correction.
+`--timing-profile reliable|low` and `--sync-offset-ms -200..200` exercise isolated
+hardware tests; the same settings are persisted in Setup Advanced for ordinary use.
+Positive adjustment delays audio; negative adjustment delays video. Changing profile
+requires STOP; signed A/V adjustment also works during PLAY, with a 5 ms audio
+crossfade and no device/clock restart. Queued buffers drain before it takes effect. No automatic fixed compensation is applied to arbitrary pages.
+
+New trace fields include applied/estimated rate, phase error, controller readiness,
+rejected observations, mapping anchor/rate, reserve count, signed sync adjustment
+the rate-fit uncertainty, and the 1.667 ms interpolation lookahead. The mapping is piecewise affine and
+continuous at each change of rate. `analyze_pipeline_sync.py` uses inverse mapping
+from the first telemetry snapshot of each pulse; it is not an exact per-sample
+output trace. Identified-reference scheduling records include their actual target
+and ratio for the more precise controlled proof.
+
+The input probe now records `host_48k` callback arrivals and independently decodes
+visual IDs into `video_id` rows. Existing pulse analysis ignores these extra fields.
+The identified analyser verifies that received IDs exist in both source and
+scheduled frames, and reports paint-to-input-callback and mapped-content-to-input
+callback timing. These include SDK input/callback delay and exclude a receiver's
+display; they are **not absolute host-to-wire latency**. Relative profile comparisons
+are more useful than treating callback arrivals as a wire timestamp.
+
+`run-validation-series.py` executes the short cases serially; `--cases` selects named
+cases for a focused repeat. Run it under a scoped `caffeinate -dims` when unattended.
+The ordinary-series defaults never start an overnight test. CTest includes
+`audio_clock_tests`: eight-hour **simulations**, rate changes, bounded recovery,
+source-coverage budgets, concurrent mapping publication, partial-write equivalence,
+passband/stopband and analytic tone residuals, plus real mixer/coverage integration.
+
+### Deferred overnight acceptance
+
+Do not start this until the overnight window is agreed. Example preparation:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 tools/audio-audit/run-endurance.py \
+  --app /tmp/candidate/URL2KeyFill.app/Contents/MacOS/URL2KeyFill \
+  --capture /tmp/u2k-decklink-capture --directory /tmp/overnight-av \
+  --mode 1080p25 --seconds 28800 --timing-profile reliable --dry-run
+```
+
+Remove `--dry-run` only when starting the agreed run. Keep the Mac connected to AC,
+lid open, with the SDI loopback connected. The runner performs measured same-session calibration first, then requires AC, owns a scoped
+caffeinate process, checks its idle/system/display assertions and power every 15 s,
+and stops its own test if protection/telemetry fails. It first captures 20 s to compute a bounded midpoint calibration, sends the integer
+only to its explicitly enabled diagnostic instance, waits for application/queue
+drain, then captures 30 s at the start/end of the measurement window. No plate or
+browser restart is involved. This never installs an empirical default for normal
+pages. `--no-calibrate` is a raw diagnostic option, not a way to bypass A/V limits. It accepts only sufficient duration,
+zero continuity errors, a ready drift controller absolute min/max A/V within one output frame (1 ms declared measurement allowance),
+and start/end change no larger than one frame. A constant large offset is rejected
+even when all continuity counters are clean. Start/end captures do not establish continuous independent A/V drift.
+No permanent pmset settings are altered; forced sleep/lid close/OS shutdown cannot
+be prevented by this harness and invalidate the run. `--seconds 120` rehearses the
+harness plus up to 45 s of calibration preparation; it does not replace eight-hour physical acceptance. `test_endurance.py`
+covers the acceptance checks and ownership of power assertions.
+
+`--sync-change-ms N` applies an isolated live adjustment at 15 s in app hardware
+tests. `analyze_live_sync.py RUN --expected-ms N` matches physical captured flashes
+to scheduled frame IDs and compares steady windows before/after, excluding the
+transition and SDK queue drain. Continuity errors or a different steady change are
+rejected. This does not replace listening to speech/music during calibration.
+
+The clock estimator waits for at least 20 s and applies a four-standard-error /
+0.5 ppm confidence gate before rate feedforward. A 10 s phase filter, 1 ms deadband,
+60 s phase return and 5 ppm/s slew are explicit. This is not a crystal-rate meter.
+A zero-valued mixed block plus halo bypasses interpolation without bypassing source
+coverage or the clock. Negative video adjustments are frame-quantised; inspection
+and listening with actual sources/receiver remain part of production acceptance.
+
+The overnight runner uses monotonic watchdog durations, incremental CSV tailing,
+source flash/pulse advancement, controller readiness and early continuity checks.
+Power logs include only its own assertions. AC loss, missing assertions, stalled
+source/trace or I/O errors stop its own processes. The app can run up to 45 s longer
+than the requested measurement to allow the calibration budget; `--seconds 28800`
+means eight hours after preparation. No eight-hour physical run was started in this
+delivery. Evidence and reassessed raw runs are under `data/priorities-2026-10-31/`.

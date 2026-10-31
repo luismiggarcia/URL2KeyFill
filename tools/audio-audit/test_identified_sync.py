@@ -48,6 +48,30 @@ class IdentifiedTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'coverage'):
             analyse(log, rows, capture, 'content')
 
+    def test_signed_audio_adjustment_in_prediction(self):
+        log, rows, capture = fixture()
+        log = '\n'.join(line+' sync_offset=960' if line.startswith('REFERENCE_SCHEDULE') else line for line in log.splitlines())
+        result = analyse(log, rows, capture, 'content')
+        self.assertAlmostEqual(result['scheduled_audio_minus_video']['median_ms'], 20+5/48)
+
+    def test_explicit_mapping_used(self):
+        log, rows, capture = fixture()
+        log = '\n'.join(line+' source_target=0 source_ratio=1' if line.startswith('REFERENCE_SCHEDULE') else line for line in log.splitlines())
+        result = analyse(log, rows, capture, 'content')
+        self.assertGreater(result['selected_content_minus_target']['min_ms'], 1000)
+
+    def test_physical_ids_and_arrival_latency(self):
+        log, rows, capture = fixture()
+        physical=[dict(kind='video_id',value=str(identity),host_48k=str(480000+identity*960+5720)) for identity in range(350,450)]
+        result=analyse(log,rows,capture,'content',capture_rows=physical)
+        self.assertAlmostEqual(result['paint_to_input_callback']['median_ms'],5000/48)
+
+    def test_wrong_physical_id_rejected(self):
+        log, rows, capture = fixture()
+        physical=[dict(kind='video_id',value=str(identity),host_48k=str(480000+identity*960+5720)) for identity in range(350,450)]
+        physical[0]['value']='0'
+        with self.assertRaisesRegex(ValueError,'Physical frame IDs'):analyse(log,rows,capture,'content',capture_rows=physical)
+
     def test_dropped_video_rejected(self):
         log, rows, capture = fixture()
         rows[0]['dropped_video'] = '1'
