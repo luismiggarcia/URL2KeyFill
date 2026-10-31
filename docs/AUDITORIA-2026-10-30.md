@@ -1028,3 +1028,23 @@ os portos sem dispositivo ligado. Não se conta este ensaio como validação SDI
 idade nessa leitura, continuidade de timestamps e fase/fila. Caso a falha não se
 repita, o mecanismo histórico continua por confirmar; um ensaio sem falhas isolado
 não prova resolução. A medição física HDMI/SDI continua independente deste diagnóstico.
+
+### 10.6 Repetição instrumentada concluída em 31 de outubro
+
+Candidata `35e9156`, mesmo executável do smoke local validado, SHA-256
+`3bb50ba2d96988e1bd11683c7f4dd400cc239de8170c032dfbba7f47f6275a1d`.
+Ensaio reiniciado a pedido do utilizador; registo anterior preservado em `/tmp`.
+HD Mini, 1080p25, J=60 ms, reserva 5760 samples. Evidência em
+`tools/audio-audit/data/application-gap-diagnostic-2026-10-31-1800s.*`.
+
+O ensaio terminou normalmente e fechou a aplicação; não ficou a correr após os
+30 minutos. Trace ativo de 1799,900799 s, 1747 intervalos: **zero samples em falta**,
+zero leituras sem fonte, erros API, recuperações, resets ou vídeo tardio/perdido.
+Sem anomalias nos contadores de continuidade. Headroom mínimo 37,2917 ms,
+máximo 144,1042 ms; tendência descritiva −1,2541 ms/h, não medição isolada
+do cristal. Idade de leitura calibrada após warmup: 58,6875–60,0417 ms.
+
+Passou o critério de zero lacunas nesta repetição. Não houve evento para o novo
+diagnóstico caracterizar: a causa histórica das 12 amostras continua por confirmar.
+Não se declara resolvida a falha transitória nem aceite o sincronismo físico A/V.
+Mantêm-se pendentes compensação adaptativa de deriva e os restantes itens do plano.
