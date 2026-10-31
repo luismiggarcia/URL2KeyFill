@@ -29,3 +29,17 @@ Command-W uses the existing guarded quit flow; RELOAD is now RELOAD LAYERS.
 Validation: core and scene tests, application build, and native CEF/UI smoke test.
 Physical SDI output and audible local-monitor playback require hardware/listening
 validation. macOS Apple Silicon (arm64), ad-hoc signed and not Apple notarized.
+
+## 0.5.0
+
+- Adaptive audio/video clock mapping to mitigate SDI clock drift, with bounded rate correction and a high-quality sinc audio resampler.
+- Live signed A/V calibration in Advanced Setup (-200 to +200 ms), persisted without restarting playback.
+- Reliable default profile and experimental Low latency profile. At 25p, the configured internal budget falls from 180 to 130 ms; at 50p, from 120 to 90 ms. These budgets exclude source and receiver buffering and calibration offsets.
+- Reduced processing for common cases: silent audio fast path, single-layer composition reuse and preparation outside the output deadline.
+- Expanded diagnostics, physical SDI loopback probes and an endurance runner with scoped sleep prevention and continuity/synchronization checks.
+
+Validation: native build, CTest (5/5), Python tests (46/46), sanitizer checks, SDI loopback at 25/50/59.94 fps, live calibration and a calibrated 120-second endurance rehearsal. Eight-hour clock simulations passed; the physical eight-hour endurance run remains pending. Calibration is source/session dependent: these results do not guarantee lip sync for every URL. Local-monitor timing redesign and subjective validation with real sources remain pending. See docs/AUDITORIA-2026-10-30.md for measurements and limitations.
+
+macOS Apple Silicon (M1 and later), macOS 13 or later. Real DeckLink backend. Ad-hoc signed; not Apple notarized.
+
+Download the ZIP, extract it and open URL2KeyFill.app. SHA256SUMS.txt contains the archive checksum.
