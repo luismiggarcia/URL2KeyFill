@@ -20,4 +20,6 @@ meter.resetPeaks();
 
 Dimensões por omissão (largura × altura): vertical 35 × 242 px; horizontal 242 × 35 px; compacto vertical 14 × 70 px. Podem ajustar-se com as variáveis CSS `--audio-led-size`, `--audio-led-gap`, `--audio-channel-gap` e `--audio-meter-padding`. As restantes variáveis `--audio-meter-*` definem as cores e o fundo.
 
-A integração futura deverá fornecer os níveis e definir os locais de montagem. Nenhuma integração foi efectuada. Abrir `preview.html` através de um servidor HTTP local para experimentar (os módulos JavaScript podem ser bloqueados em URLs file://).
+A aplicação fornece os níveis e define os locais de montagem através do adaptador em `assets/interface.html`. Abrir `preview.html` através de um servidor HTTP local para experimentar (os módulos JavaScript podem ser bloqueados em URLs file://).
+
+Integração nativa: `setReading([leftDbFS,rightDbFS], [heldLeftDbFS,heldRightDbFS])` conserva a calibração e retenção externas. `mono` oculta R. `layer-compact` é a variante aprovada de 17 × 33 px, 10 segmentos de 5 × 2 px por canal.

@@ -1,6 +1,6 @@
 /** Isolated display component. Levels are supplied by the host in dBFS. */
 export class AudioLevelMeter extends HTMLElement {
-  static observedAttributes = ['orientation', 'compact', 'layer-compact', 'muted', 'left', 'right'];
+  static observedAttributes = ['orientation', 'compact', 'layer-compact', 'mono', 'muted', 'left', 'right'];
   #channels = [];
   #levels = [-Infinity, -Infinity];
   #peaks = [-Infinity, -Infinity];
@@ -22,6 +22,7 @@ export class AudioLevelMeter extends HTMLElement {
       :host([layer-compact]) { --audio-led-gap:1px; --audio-channel-gap:3px; --audio-meter-padding:2px; }
       :host([layer-compact]) .led { width:5px; height:2px; }
       :host([layer-compact]) .led:nth-child(n+11) { display:none; }
+      :host([mono]) .channel:nth-child(2) { display:none; }
       :host([muted]) :is(.lit,.peak) { background:#a4adb8; box-shadow:none; }
     </style><div class="meter" role="img"></div>`;
     const meter = shadow.querySelector('.meter');
@@ -60,6 +61,15 @@ export class AudioLevelMeter extends HTMLElement {
     this.#schedulePeakExpiry();
   }
   get levels() { return [...this.#levels]; }
+  /** Paint externally calibrated levels and held peaks (native audio adapter). */
+  setReading(levels, peaks = levels) {
+    if (![levels, peaks].every(v => Array.isArray(v) && v.length === 2)) throw new TypeError('Expected stereo levels and peaks');
+    const clean = values => values.map(v => typeof v === 'number' && Number.isFinite(v) ? Math.min(0, v) : -Infinity);
+    clearTimeout(this.#timer);
+    this.#levels = clean(levels);
+    this.#peaks = clean(peaks);
+    this.#render();
+  }
   resetPeaks() {
     this.#peaks = [...this.#levels];
     this.#expires = [0, 0];
