@@ -12,7 +12,7 @@ Use the **URL2KeyFill** Desktop shortcut or `~/Applications/URL2KeyFill.app`. Th
 - **PAUSE** cuts image to transparent and silences audio while maintaining the SDI signal. It is only available during PLAY.
 - **LAYERS** shows/hides the layer column without resizing the monitor. Hiding it disables editing.
 - With **EDIT LAYER** off, a layer key toggles visibility and its audio. With editing on, click opens/closes the layer drawer; drag between rows changes the stacking order. Alt+Up/Down provides keyboard reordering.
-- **ADD LAYER** adds the built-in test page at the top, initially hidden. New installations start with one visible test layer.
+- **ADD LAYER** adds the built-in test page at the top, initially hidden, shows the layer list and opens the new layer drawer with **EDIT LAYER** enabled. New installations start with one visible test layer.
 - **RELOAD** reloads all layers. The layer drawer has an individual Reload and confirmed Delete.
 - Names/URLs apply on field blur. A changed valid URL automatically reloads that layer. Visibility applies immediately. Under Audio, each layer has mute and gain; the stereo sum is limited to prevent integer overflow.
 - **SETUP** configures device, exact SDI mode, pixel format, Fill/Key, browser size and master audio mute. Stop PLAY before changing output settings. Custom dimensions appear below Browser Size.

@@ -43,3 +43,10 @@ Validation: native build, CTest (5/5), Python tests (46/46), sanitizer checks, S
 macOS Apple Silicon (M1 and later), macOS 13 or later. Real DeckLink backend. Ad-hoc signed; not Apple notarized.
 
 Download the ZIP, extract it and open URL2KeyFill.app. SHA256SUMS.txt contains the archive checksum.
+
+## 0.5.1
+
+- ADD LAYER shows the layer list, enables EDIT LAYER and opens the newly created layer drawer after successful creation.
+- POWER uses an inline SVG symbol with the green LED illumination prepared in the standalone studio-button component.
+
+Validation: native application build, JavaScript syntax check and CTest (5/5). The no-device UI/CEF smoke test reported all checks as PASS but exited with status 1; a clean smoke-test exit remains unverified.
