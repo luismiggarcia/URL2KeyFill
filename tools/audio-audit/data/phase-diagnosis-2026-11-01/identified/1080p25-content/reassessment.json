@@ -1,0 +1,5 @@
+{
+  "initial_series_driver_result": "rejected by pulse-origin check on first source pulse at elapsed 3.145849 s; steady playback/capture completed with exit 0",
+  "startup_pulse_error_samples": 1148,
+  "reassessment": "Only pulses before content second 7 excluded and retained explicitly, consistent with pre-existing schedule warmup. Stable pulse validation, content markers and I/O health unchanged."
+}

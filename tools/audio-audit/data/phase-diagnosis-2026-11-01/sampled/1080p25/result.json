@@ -1,0 +1,195 @@
+{
+  "av_quality_passed": true,
+  "av_frame_limit_ms": 40,
+  "measurement_allowance_ms": 1,
+  "active_duration_s": 1244.651083,
+  "health": {
+    "missing_total": 0.0,
+    "api_errors": 0.0,
+    "recoveries": 0.0,
+    "late_video": 0.0,
+    "dropped_video": 0.0,
+    "clock_resets": 0.0,
+    "video_history_misses": 0.0,
+    "video_history_startup_misses": 0.0,
+    "video_conversion_fallbacks": 0.0
+  },
+  "first_av_ms": 0.3958333333333333,
+  "last_av_ms": 13.541666666666666,
+  "av_change_ms": 13.145833333333332,
+  "rate_ppm_range": [
+    -43.590099,
+    32.643584
+  ],
+  "phase_error_ms_range": [
+    -2.417233,
+    2.379499
+  ],
+  "minimum_source_headroom_ms": 42.6875,
+  "limits": "One Mac/device/mode; same-device SDI captures at start/end, not continuous independent physical capture.",
+  "intermediate_captures": [
+    {
+      "name": "capture-sample-000",
+      "measurement_elapsed_s": 120.01659766599187,
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": 1.0625,
+          "min_ms": 1.0416666666666667,
+          "max_ms": 1.1666666666666667
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": 1.0625,
+          "min_ms": 1.0416666666666667,
+          "max_ms": 1.1666666666666667
+        }
+      }
+    },
+    {
+      "name": "capture-sample-001",
+      "measurement_elapsed_s": 240.13406154100085,
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": 4.0625,
+          "min_ms": 3.9375,
+          "max_ms": 4.166666666666667
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": 4.0625,
+          "min_ms": 3.9375,
+          "max_ms": 4.166666666666667
+        }
+      }
+    },
+    {
+      "name": "capture-sample-002",
+      "measurement_elapsed_s": 360.3274042499834,
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": 5.625,
+          "min_ms": 5.541666666666667,
+          "max_ms": 5.708333333333333
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": 5.625,
+          "min_ms": 5.541666666666667,
+          "max_ms": 5.708333333333333
+        }
+      }
+    },
+    {
+      "name": "capture-sample-003",
+      "measurement_elapsed_s": 480.4619925409788,
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": 7.25,
+          "min_ms": 7.0625,
+          "max_ms": 7.270833333333333
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": 7.25,
+          "min_ms": 7.0625,
+          "max_ms": 7.270833333333333
+        }
+      }
+    },
+    {
+      "name": "capture-sample-004",
+      "measurement_elapsed_s": 600.49755,
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": 4.875,
+          "min_ms": 4.854166666666667,
+          "max_ms": 4.9375
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": 4.875,
+          "min_ms": 4.854166666666667,
+          "max_ms": 4.9375
+        }
+      }
+    },
+    {
+      "name": "capture-sample-005",
+      "measurement_elapsed_s": 720.6530120410025,
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": 4.583333333333333,
+          "min_ms": 4.5625,
+          "max_ms": 4.75
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": 4.583333333333333,
+          "min_ms": 4.5625,
+          "max_ms": 4.75
+        }
+      }
+    },
+    {
+      "name": "capture-sample-006",
+      "measurement_elapsed_s": 840.911130833003,
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": 8.020833333333334,
+          "min_ms": 7.875,
+          "max_ms": 8.104166666666666
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": 8.020833333333334,
+          "min_ms": 7.875,
+          "max_ms": 8.104166666666666
+        }
+      }
+    },
+    {
+      "name": "capture-sample-007",
+      "measurement_elapsed_s": 961.0625003750029,
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": 9.520833333333334,
+          "min_ms": 9.416666666666666,
+          "max_ms": 9.645833333333334
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": 9.520833333333334,
+          "min_ms": 9.416666666666666,
+          "max_ms": 9.645833333333334
+        }
+      }
+    },
+    {
+      "name": "capture-sample-008",
+      "measurement_elapsed_s": 1081.2869965829886,
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": 12.520833333333334,
+          "min_ms": 12.395833333333334,
+          "max_ms": 12.625
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": 12.520833333333334,
+          "min_ms": 12.395833333333334,
+          "max_ms": 12.625
+        }
+      }
+    }
+  ],
+  "post_calibration_duration_s": 1213.9823670829937
+}

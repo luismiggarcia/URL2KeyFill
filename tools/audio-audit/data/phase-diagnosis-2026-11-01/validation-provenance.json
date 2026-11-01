@@ -1,0 +1,12 @@
+{
+  "sha256": {
+    "tests/SyncDiagnosticsTests.cpp": "544c60aaa84d1b9c714c3cee63c375df56157a310cbdd76e139ef3a10cbcef80",
+    "tools/audio-audit/analyze_device_clocks.py": "173fa6f7737c67dec3e33d9c8cf87d5cfce9a573622e246b58ca5dd25a060a0d",
+    "tools/audio-audit/analyze_event_sync.py": "46394417e07d4cbff9d7dd34002efb5ffa4b3ab4c1700abb5b3cccc1a77765ad",
+    "tools/audio-audit/test_device_clocks.py": "9947ebe78d55acf2836c029da86c51251ccbe6137e6c6ac708dcb7e2aeeff514",
+    "tools/audio-audit/test_event_sync.py": "81ed2b73af7af0b38eb2bf59e0e9fd9d13f41027f889d311157b9842739cb8ba",
+    "tools/audio-audit/test_endurance.py": "7369a67b1c6ed5e45a2bfd97c36f7fa10746f2b734cb995d36d50d94c387f01d",
+    "tools/audio-audit/test_identified_sync.py": "603588b16bdba8286e31aa0f5fb9d2299bd73b1559d35a6a76ed8b5d6872e1a1"
+  },
+  "checks": "CTest 6/6; Python 64/64; ASan/UBSan pass; CRC/SHA and original CSV/source bytes verified; intentional 50p quality rejection preserved"
+}

@@ -1,0 +1,181 @@
+{
+  "points": [
+    {
+      "name": "capture-start",
+      "matched": 27,
+      "stream_s": 50.96,
+      "physical_median_ms": 0.3958333333333333,
+      "physical_min_ms": 0.0,
+      "physical_max_ms": 0.6458333333333334,
+      "scheduled_median_ms": -0.3125,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.7083333333333333,
+        "median_ms": 0.7083333333333334,
+        "max_ms": 0.7083333333333334
+      }
+    },
+    {
+      "name": "capture-sample-000",
+      "matched": 27,
+      "stream_s": 168.96,
+      "physical_median_ms": 1.0625,
+      "physical_min_ms": 1.0416666666666667,
+      "physical_max_ms": 1.1666666666666667,
+      "scheduled_median_ms": 0.3541666666666667,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.7083333333333333,
+        "median_ms": 0.7083333333333335,
+        "max_ms": 0.7083333333333335
+      }
+    },
+    {
+      "name": "capture-sample-001",
+      "matched": 27,
+      "stream_s": 288.96,
+      "physical_median_ms": 4.0625,
+      "physical_min_ms": 3.9375,
+      "physical_max_ms": 4.166666666666667,
+      "scheduled_median_ms": 3.3541666666666665,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.708333333333333,
+        "median_ms": 0.7083333333333335,
+        "max_ms": 0.7083333333333335
+      }
+    },
+    {
+      "name": "capture-sample-002",
+      "matched": 27,
+      "stream_s": 408.96,
+      "physical_median_ms": 5.625,
+      "physical_min_ms": 5.541666666666667,
+      "physical_max_ms": 5.708333333333333,
+      "scheduled_median_ms": 4.916666666666667,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.708333333333333,
+        "median_ms": 0.708333333333333,
+        "max_ms": 0.7083333333333339
+      }
+    },
+    {
+      "name": "capture-sample-003",
+      "matched": 27,
+      "stream_s": 529.96,
+      "physical_median_ms": 7.25,
+      "physical_min_ms": 7.0625,
+      "physical_max_ms": 7.270833333333333,
+      "scheduled_median_ms": 6.541666666666667,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.708333333333333,
+        "median_ms": 0.708333333333333,
+        "max_ms": 0.7083333333333339
+      }
+    },
+    {
+      "name": "capture-sample-004",
+      "matched": 27,
+      "stream_s": 649.96,
+      "physical_median_ms": 4.875,
+      "physical_min_ms": 4.854166666666667,
+      "physical_max_ms": 4.9375,
+      "scheduled_median_ms": 4.166666666666667,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.708333333333333,
+        "median_ms": 0.708333333333333,
+        "max_ms": 0.7083333333333339
+      }
+    },
+    {
+      "name": "capture-sample-005",
+      "matched": 27,
+      "stream_s": 769.96,
+      "physical_median_ms": 4.583333333333333,
+      "physical_min_ms": 4.5625,
+      "physical_max_ms": 4.75,
+      "scheduled_median_ms": 3.8958333333333335,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.6874999999999996,
+        "median_ms": 0.6875,
+        "max_ms": 0.6875000000000004
+      }
+    },
+    {
+      "name": "capture-sample-006",
+      "matched": 27,
+      "stream_s": 889.96,
+      "physical_median_ms": 8.020833333333334,
+      "physical_min_ms": 7.875,
+      "physical_max_ms": 8.104166666666666,
+      "scheduled_median_ms": 7.333333333333333,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.6874999999999991,
+        "median_ms": 0.6875,
+        "max_ms": 0.6875000000000009
+      }
+    },
+    {
+      "name": "capture-sample-007",
+      "matched": 27,
+      "stream_s": 1009.96,
+      "physical_median_ms": 9.520833333333334,
+      "physical_min_ms": 9.416666666666666,
+      "physical_max_ms": 9.645833333333334,
+      "scheduled_median_ms": 8.833333333333334,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.6875,
+        "median_ms": 0.6875,
+        "max_ms": 0.6875
+      }
+    },
+    {
+      "name": "capture-sample-008",
+      "matched": 27,
+      "stream_s": 1129.96,
+      "physical_median_ms": 12.520833333333334,
+      "physical_min_ms": 12.395833333333334,
+      "physical_max_ms": 12.625,
+      "scheduled_median_ms": 11.833333333333334,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.6875,
+        "median_ms": 0.6875,
+        "max_ms": 0.6875
+      }
+    },
+    {
+      "name": "capture-end",
+      "matched": 27,
+      "stream_s": 1204.96,
+      "physical_median_ms": 13.541666666666666,
+      "physical_min_ms": 13.3125,
+      "physical_max_ms": 13.833333333333334,
+      "scheduled_median_ms": 12.833333333333334,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.7083333333333321,
+        "median_ms": 0.7083333333333339,
+        "max_ms": 0.7083333333333339
+      }
+    }
+  ],
+  "quality_revalidated": {
+    "av_quality_passed": true,
+    "sampled_av_min_ms": 0.0,
+    "sampled_av_max_ms": 13.833333333333334,
+    "sampled_av_span_ms": 13.833333333333334,
+    "sampled_quality_limit": "Absolute A/V and full sampled envelope <= one frame + 1 ms allowance; not a continuous capture guarantee."
+  },
+  "original_accepted": true,
+  "power_checks": 82,
+  "max_active_telemetry_interval_s": 1.0519160000000056,
+  "event_trace_omitted": 0,
+  "method": "Accepted PCM and selected flash events. Generic periodic/host matching assumes observation gap <400 ms and validates a constant timestamp epoch per capture; no physical content IDs. Original runner result preserved. Same recomputation applied to every capture and full sampled envelope."
+}

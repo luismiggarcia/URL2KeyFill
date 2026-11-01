@@ -31,9 +31,16 @@ def analyse(log, rows, captured, selection, seconds=30, capture_rows=None):
         raise ValueError('Reference playback contains an error or unidentified paint')
     if max(int(r['clock_matches']) for r in valid) < 10:
         raise ValueError('Too few verified audio markers')
+    startup_pulses = []
     for r in rows:
         if r.get('source_pulse_pts'):
             relative = int(r['source_pulse_pts'])-origin
+            # The first CEF packet may begin inside the first pulse. Use the
+            # same seven-second warmup as schedule/content validation, while
+            # retaining excluded observations rather than certifying them.
+            if relative < 7*48000:
+                startup_pulses.append(dict(elapsed_s=r.get('elapsed_s'), relative_samples=relative))
+                continue
             error = relative-round(relative/48000)*48000-5
             if abs(error) > 1:
                 raise ValueError('Observed audio pulse PTS disagrees with the identified content clock')
@@ -95,6 +102,7 @@ def analyse(log, rows, captured, selection, seconds=30, capture_rows=None):
         content_transport=stats([host-origin-identity*960 for identity,host in received.items()])
         if transport['min_ms']<0:raise ValueError('Input arrived before the identified source paint')
     return dict(selection=selection, paint_to_input_callback=transport, content_to_input_callback=content_transport, audio_content_origin=origin, health=health,
+                startup_pulse_observations_excluded=startup_pulses,
                 verified_audio_markers=max(int(r['clock_matches']) for r in valid),
                 skipped_audio_marker_ids=max(int(r.get('clock_skipped', 0)) for r in valid),
                 source_paint_minus_content=stats([int(r['host_samples'])-origin-int(r['id'])*960 for r in valid if int(r['id'])>=350]),

@@ -1,0 +1,45 @@
+{
+  "windows": [
+    {
+      "stream_window_s": [
+        20,
+        110
+      ],
+      "points": 89,
+      "span_s": 89.0799375,
+      "device_per_host_ppm": -19.62500974816983,
+      "host_per_device_ppm": 19.625394896749526,
+      "residual_rms_ms": 0.25461847900246726,
+      "residual_max_ms": 0.468182791003161,
+      "slope_standard_error_ppm": 1.0499975592848543
+    },
+    {
+      "stream_window_s": [
+        110,
+        200
+      ],
+      "points": 89,
+      "span_s": 88.89985416666667,
+      "device_per_host_ppm": 36.94451500502183,
+      "host_per_device_ppm": -36.94315015823069,
+      "residual_rms_ms": 0.40545400993413105,
+      "residual_max_ms": 0.764701735469013,
+      "slope_standard_error_ppm": 1.6748044780508022
+    },
+    {
+      "stream_window_s": [
+        200,
+        285
+      ],
+      "points": 84,
+      "span_s": 83.9199375,
+      "device_per_host_ppm": 25.07178450184,
+      "host_per_device_ppm": -25.071155923206412,
+      "residual_rms_ms": 0.19063810354403696,
+      "residual_max_ms": 0.32971487125420634,
+      "slope_standard_error_ppm": 0.8585867180167057
+    }
+  ],
+  "hardware_query_max_span_ms": 0.020833333333333332,
+  "limits": "SDK-reported clocks, not independent physical oscillator measurement. Short-window fits with correlated/nonstationary noise."
+}

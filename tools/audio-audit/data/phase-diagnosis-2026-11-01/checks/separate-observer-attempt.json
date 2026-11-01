@@ -1,0 +1,5 @@
+{
+  "status": "Failed exploratory observation, not a clock measurement",
+  "exit_code": 1,
+  "reason": "Separate output interface returned no scheduled-stream or hardware clock observations in this run. No output/input configuration or callbacks were changed. Owning-instance diagnostic added instead."
+}

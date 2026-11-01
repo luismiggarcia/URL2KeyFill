@@ -1,0 +1,21 @@
+[
+  "/opt/homebrew/opt/python@3.14/bin/python3.14",
+  "/Users/luisgarcia/Library/CloudStorage/OneDrive-RumosConsulting/Rumos Documents/Desenvolvimento/LG-Systems/URL2KeyFill/tools/audio-audit/run-loopback.py",
+  "--app",
+  "/tmp/u2k-phase-diagnostic/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+  "--capture",
+  "/tmp/u2k-phase-capture",
+  "--mode",
+  "1080p50",
+  "--seconds",
+  "40",
+  "--directory",
+  "/private/tmp/u2k-phase-series-20261101/1080p50-arrival/loopback",
+  "--source-url",
+  "http://127.0.0.1:50447/",
+  "--timing-profile",
+  "reliable",
+  "--sync-offset-ms",
+  "0",
+  "--reference-ids"
+]

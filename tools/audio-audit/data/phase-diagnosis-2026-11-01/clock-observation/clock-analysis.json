@@ -1,0 +1,42 @@
+{
+  "consumed_queue": {
+    "points": 262,
+    "span_s": 263.9196979166667,
+    "device_per_host_ppm": 15.627629049941305,
+    "host_per_device_ppm": -15.627384830962932,
+    "residual_rms_ms": 0.8367812884702476,
+    "residual_max_ms": 2.235528162214905,
+    "slope_standard_error_ppm": 0.6787759657806471
+  },
+  "hardware": {
+    "points": 262,
+    "span_s": 263.91970833333335,
+    "device_per_host_ppm": 15.639918073961923,
+    "host_per_device_ppm": -15.63967347073536,
+    "residual_rms_ms": 0.8369891160934412,
+    "residual_max_ms": 2.244624601696463,
+    "slope_standard_error_ppm": 0.6789445631437732
+  },
+  "scheduled_stream": {
+    "points": 262,
+    "span_s": 263.91970833333335,
+    "device_per_host_ppm": 15.650414877388386,
+    "host_per_device_ppm": -15.650169945757852,
+    "residual_rms_ms": 0.8380791466184992,
+    "residual_max_ms": 2.2373429831350222,
+    "slope_standard_error_ppm": 0.6798287647177402
+  },
+  "applied_rate_ppm": {
+    "min": -53.22611299996005,
+    "median": 2.4296699999704074,
+    "max": 36.56046200006813
+  },
+  "queue_phase_error_ms": {
+    "min": -3.288558006286625,
+    "median": -1.1565660238265938,
+    "max": 0.807051658630375
+  },
+  "rejected_queue_observations": 0,
+  "rejected_hardware_observations": 0,
+  "limits": "Read-only SDK queries inside the owning diagnostic instance. Fits cover a finite window with correlated query noise; standard error is descriptive, not independent physical clock certification. Scheduled-stream host timing is bracketed approximately. These fits do not measure content A/V sync."
+}

@@ -1,0 +1,106 @@
+{
+  "points": [
+    {
+      "name": "capture-start",
+      "matched": 27,
+      "stream_s": 50.86,
+      "physical_median_ms": -4.666666666666667,
+      "physical_min_ms": -5.041666666666667,
+      "physical_max_ms": 15.5625,
+      "scheduled_median_ms": -5.395833333333333,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.7291666666666661,
+        "median_ms": 0.729166666666667,
+        "max_ms": 0.7291666666666679
+      }
+    },
+    {
+      "name": "capture-sample-000",
+      "matched": 27,
+      "stream_s": 168.86,
+      "physical_median_ms": -1.1666666666666667,
+      "physical_min_ms": -1.3541666666666667,
+      "physical_max_ms": 18.854166666666668,
+      "scheduled_median_ms": -1.8958333333333333,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.7291666666666643,
+        "median_ms": 0.7291666666666667,
+        "max_ms": 0.7291666666666679
+      }
+    },
+    {
+      "name": "capture-sample-001",
+      "matched": 27,
+      "stream_s": 288.86,
+      "physical_median_ms": -3.5833333333333335,
+      "physical_min_ms": -3.5833333333333335,
+      "physical_max_ms": 16.416666666666668,
+      "scheduled_median_ms": -4.3125,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.7291666666666665,
+        "median_ms": 0.7291666666666665,
+        "max_ms": 0.7291666666666679
+      }
+    },
+    {
+      "name": "capture-sample-002",
+      "matched": 27,
+      "stream_s": 408.86,
+      "physical_median_ms": 16.604166666666668,
+      "physical_min_ms": -3.375,
+      "physical_max_ms": 16.645833333333332,
+      "scheduled_median_ms": 15.875,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.7291666666666661,
+        "median_ms": 0.7291666666666665,
+        "max_ms": 0.7291666666666679
+      }
+    },
+    {
+      "name": "capture-sample-003",
+      "matched": 27,
+      "stream_s": 528.86,
+      "physical_median_ms": -4.4375,
+      "physical_min_ms": -4.583333333333333,
+      "physical_max_ms": 15.583333333333334,
+      "scheduled_median_ms": -5.166666666666667,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.7291666666666661,
+        "median_ms": 0.729166666666667,
+        "max_ms": 0.7291666666666679
+      }
+    },
+    {
+      "name": "capture-end",
+      "matched": 27,
+      "stream_s": 604.86,
+      "physical_median_ms": -1.625,
+      "physical_min_ms": -2.3541666666666665,
+      "physical_max_ms": 18.1875,
+      "scheduled_median_ms": -2.375,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.7499999999999998,
+        "median_ms": 0.75,
+        "max_ms": 0.7500000000000002
+      }
+    }
+  ],
+  "quality_revalidated": {
+    "av_quality_passed": false,
+    "sampled_av_min_ms": -5.041666666666667,
+    "sampled_av_max_ms": 18.854166666666668,
+    "sampled_av_span_ms": 23.895833333333336,
+    "sampled_quality_limit": "Absolute A/V and full sampled envelope <= one frame + 1 ms allowance; not a continuous capture guarantee."
+  },
+  "original_accepted": false,
+  "power_checks": 43,
+  "max_active_telemetry_interval_s": 1.051907999999969,
+  "event_trace_omitted": 0,
+  "method": "Accepted PCM and selected flash events. Generic periodic/host matching assumes observation gap <400 ms and validates a constant timestamp epoch per capture; no physical content IDs. Original runner result preserved. Same recomputation applied to every capture and full sampled envelope."
+}

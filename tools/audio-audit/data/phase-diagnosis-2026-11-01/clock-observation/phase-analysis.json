@@ -1,0 +1,61 @@
+{
+  "points": [
+    {
+      "name": "capture-start",
+      "matched": 27,
+      "stream_s": 50.96,
+      "physical_median_ms": -0.8958333333333334,
+      "physical_min_ms": -1.3541666666666667,
+      "physical_max_ms": -0.4583333333333333,
+      "scheduled_median_ms": -1.6041666666666667,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.7083333333333333,
+        "median_ms": 0.7083333333333333,
+        "max_ms": 0.7083333333333335
+      }
+    },
+    {
+      "name": "capture-sample-000",
+      "matched": 27,
+      "stream_s": 168.96,
+      "physical_median_ms": -3.3541666666666665,
+      "physical_min_ms": -3.4583333333333335,
+      "physical_max_ms": -2.9583333333333335,
+      "scheduled_median_ms": -4.0625,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.708333333333333,
+        "median_ms": 0.7083333333333335,
+        "max_ms": 0.7083333333333335
+      }
+    },
+    {
+      "name": "capture-end",
+      "matched": 27,
+      "stream_s": 244.96,
+      "physical_median_ms": -0.08333333333333333,
+      "physical_min_ms": -0.5625,
+      "physical_max_ms": 0.3958333333333333,
+      "scheduled_median_ms": -0.7916666666666666,
+      "capture_minus_scheduled": {
+        "count": 27,
+        "min_ms": 0.7083333333333333,
+        "median_ms": 0.7083333333333333,
+        "max_ms": 0.7083333333333335
+      }
+    }
+  ],
+  "quality_revalidated": {
+    "av_quality_passed": true,
+    "sampled_av_min_ms": -3.4583333333333335,
+    "sampled_av_max_ms": 0.3958333333333333,
+    "sampled_av_span_ms": 3.854166666666667,
+    "sampled_quality_limit": "Absolute A/V and full sampled envelope <= one frame + 1 ms allowance; not a continuous capture guarantee."
+  },
+  "original_accepted": true,
+  "power_checks": 19,
+  "max_active_telemetry_interval_s": 1.051528000000019,
+  "event_trace_omitted": 0,
+  "method": "Accepted PCM and selected flash events. Generic periodic/host matching assumes observation gap <400 ms and validates a constant timestamp epoch per capture; no physical content IDs. Original runner result preserved. Same recomputation applied to every capture and full sampled envelope."
+}

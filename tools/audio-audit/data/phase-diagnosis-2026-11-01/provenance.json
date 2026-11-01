@@ -1,0 +1,20 @@
+{
+  "base_commit": "9f4ec1fde02604c5c94f88cd67a69622a4de59cb",
+  "source_sha256": {
+    "src/core/SyncDiagnostics.hpp": "0268bd62d773d3e2932d544bdf800835a4c9b9680185cfe94a2acb438bd80b0f",
+    "src/output/DeckLink.cpp": "4836a9767da167cd4c9e17e045e66ce99aa7d415e07360867fc8a54fe3492aec",
+    "CMakeLists.txt": "f4d04295d9a3b4394f207db066697037ec2e7d2400facd9ba9c40f0de6aedd56",
+    "src/platform/mac/Main.mm": "c2cca4a416c5af404f2aff480565ab8aa1927025d03e599092a8dd6d13943a7b",
+    "src/core/Scene.cpp": "d6f3c238979916abd99bceb46ff3c08cf4337ae796bcfcbb903946c5a12614cf",
+    "src/browser/Browser.cpp": "41794ea4d24526b5b6252e97b767053f093bad60ab655f57ca330dee77f5deb3",
+    "tools/audio-audit/decklink_capture.cpp": "0d74d5f142bf0faded83cf6a3ab76dbb2b41128f26d72a2e24ac41c33b251303",
+    "tools/audio-audit/run-endurance.py": "4e3762e2f8eb1fbde4e1387d190cf6bcfc2d72cc9272d64a8ecd1009f80f60e1",
+    "tools/audio-audit/analyze_event_sync.py": "9a74534beb64e3dcc79e2a0c6002762bb6e8eca1048d8357c5838abafd24a92f",
+    "tools/audio-audit/analyze_identified_sync.py": "336944ca90a625c623228a4920193677b7ca5c75ebea4273be3367c8b0e33b66"
+  },
+  "binary_sha256": "f41a56d698d6ddc86a9030156de923615429805925752e72febad0b050983ed4",
+  "capture_sha256": "53e0d9becabaae29ec223ddda2e81b63cb93a6dd608d7a949c7ce5b56a0da727",
+  "release_replaced": false,
+  "interface_note": "Diagnostic bundle contains the existing working interface; unrelated interface edits are excluded from this change and no release asset is replaced.",
+  "variant": "v1: accepted PCM and selected flash tracing"
+}

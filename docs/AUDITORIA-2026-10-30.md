@@ -1873,3 +1873,278 @@ fiabilidade demonstrada nesta execução; movimento residual de fase reconhecido
 quantificado; causa exata e comportamento para além da janela ainda não fechados.
 Esta análise não iniciou outro teste físico nem alterou o código de produção.
 A próxima intervenção acima fica pendente de confirmação do Luis.
+
+
+### 10.14 Resposta de implementação — diagnóstico por evento e ensaios de 01-11-2026
+
+Trabalho autorizado pelo Luis após 10.13, com continuação autónoma dos testes até
+às 15:00 de Lisboa. Evidência em `tools/audio-audit/data/phase-diagnosis-2026-11-01/`.
+Esta secção distingue a confirmação do mecanismo de quantização de uma garantia
+universal de sincronismo de páginas arbitrárias.
+
+#### 10.14.1 Instrumentação limitada ao diagnóstico
+
+O modo explícito `--sdi-av-test` passou a reservar buffers limitados a 4096 eventos
+por tipo, antes de começar os callbacks. `SYNC_AUDIO` deteta os impulsos no PCM
+**efetivamente aceite** por `ScheduleAudioSamples`, contando apenas o prefixo aceite
+em escritas parciais; guarda posição de saída, mapeamento, atraso e indicação de
+transição/crossfade. `SYNC_VIDEO` guarda o onset do flash escolhido, sequência,
+PTS de pintura/conteúdo, alvo, mapeamento e ID da referência quando disponível.
+A variante final acrescenta o timestamp efetivo do histórico e o limite de avanço
+de meia frame, mais uma observação de relógios por segundo na própria instância.
+
+Não há alocação no append nem escrita de logs no agendamento: a serialização é
+feita depois de os escritores pararem. Overflow é contado e o analisador recusa
+traços truncados. A reprodução normal não cria estes buffers, não analisa PCM
+para este fim nem faz as novas consultas de hardware. Não se alterou o algoritmo
+de seleção, o servo, a margem Reliable ou os valores de calibração de produção.
+
+`analyze_event_sync.py` verifica mapeamentos afins, ordem/completude dos eventos,
+exclui impulsos de transição e compara áudio aceite com a frame escolhida. Para a
+referência identificada exige IDs físicos: um probe antigo sem IDs não passa esta
+validação. Para a página genérica há um emparelhamento opcional por periodicidade
+mais observação host, explicitamente limitado a atraso de observação inferior a
+400 ms e época vídeo entrada/saída constante por captura. Não equivale a IDs de
+conteúdo. Os timestamps host são observações de software, não instantes de emissão.
+
+Foram preservadas duas variantes: a primeira usada nas quatro comparações e nos
+ensaios de 20/10 minutos; a final acrescenta a observação SDK independente e o
+instante de seleção. Os hashes identificam cada executável. Os fontes exatos da
+primeira variante, verificados contra os hashes registados, ficam comprimidos com
+a evidência. A release 0.5.0 publicada e a aplicação instalada não foram substituídas.
+
+#### 10.14.2 Referência conhecida: previsão e captura concordam por ID
+
+O probe foi recompilado dos fontes atuais para descodificar os IDs físicos. Cada
+fonte de 60 s foi verificada independentemente, incluindo os 1500/3000 frames
+visuais a 25/50 fps e as marcas áudio. Os dois pares chegada/conteúdo usam os mesmos
+bytes de media em cada cadência, preservados uma vez por SHA-256. São sessões de
+saída diferentes: não se compara a fase de arranque como se fosse uma alteração
+isolada numa única sessão.
+
+| Fonte/saída | Seleção | Mediana física áudio − vídeo | Min/max físicos | IDs emparelhados |
+|---|---|---:|---:|---:|
+| 25/25 fps | Chegada da pintura | +0,802 ms | +0,771 a +1,625 ms | 30 |
+| 25/25 fps | PTS de conteúdo | +11,333 ms | +10,792 a +11,375 ms | 31 |
+| 50/50 fps | Chegada da pintura | +17,729 ms | +17,208 a +17,771 ms | 31 |
+| 50/50 fps | PTS de conteúdo | +10,563 ms | −9,167 a +10,792 ms | 31 |
+
+Os canais L/R coincidem e todos os contadores I/O verificados estão a zero. A
+diferença captura–PCM agendado é praticamente constante por evento: **+0,708 ms**
+em três casos e **+0,729 ms** no controlo por chegada a 50 fps. É um residual do
+percurso saída+entrada; não foi subtraído nem atribuído integralmente à entrada
+como se houvesse calibração física independente.
+
+**Mudança de frame confirmada fisicamente.** No caso de conteúdo a 50 fps, os IDs
+1550 e 1600 dão, respetivamente, **+10,792 e −9,167 ms** físicos; o PCM agendado dá
+**+10,083 e −9,875 ms**. A variação de **−19,958 ms** é aproximadamente uma frame de
+20 ms, mantendo residual de +0,708 ms nas duas extremidades. A grelha de vídeo
+mudou de fase sem underrun, recuperação ou frame SDI perdida/atrasada. Contadores
+SDK a zero não significam que nunca muda a identidade do frame de conteúdo escolhido.
+
+Isto demonstra o mecanismo que faltava à hipótese de 10.13: uma fase pode avançar
+gradualmente e depois mudar um frame; a tendência não tem de crescer linearmente
+sem limite. Demonstra-o nesta referência controlada. A atribuição de todos os
+25 ms do ensaio noturno ao mesmo mecanismo continua condicionada à falta de
+registo por evento nessa execução; é uma explicação suportada, não uma reconstrução
+física contínua das oito horas.
+
+Duas primeiras recolhas usaram o probe antigo sem IDs e foram preservadas como
+exploração, sem contar como prova por identidade. Num arranque a 25 fps, o primeiro
+impulso observado pelo CEF diferiu 1148 amostras da origem conhecida, antes da janela
+de validação. O analisador inicialmente rejeitou o caso. A reavaliação usa para os
+impulsos o mesmo warmup de sete segundos já usado no agendamento e guarda as
+observações excluídas; os impulsos estáveis, marcas de origem e saúde I/O continuam
+verificados. Não se apagou a rejeição nem se dispensou o teste dentro da janela.
+
+#### 10.14.3 Envolvente determinística da seleção
+
+`sync_diagnostics_tests` exercita o `FrameHistory` real em **192 cenários**, cada um
+com **48 horas simuladas**: quatro combinações fonte/saída 25/50 fps, 16 fases de
+arranque e diferenças de taxa 0/±1 ppm. Verifica a envolvente e a mudança de frame,
+além de escritas PCM parciais, escrita nula, sinal negativo extremo e overflow
+sem crescimento de memória. A previsão mantém-se numa envolvente de uma frame de
+saída, com tolerância de arredondamento, e faz mudanças discretas quando a fase
+atravessa a fronteira. Sem diferença de taxa, a fase fica constante neste modelo.
+
+Com cadências iguais e sem jitter, a quantização tem aproximadamente ±20 ms a
+25 fps e ±10 ms a 50 fps, em torno do centro ideal escolhido. São limites do modelo
+com frames disponíveis, não limites absolutos da app para qualquer fonte. Cadências
+mistas podem ter uma envolvente assimétrica. A pintura/descodificação real, composição,
+frames indisponíveis e fase do recetor continuam a acrescentar incerteza.
+
+Validação desta implementação: build nativa e assinatura verificadas, CTest **6/6**,
+Python **64/64**, ASan/UBSan no teste de diagnóstico/seleção. Não se publicou uma
+nova versão nem se alterou a 0.5.0 para incorporar dados posteriores à sua publicação.
+
+
+#### 10.14.4 Capturas intermédias e critério de qualidade reforçado
+
+O runner ganhou capturas físicas opcionais de 30 s a cada 120 s medidos, sem
+sobrepor a posse da entrada com calibração/início/fim. A variante atual testa tanto
+o A/V absoluto como a **envolvente min/max de todas as capturas**, até uma frame
+mais 1 ms de allowance. Os bons endpoints não podem ocultar uma excursão intermédia.
+Isto reforça o critério original, que verificava valores absolutos e a mudança de
+medianas início/fim. Não se reescreveram os manifests antigos para simular esse
+critério novo; a mesma revalidação é guardada separadamente para as novas séries.
+
+O ensaio a **25 fps, Reliable, 1200 s após calibração**, teve 1244,651 s ativos e
+1213,982 s após preparação. Ajuste medido **+49 ms**. Foram recolhidas **11 janelas**
+(início, nove intermédias e fim), com 297 emparelhamentos periódicos/host; todas as
+épocas de timestamps foram consistentes por captura e os canais coincidiram.
+Mediana física: **+0,396 → +13,542 ms**; min/max conjunto **0 a +13,833 ms**.
+Passou continuidade e a revalidação da envolvente. Zero contadores de falha,
+headroom mínimo **42,688 ms**, fase interna **−2,417 a +2,379 ms**, taxa aplicada
+**−43,590 a +32,644 ppm**. Não se estende a esta sessão a observação de erro interno
+inferior a 1 ms obtida no ensaio noturno. Foram revalidadas **82 verificações** de
+energia/assertions e o maior intervalo de telemetria foi **1,052 s**.
+
+As medianas físicas nas nove capturas intermédias foram **1,063; 4,063; 5,625;
+7,250; 4,875; 4,583; 8,021; 9,521; 12,521 ms**. O movimento não é estritamente
+monótono. O residual captura–PCM agendado manteve-se em torno de **0,688–0,708 ms**:
+o deslocamento aparece no agendamento, sem evidência de uma mudança comparável
+no atraso relativo da captura. O emparelhamento da página genérica é condicionado
+à hipótese host/periódica descrita acima; não foi promovido a identidade física.
+
+
+O ensaio a **50 fps, Reliable, 600 s após calibração**, teve **644,651 s ativos**,
+com ajuste medido de **−5 ms**, seis capturas (início, quatro intermédias e fim) e
+162 emparelhamentos periódicos/host. Zero contadores de falha; headroom mínimo
+**25,688 ms**; fase interna **−2,533 a +2,539 ms**; taxa aplicada **−60,160 a
++33,784 ppm**. Foram revalidadas **43 verificações** de energia/assertions e o
+maior intervalo de telemetria foi **1,052 s**.
+
+**Continuidade aprovada; qualidade reprovada pelo critério reforçado.** Medianas
+início/fim **−4,667 → −1,625 ms**, mudança **+3,042 ms**. Porém, a envolvente física
+conjunta foi **−5,042 a +18,854 ms**, largura **23,896 ms**, superior aos **21 ms**
+permitidos (uma frame + 1 ms). O A/V absoluto ficou dentro do limite. O runner
+terminou com exit 1 e `accepted=false`; este resultado não foi reclassificado para
+aprovação. As medianas intermédias foram **−1,167; −3,583; +16,604; −4,438 ms**.
+O residual captura–PCM manteve-se próximo de **0,729–0,750 ms**.
+
+A fase de chegada flash–impulso observada na própria fonte, nos snapshots válidos,
+abrangeu **−17,854 a +6,458 ms**, mediana **+1,979 ms**. A referência de pintura já
+varia aproximadamente uma frame antes de se avaliar a seleção na saída. Não são
+PTS de conteúdo, e a amostragem pode omitir eventos; ainda assim, estes dados
+impedem atribuir a envolvente toda à correção de relógio. A calibração negativa
+quantizada e a pintura do CEF são fatores distintos a isolar. Nem esta reprovação
+significa crescimento ilimitado nem se deve considerar resolvida a qualidade de
+qualquer URL por o ensaio de oito horas ter passado noutro modo/sessão.
+
+#### 10.14.5 Granularidade do ajuste negativo: limitação confirmada e alternativa
+
+A política de produção atual mantém áudio sem atraso adicional quando o ajuste é
+negativo e procura uma pintura anterior para atrasar vídeo. Uma seleção de frames
+não implementa uma translação contínua de 1 ms. Testes adicionais do `FrameHistory`
+real, com 16 fases e fonte/saída à mesma cadência, confirmaram, sem jitter:
+
+| Ajuste pedido | Efeito possível a 25 fps | Efeito possível a 50 fps |
+|---|---:|---:|
+| −5 ms | 0 ou −40 ms | 0 ou −20 ms |
+| −20 ms | 0 ou −40 ms | −20 ms |
+| −25 ms | 0 ou −40 ms | −20 ou −40 ms |
+
+São diferenças em relação ao caso sem ajuste na mesma fase do modelo. O teste
+físico anterior de −20 ms a 50 fps correspondia a uma frame inteira; não demonstrava
+precisão de 1 ms para valores negativos fracionários. Esta limitação não deve ser
+confundida com crescimento ilimitado de deriva nem com uma falha I/O.
+
+Foi testada **apenas como protótipo matemático**, sem mudar a produção, uma
+decomposição que desloca o vídeo por um número inteiro de frames de saída e
+compensa a fração no áudio. Por exemplo, para obter −5 ms a 50 fps: vídeo +20 ms,
+áudio +15 ms; a 25 fps: vídeo +40 ms, áudio +35 ms. O modelo de taxa unitária
+recupera o ajuste pedido em todas as fases testadas. O custo é latência adicional,
+a considerar pela ordem de prioridades fiabilidade → qualidade → velocidade.
+
+A alternativa ainda exige implementação/validação com mapeamento variável,
+transições, orçamento do histórico, captura física e fontes reais. **Não elimina
+por si só a incerteza de pintura do CEF**, nem se atribui automaticamente a esta
+limitação toda a envolvente A/V medida em páginas genéricas. A referência com PTS
+conhecidos permite separar estes fatores; uma página arbitrária continua sem essa
+origem comum garantida.
+
+
+#### 10.14.6 Observação SDK na própria instância
+
+Uma tentativa de observador separado, estritamente de leitura, não obteve os
+relógios ativos através da sua interface SDK; ficou preservada como tentativa
+falhada, sem a tratar como medição. A variante final passou a observar o relógio
+de hardware na própria instância de saída, uma vez por segundo, com tempos host
+antes/depois da consulta e sem usar essas novas leituras para comandar o servo.
+
+O ensaio de **240 s após calibração a 25 fps**, com ajuste medido **+35 ms**, passou:
+**284,651 s ativos**, **253,543 s após preparação**, zero contadores de falha,
+headroom mínimo **36,583 ms**, medianas físicas **−0,896 → −0,083 ms** e envolvente
+amostrada **−3,458 a +0,396 ms**, largura **3,854 ms**. O erro de fase interno na
+telemetria foi **−3,267 a +0,788 ms**; a taxa aplicada foi **−53,215 a +36,564 ppm**.
+São valores desta sessão curta, não uma garantia de erro máximo em produção.
+
+Foram ajustados 262 pontos válidos, cobrindo **263,920 s** depois do warmup:
+
+| Relógio reportado pelo SDK contra host | Taxa média dispositivo/host |
+|---|---:|
+| Consumo da fila áudio | +15,628 ppm |
+| Referência de hardware | +15,640 ppm |
+| Stream agendado | +15,650 ppm |
+
+Os três ajustes diferem menos de **0,03 ppm**. O residual RMS do ajuste linear
+foi cerca de **0,84 ms**, com máximo perto de **2,24 ms**. Nas três janelas de
+hardware de aproximadamente 90/90/85 s, as taxas ajustadas foram **−19,625;
++36,945; +25,072 ppm**. A taxa não se comportou como uma constante nesta janela;
+não se deve comparar a mediana da correção aplicada com uma única regressão global
+para deduzir um erro fixo no servo.
+
+Não houve observações rejeitadas pelo limite de tempo das queries. A concordância
+entre os canais SDK enfraquece a hipótese de uma variação exclusiva do contador da
+fila. **Não mede um oscilador físico independente**: hardware/stream são valores
+reportados pelo driver na mesma máquina/dispositivo, e o erro de ajuste tem ruído
+correlacionado/não estacionário. Não há base nestes dados para substituir o servo
+por uma taxa fixa, declarar avaria da placa ou prometer sincronismo subframe.
+
+
+#### 10.14.7 Cadências mistas e decisão após a janela autorizada
+
+As comparações finais da referência identificada, com PTS de conteúdo e a variante
+final de diagnóstico, concluíram sem contadores de falha, com os canais coincidentes:
+
+| Fonte → saída | Mediana física A/V | Min/max físicos | IDs emparelhados |
+|---|---:|---:|---:|
+| 25 → 50 fps | −1,563 ms | −1,583 a −0,729 ms | 31 |
+| 50 → 25 fps | −6,813 ms | −6,833 a −6,188 ms | 31 |
+
+O residual captura–PCM foi **+0,750 ms** nos dois casos. Estas sessões curtas
+validam a associação por conteúdo nas cadências testadas; não tornam a cadência de
+pintura de uma página arbitrária equivalente ao PTS de um vídeo identificado.
+
+**Os testes físicos terminaram às 14:55 de 01-11-2026**, antes do limite autorizado
+das 15:00. Não ficou outro ensaio agendado. Foram preservados os dados originais,
+fontes de referência deduplicados, variantes de instrumentação, scripts efetivamente
+usados, verificações e a rejeição de qualidade a 50 fps. `summary.json` resume os
+casos; `SHA256SUMS.json` permite verificar os artefactos. Os ensaios decorreram com
+atividade de desenvolvimento no Mac, não em ambiente de carga/temperatura controladas.
+
+**Conclusão para o auditor e para o Luis:**
+
+- A fiabilidade I/O passou nas novas sessões e já tinha passado oito horas a 25p;
+  não há indicação nestes casos de fila a crescer sem limite ou de falhas periódicas.
+- A diferença de fase entre relógios e uma grelha de frames pode acumular-se e depois
+  mudar uma frame. Houve confirmação física por IDs; não se extrapola uma taxa
+  linear para anunciar uma hora de falha de lip sync.
+- A qualidade para URLs genéricas continua condicionada pela pintura e pela
+  calibração. A envolvente de 23,896 ms a 50p reprovou o novo limite de 21 ms, mesmo
+  com A/V absoluto dentro do limite e contadores de continuidade limpos.
+- Ajustes negativos fracionários não têm hoje efeito contínuo de 1 ms. A proposta
+  de frame comum mais compensação áudio merece a próxima implementação/validação,
+  porque a qualidade tem prioridade sobre até uma frame adicional de latência.
+  Deve ser comparada na mesma sessão e não promete remover o jitter da fonte.
+- Mantém-se a correção adaptativa de relógio e o perfil Reliable; não há fundamento
+  para aplicar uma taxa fixa, reduzir margens ou ativar automaticamente o protótipo
+  de PTS para qualquer URL. Referências de conteúdo conhecidas permitem melhor
+  controlo; fontes reais e receção/lip sync humano continuam por validar.
+
+Próximo passo proposto: implementar e medir a decomposição de ajustes negativos,
+com tratamento de transições e limites de histórico, depois repetir a comparação
+com a página HTML e a referência identificada. A observação SDK pode acompanhar
+um ensaio mais prolongado, mas os buffers devem ser dimensionados/amostrados para
+essa janela antes de o certificar por evento. Nenhuma nova sessão longa foi
+iniciada. O monitor local/P6 mantém as pendências já identificadas.

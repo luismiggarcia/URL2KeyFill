@@ -1,0 +1,15 @@
+{
+  "source_flash_minus_audio": {
+    "pairs": 619,
+    "median_ms": 1.9791666666666667,
+    "min_ms": -17.854166666666668,
+    "max_ms": 6.458333333333333
+  },
+  "scheduled_audio_minus_video": {
+    "pairs": 594,
+    "median_ms": -2.759685548924608,
+    "min_ms": -5.770854027922421,
+    "max_ms": 19.406920009835932
+  },
+  "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected."
+}

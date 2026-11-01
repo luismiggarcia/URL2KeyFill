@@ -90,6 +90,21 @@ def captured(path):
     return result
 
 
+def intermediate_due(elapsed, next_at, total, interval):
+    # Leave time for lock, 30 s of acquisition and shutdown before the final
+    # capture at total-45. Never overlap input ownership with start/end probes.
+    return interval > 0 and elapsed >= next_at and elapsed+40 < total-45
+
+
+def sampled_quality(captures, frame_limit):
+    values=[v for c in captures for channel in c['channels'].values()
+            for v in (channel.get('min_ms',channel['median_ms']),channel.get('max_ms',channel['median_ms']))]
+    lo,hi=min(values),max(values)
+    return dict(av_quality_passed=max(abs(lo),abs(hi))<=frame_limit+1 and hi-lo<=frame_limit+1,
+                sampled_av_min_ms=lo,sampled_av_max_ms=hi,sampled_av_span_ms=hi-lo,
+                sampled_quality_limit='Absolute A/V and full sampled envelope <= one frame + 1 ms allowance; not a continuous capture guarantee.')
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--app', required=True, help='Signed Contents/MacOS/URL2KeyFill')
@@ -99,10 +114,14 @@ def main():
     p.add_argument('--seconds', type=int, default=28800)
     p.add_argument('--timing-profile', choices=['reliable','low'], default='reliable')
     p.add_argument('--no-calibrate', action='store_true', help='Diagnostic raw run; absolute A/V quality still must pass')
+    p.add_argument('--sample-interval-seconds', type=int, default=0,
+                   help='Optional intermediate 30 s captures, every 90+ s; 0 disables')
     p.add_argument('--dry-run', action='store_true')
     args = p.parse_args()
     if not 120 <= args.seconds <= 28800:
         p.error('--seconds must be 120..28800')
+    if args.sample_interval_seconds != 0 and args.sample_interval_seconds < 90:
+        p.error('--sample-interval-seconds must be 0 or at least 90')
     app, capture = str(Path(args.app).resolve()), str(Path(args.capture).resolve())
     root = Path(args.directory).resolve()
     total_seconds=args.seconds+(0 if args.no_calibrate else 45)
@@ -116,8 +135,11 @@ def main():
         raise RuntimeError('Connect AC power before starting the endurance test')
     root.mkdir(parents=True, exist_ok=False)
     metadata = dict(mode=args.mode, seconds=args.seconds, timing_profile=args.timing_profile,
-                    app_sha256=hashlib.sha256(Path(app).read_bytes()).hexdigest(), capture_sha256=hashlib.sha256(Path(capture).read_bytes()).hexdigest(), command=command, initial_power=power)
+                    app_sha256=hashlib.sha256(Path(app).read_bytes()).hexdigest(), capture_sha256=hashlib.sha256(Path(capture).read_bytes()).hexdigest(), command=command, initial_power=power,
+                    runner_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
     children = []; start_capture = None; end_capture = None;calibration=None;calibration_applied=None;measured_began=None
+    samples=[];sample_child=None;next_sample=args.sample_interval_seconds
+    metadata['sample_interval_seconds']=args.sample_interval_seconds
     try:
         with (root/'playback.log').open('w') as log:
             env = dict(os.environ, TMPDIR=str(root), U2K_AUDIO_TRACE=str(root/'application.csv'))
@@ -168,15 +190,27 @@ def main():
                     if marker in (root/'playback.log').read_text():measured_began=time.monotonic();metadata['measurement_started_after_s']=measured_began-began
                 if measured_began is None and elapsed>43:raise RuntimeError('Calibration did not finish within its preparation budget')
                 measured_elapsed=0 if measured_began is None else time.monotonic()-measured_began
+                if sample_child and sample_child.poll() is not None:
+                    if sample_child.returncode:raise RuntimeError('Intermediate capture failed')
+                    sample_child=None
                 if measured_began is not None and measured_elapsed>(8 if args.no_calibrate else 2) and start_capture is None:
                     with (root/'capture-start.log').open('w') as caplog:
                         start_capture=subprocess.Popen([capture,'--mode',args.mode,'--seconds','30','--csv',str(root/'capture-start.csv')],stdout=caplog,stderr=caplog)
                     children.append(start_capture)
                 if measured_began is not None and measured_elapsed>=args.seconds-45 and end_capture is None:
                     if start_capture and start_capture.poll() is None:raise RuntimeError('Initial capture did not finish')
+                    if sample_child:raise RuntimeError('Intermediate capture overlaps final capture')
                     with (root/'capture-end.log').open('w') as caplog:
                         end_capture=subprocess.Popen([capture,'--mode',args.mode,'--seconds','30','--csv',str(root/'capture-end.csv')],stdout=caplog,stderr=caplog)
                     children.append(end_capture)
+                if (measured_began is not None and start_capture and start_capture.poll() is not None
+                        and sample_child is None and intermediate_due(measured_elapsed,next_sample,args.seconds,args.sample_interval_seconds)):
+                    if start_capture.returncode:raise RuntimeError('Initial capture failed')
+                    name=f'capture-sample-{len(samples):03d}'
+                    with (root/(name+'.log')).open('w') as caplog:
+                        sample_child=subprocess.Popen([capture,'--mode',args.mode,'--seconds','30','--csv',str(root/(name+'.csv'))],stdout=caplog,stderr=caplog)
+                    children.append(sample_child);samples.append(dict(name=name,measurement_elapsed_s=measured_elapsed))
+                    next_sample=measured_elapsed+args.sample_interval_seconds
                 if elapsed>total_seconds+30:raise RuntimeError('Playback exceeded duration watchdog')
                 time.sleep(.25)
             metadata['playback_exit']=play.wait()
@@ -187,6 +221,14 @@ def main():
         first=captured(root/'capture-start.csv')
         last=captured(root/'capture-end.csv')
         result=summarize(rows,first,last,args.mode,args.seconds)
+        quality_captures=[first,last]
+        for sample in samples:
+            measured=captured(root/(sample['name']+'.csv'))
+            quality_captures.append(measured)
+            sample['channels']={k:{q:v[q] for q in ('pairs','median_ms','min_ms','max_ms')} for k,v in measured['channels'].items()}
+            (root/(sample['name']+'.json')).write_text(json.dumps(measured,indent=2)+'\n')
+        result.update(sampled_quality(quality_captures,result['av_frame_limit_ms']))
+        result['intermediate_captures']=samples
         if measured_began is None or time.monotonic()-measured_began<args.seconds-1:raise RuntimeError('Incomplete post-calibration measurement duration')
         result['post_calibration_duration_s']=time.monotonic()-measured_began
         for name,data in [('capture-start.json',first),('capture-end.json',last),('result.json',result)]:

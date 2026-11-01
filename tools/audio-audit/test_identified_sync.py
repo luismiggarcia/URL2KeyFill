@@ -38,6 +38,12 @@ class IdentifiedTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'audio pulse PTS'):
             analyse(log, rows, capture, 'content')
 
+    def test_partial_startup_pulse_is_reported_outside_validation_window(self):
+        log, rows, capture = fixture()
+        rows.insert(0, dict(rows[0], source_pulse_pts=str(480000+48000+1153), elapsed_s='3'))
+        result = analyse(log, rows, capture, 'content')
+        self.assertEqual(result['startup_pulse_observations_excluded'], [dict(elapsed_s='3',relative_samples=49153)])
+
     def test_arrival_control_cannot_use_content_stamp(self):
         with self.assertRaisesRegex(ValueError, 'unexpectedly uses content'):
             analyse(*fixture(), 'arrival')

@@ -1,0 +1,2 @@
+host_before_ns,host_after_ns,stream_us,hardware_us,in_frame_us,ticks_per_frame_us,speed,stream_ok,hardware_ok
+227848190803500,227848190803583,0,0,0,0,0.000000000,0,0

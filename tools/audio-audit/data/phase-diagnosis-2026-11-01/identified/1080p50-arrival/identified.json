@@ -1,0 +1,82 @@
+{
+  "selection": "arrival",
+  "paint_to_input_callback": {
+    "count": 1696,
+    "min_ms": 136.52083333333334,
+    "median_ms": 142.70833333333334,
+    "max_ms": 144.89583333333334
+  },
+  "content_to_input_callback": {
+    "count": 1696,
+    "min_ms": 126.5625,
+    "median_ms": 127.33333333333333,
+    "max_ms": 147.5625
+  },
+  "audio_content_origin": 10910883477,
+  "health": {
+    "missing_total": 0.0,
+    "api_errors": 0.0,
+    "recoveries": 0.0,
+    "late_video": 0.0,
+    "dropped_video": 0.0,
+    "clock_resets": 0.0,
+    "video_history_misses": 0.0,
+    "video_history_startup_misses": 0.0,
+    "video_conversion_fallbacks": 0.0
+  },
+  "startup_pulse_observations_excluded": [
+    {
+      "elapsed_s": "5.194352",
+      "relative_samples": 96005
+    },
+    {
+      "elapsed_s": "6.243651",
+      "relative_samples": 144005
+    },
+    {
+      "elapsed_s": "7.293281",
+      "relative_samples": 192005
+    },
+    {
+      "elapsed_s": "8.294718",
+      "relative_samples": 240005
+    },
+    {
+      "elapsed_s": "9.344995",
+      "relative_samples": 288005
+    }
+  ],
+  "verified_audio_markers": 2009,
+  "skipped_audio_marker_ids": 1,
+  "source_paint_minus_content": {
+    "count": 1716,
+    "min_ms": -17.0,
+    "median_ms": -15.1875,
+    "max_ms": 11.041666666666666
+  },
+  "received_flash_frame_after_content_onset": {
+    "count": 35,
+    "min_ms": 0.0,
+    "median_ms": 0.0,
+    "max_ms": 0.0
+  },
+  "selected_content_minus_target": {
+    "count": 1600,
+    "min_ms": -3.2200841506322226,
+    "median_ms": 16.92083050807317,
+    "max_ms": 16.9375
+  },
+  "scheduled_audio_minus_video": {
+    "count": 32,
+    "min_ms": 16.483642574610368,
+    "median_ms": 17.01902253142323,
+    "max_ms": 17.041666666666668
+  },
+  "captured_audio_minus_video_ms": 17.729166666666668,
+  "capture_pairs": 31,
+  "captured_minus_scheduled_range_ms": [
+    0.1666666666666643,
+    1.2871907587229643
+  ],
+  "limits": "Controlled watermarked VP8/PCM reference only; no independent receiver calibration or drift acceptance. Selection windows and capture windows may differ."
+}

@@ -1,0 +1,6 @@
+{
+  "status": "Exploratory relative A/V only; not an exact physical frame-ID validation",
+  "reason": "Old capture binary produced four-column CSV without frame IDs/host timestamps. Repeated all four identified final cases with a current rebuilt probe. Current event analyser rejects identified validation with this old probe.",
+  "media_sha256": "6ede0ebfe92eeb868a73049c805622544ac5d8f8e134ba79c0e3d00baaf691b3",
+  "media_artifact": "../../sources/6ede0ebfe92eeb868a73049c805622544ac5d8f8e134ba79c0e3d00baaf691b3.mkv.gz"
+}

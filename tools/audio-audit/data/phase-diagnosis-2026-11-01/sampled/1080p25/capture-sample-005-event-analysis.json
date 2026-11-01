@@ -1,0 +1,255 @@
+{
+  "scheduled_av": {
+    "count": 1238,
+    "min_ms": -50.25,
+    "median_ms": 4.9375,
+    "max_ms": 13.979166666666666
+  },
+  "target_minus_paint": {
+    "count": 1238,
+    "min_ms": -11.185173432032267,
+    "median_ms": -0.8530902862548828,
+    "max_ms": 6.833333333333333
+  },
+  "limits": "Accepted output PCM, not physical emission. Transition pulses excluded. Periodic nearest pairing assumes less than 400 ms offset. Input A/V offset remains included; no absolute latency or arbitrary URL guarantee.",
+  "physical_av": {
+    "audio_L": {
+      "pairs": 27,
+      "min_ms": 4.5625,
+      "median_ms": 4.583333333333333,
+      "max_ms": 4.75
+    },
+    "audio_R": {
+      "pairs": 27,
+      "min_ms": 4.5625,
+      "median_ms": 4.583333333333333,
+      "max_ms": 4.75
+    }
+  },
+  "physical_id_matches": null,
+  "periodic_host_matches": [
+    {
+      "video_stream": 36334080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.35416666666667,
+      "scheduled_av_ms": 3.875,
+      "physical_av_ms": 4.5625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 36382080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.27083333333333,
+      "scheduled_av_ms": 3.875,
+      "physical_av_ms": 4.5625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 36430080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.3125,
+      "scheduled_av_ms": 3.875,
+      "physical_av_ms": 4.5625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 36478080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.20833333333333,
+      "scheduled_av_ms": 3.875,
+      "physical_av_ms": 4.5625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 36526080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.25,
+      "scheduled_av_ms": 3.875,
+      "physical_av_ms": 4.5625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 36574080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.20833333333333,
+      "scheduled_av_ms": 3.875,
+      "physical_av_ms": 4.5625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 36622080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.29166666666667,
+      "scheduled_av_ms": 3.875,
+      "physical_av_ms": 4.5625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 36670080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.22916666666667,
+      "scheduled_av_ms": 3.875,
+      "physical_av_ms": 4.5625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 36718080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.3125,
+      "scheduled_av_ms": 3.875,
+      "physical_av_ms": 4.5625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 36766080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.22916666666667,
+      "scheduled_av_ms": 3.8958333333333335,
+      "physical_av_ms": 4.583333333333333,
+      "capture_minus_scheduled_ms": 0.6874999999999996
+    },
+    {
+      "video_stream": 36814080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.1875,
+      "scheduled_av_ms": 3.8958333333333335,
+      "physical_av_ms": 4.583333333333333,
+      "capture_minus_scheduled_ms": 0.6874999999999996
+    },
+    {
+      "video_stream": 36862080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.16666666666667,
+      "scheduled_av_ms": 3.8958333333333335,
+      "physical_av_ms": 4.583333333333333,
+      "capture_minus_scheduled_ms": 0.6874999999999996
+    },
+    {
+      "video_stream": 36910080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.25,
+      "scheduled_av_ms": 3.8958333333333335,
+      "physical_av_ms": 4.583333333333333,
+      "capture_minus_scheduled_ms": 0.6874999999999996
+    },
+    {
+      "video_stream": 36958080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.1875,
+      "scheduled_av_ms": 3.8958333333333335,
+      "physical_av_ms": 4.583333333333333,
+      "capture_minus_scheduled_ms": 0.6874999999999996
+    },
+    {
+      "video_stream": 37006080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.22916666666667,
+      "scheduled_av_ms": 3.9166666666666665,
+      "physical_av_ms": 4.604166666666667,
+      "capture_minus_scheduled_ms": 0.6875000000000004
+    },
+    {
+      "video_stream": 37054080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.3125,
+      "scheduled_av_ms": 3.9166666666666665,
+      "physical_av_ms": 4.604166666666667,
+      "capture_minus_scheduled_ms": 0.6875000000000004
+    },
+    {
+      "video_stream": 37102080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.20833333333333,
+      "scheduled_av_ms": 3.9166666666666665,
+      "physical_av_ms": 4.604166666666667,
+      "capture_minus_scheduled_ms": 0.6875000000000004
+    },
+    {
+      "video_stream": 37150080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.1875,
+      "scheduled_av_ms": 3.9166666666666665,
+      "physical_av_ms": 4.604166666666667,
+      "capture_minus_scheduled_ms": 0.6875000000000004
+    },
+    {
+      "video_stream": 37198080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.14583333333333,
+      "scheduled_av_ms": 3.9375,
+      "physical_av_ms": 4.625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 37246080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.16666666666667,
+      "scheduled_av_ms": 3.9375,
+      "physical_av_ms": 4.625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 37294080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.16666666666667,
+      "scheduled_av_ms": 3.9583333333333335,
+      "physical_av_ms": 4.645833333333333,
+      "capture_minus_scheduled_ms": 0.6874999999999996
+    },
+    {
+      "video_stream": 37342080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.08333333333333,
+      "scheduled_av_ms": 3.9791666666666665,
+      "physical_av_ms": 4.666666666666667,
+      "capture_minus_scheduled_ms": 0.6875000000000004
+    },
+    {
+      "video_stream": 37390080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.16666666666667,
+      "scheduled_av_ms": 3.9791666666666665,
+      "physical_av_ms": 4.666666666666667,
+      "capture_minus_scheduled_ms": 0.6875000000000004
+    },
+    {
+      "video_stream": 37438080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.33333333333333,
+      "scheduled_av_ms": 4.0,
+      "physical_av_ms": 4.6875,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 37486080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.22916666666667,
+      "scheduled_av_ms": 4.020833333333333,
+      "physical_av_ms": 4.708333333333333,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 37534080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.20833333333333,
+      "scheduled_av_ms": 4.041666666666667,
+      "physical_av_ms": 4.729166666666667,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 37582080,
+      "input_epoch_samples": -36182400,
+      "observation_gap_ms": 123.45833333333333,
+      "scheduled_av_ms": 4.0625,
+      "physical_av_ms": 4.75,
+      "capture_minus_scheduled_ms": 0.6875
+    }
+  ],
+  "capture_minus_scheduled": {
+    "count": 27,
+    "min_ms": 0.6874999999999996,
+    "median_ms": 0.6875,
+    "max_ms": 0.6875000000000004
+  },
+  "periodic_pairing_limit": "No content IDs: assumes schedule-to-input observation delay in [0,400) ms and verifies a constant video timestamp epoch per capture. Not equivalent to identified content matching."
+}

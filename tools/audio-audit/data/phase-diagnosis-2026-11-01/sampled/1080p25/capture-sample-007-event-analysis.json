@@ -1,0 +1,255 @@
+{
+  "scheduled_av": {
+    "count": 1238,
+    "min_ms": -50.25,
+    "median_ms": 4.9375,
+    "max_ms": 13.979166666666666
+  },
+  "target_minus_paint": {
+    "count": 1238,
+    "min_ms": -11.185173432032267,
+    "median_ms": -0.8530902862548828,
+    "max_ms": 6.833333333333333
+  },
+  "limits": "Accepted output PCM, not physical emission. Transition pulses excluded. Periodic nearest pairing assumes less than 400 ms offset. Input A/V offset remains included; no absolute latency or arbitrary URL guarantee.",
+  "physical_av": {
+    "audio_L": {
+      "pairs": 27,
+      "min_ms": 9.416666666666666,
+      "median_ms": 9.520833333333334,
+      "max_ms": 9.645833333333334
+    },
+    "audio_R": {
+      "pairs": 27,
+      "min_ms": 9.416666666666666,
+      "median_ms": 9.520833333333334,
+      "max_ms": 9.645833333333334
+    }
+  },
+  "physical_id_matches": null,
+  "periodic_host_matches": [
+    {
+      "video_stream": 47854080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.25,
+      "scheduled_av_ms": 8.729166666666666,
+      "physical_av_ms": 9.416666666666666,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 47902080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.14583333333333,
+      "scheduled_av_ms": 8.75,
+      "physical_av_ms": 9.4375,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 47950080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.16666666666667,
+      "scheduled_av_ms": 8.75,
+      "physical_av_ms": 9.4375,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 47998080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.25,
+      "scheduled_av_ms": 8.75,
+      "physical_av_ms": 9.4375,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48046080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.25,
+      "scheduled_av_ms": 8.770833333333334,
+      "physical_av_ms": 9.458333333333334,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48094080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.375,
+      "scheduled_av_ms": 8.770833333333334,
+      "physical_av_ms": 9.458333333333334,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48142080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.3125,
+      "scheduled_av_ms": 8.770833333333334,
+      "physical_av_ms": 9.458333333333334,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48190080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.22916666666667,
+      "scheduled_av_ms": 8.791666666666666,
+      "physical_av_ms": 9.479166666666666,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48238080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.39583333333333,
+      "scheduled_av_ms": 8.791666666666666,
+      "physical_av_ms": 9.479166666666666,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48286080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.25,
+      "scheduled_av_ms": 8.791666666666666,
+      "physical_av_ms": 9.479166666666666,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48334080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.33333333333333,
+      "scheduled_av_ms": 8.8125,
+      "physical_av_ms": 9.5,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48382080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.1875,
+      "scheduled_av_ms": 8.8125,
+      "physical_av_ms": 9.5,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48430080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.22916666666667,
+      "scheduled_av_ms": 8.8125,
+      "physical_av_ms": 9.5,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48478080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.3125,
+      "scheduled_av_ms": 8.833333333333334,
+      "physical_av_ms": 9.520833333333334,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48526080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.20833333333333,
+      "scheduled_av_ms": 8.833333333333334,
+      "physical_av_ms": 9.520833333333334,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48574080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.27083333333333,
+      "scheduled_av_ms": 8.854166666666666,
+      "physical_av_ms": 9.541666666666666,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48622080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.125,
+      "scheduled_av_ms": 8.854166666666666,
+      "physical_av_ms": 9.541666666666666,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48670080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.27083333333333,
+      "scheduled_av_ms": 8.854166666666666,
+      "physical_av_ms": 9.541666666666666,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48718080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.375,
+      "scheduled_av_ms": 8.875,
+      "physical_av_ms": 9.5625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48766080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.41666666666667,
+      "scheduled_av_ms": 8.875,
+      "physical_av_ms": 9.5625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48814080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.22916666666667,
+      "scheduled_av_ms": 8.895833333333334,
+      "physical_av_ms": 9.583333333333334,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48862080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.27083333333333,
+      "scheduled_av_ms": 8.895833333333334,
+      "physical_av_ms": 9.583333333333334,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48910080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.16666666666667,
+      "scheduled_av_ms": 8.916666666666666,
+      "physical_av_ms": 9.604166666666666,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 48958080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.29166666666667,
+      "scheduled_av_ms": 8.916666666666666,
+      "physical_av_ms": 9.604166666666666,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 49006080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.27083333333333,
+      "scheduled_av_ms": 8.9375,
+      "physical_av_ms": 9.625,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 49054080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.27083333333333,
+      "scheduled_av_ms": 8.958333333333334,
+      "physical_av_ms": 9.645833333333334,
+      "capture_minus_scheduled_ms": 0.6875
+    },
+    {
+      "video_stream": 49102080,
+      "input_epoch_samples": -47698560,
+      "observation_gap_ms": 123.25,
+      "scheduled_av_ms": 8.958333333333334,
+      "physical_av_ms": 9.645833333333334,
+      "capture_minus_scheduled_ms": 0.6875
+    }
+  ],
+  "capture_minus_scheduled": {
+    "count": 27,
+    "min_ms": 0.6875,
+    "median_ms": 0.6875,
+    "max_ms": 0.6875
+  },
+  "periodic_pairing_limit": "No content IDs: assumes schedule-to-input observation delay in [0,400) ms and verifies a constant video timestamp epoch per capture. Not equivalent to identified content matching."
+}

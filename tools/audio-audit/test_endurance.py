@@ -59,5 +59,20 @@ class EnduranceTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError,'absent'):m.validate_power("'AC Power'",assertions,43)
         with self.assertRaisesRegex(RuntimeError,'AC power'):m.validate_power("'Battery Power'",assertions,42)
 
+    def test_intermediate_capture_leaves_final_window_free(self):
+        self.assertFalse(m.intermediate_due(120,120,1200,0))
+        self.assertFalse(m.intermediate_due(119,120,1200,120))
+        self.assertTrue(m.intermediate_due(120,120,1200,120))
+        self.assertTrue(m.intermediate_due(1114,1080,1200,120))
+        self.assertFalse(m.intermediate_due(1115,1080,1200,120))
+
+    def test_intermediate_excursion_cannot_hide_behind_good_endpoints(self):
+        result=m.sampled_quality([self.capture(),self.capture(),self.capture(45)],40)
+        self.assertFalse(result['av_quality_passed'])
+        result=m.sampled_quality([self.capture(),self.capture(-25),self.capture(25)],40)
+        self.assertFalse(result['av_quality_passed'])
+        self.assertEqual(result['sampled_av_span_ms'],50)
+        self.assertTrue(m.sampled_quality([self.capture(-10),self.capture(10)],20)['av_quality_passed'])
+
 
 if __name__=='__main__':unittest.main()

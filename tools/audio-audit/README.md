@@ -451,6 +451,54 @@ be prevented by this harness and invalidate the run. `--seconds 120` rehearses t
 harness plus up to 45 s of calibration preparation; it does not replace eight-hour physical acceptance. `test_endurance.py`
 covers the acceptance checks and ownership of power assertions.
 
+`--sample-interval-seconds 120` optionally adds a 30-second physical capture every
+two minutes of the measured window. The interval must be at least 90 seconds.
+The runner leaves acquisition/shutdown space before its final capture, never owns
+two input probes at once, rejects failed probes and includes every intermediate
+min/max in the absolute A/V acceptance check. These are sampled windows, not a
+continuous independent recording. The current runner also rejects a full sampled
+min/max envelope wider than one frame + 1 ms; good endpoints cannot hide an
+intermediate excursion. The runner source hash is recorded at startup.
+
+### Event-level phase diagnosis
+
+Explicit `--sdi-av-test` runs also reserve bounded audio/video event buffers before
+starting the callbacks. `SYNC_AUDIO` records pulse onsets in PCM actually accepted
+by `ScheduleAudioSamples`, including partial writes, with the mapping and delay;
+transition pulses are labelled. `SYNC_VIDEO` records each selected flash onset,
+paint/content PTS, sequence, controlled-reference ID, target and mapping. Host
+timestamps are diagnostic observations, not physical presentation timestamps.
+Each buffer holds at most 4096 events; overflow is counted. Serialization happens
+only after the writers stop. Normal playback does not allocate or scan these traces.
+The final diagnostic variant additionally records the actual history timestamp and
+future-selection tolerance, plus at most one clock observation per second. Clock
+observations query the SDK hardware reference inside the owning output instance,
+alongside consumed queue and scheduled-stream positions. A separate read-only
+instance was unable to query these clocks on the development device; its failed
+attempt is retained as evidence, not as a clock measurement.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 tools/audio-audit/analyze_event_sync.py RUN/loopback
+PYTHONDONTWRITEBYTECODE=1 python3 tools/audio-audit/analyze_device_clocks.py RUN/playback.log
+```
+
+The analyser rejects incomplete/overflowed traces and compares accepted PCM with
+the selected flash. For the identified reference it requires a rebuilt current
+capture probe, matches the exact physical frame IDs, and reports the residual
+capture-versus-schedule offset without silently treating that offset as a calibrated
+input delay. Generic pages have no such IDs. The event analyser offers
+an optional `--periodic-host-matching` for generic diagnostic captures only when
+explicitly requested: it assumes a schedule-to-input observation delay below
+400 ms and requires a constant input/output video epoch within each capture. This
+is labelled separately from exact frame-ID matching. The identified-content analyser uses
+the same seven-second warmup for pulse verification and schedule validation; early
+pulse observations are retained explicitly as excluded, including a possible first
+packet that starts within a pulse. Content markers and all continuity counters
+remain checked. `sync_diagnostics_tests` sweeps actual `FrameHistory` selection over
+48 simulated hours for all source/output combinations at 25/50 fps, all 16 initial
+frame phases and 0/±1 ppm (192 cases). It isolates
+quantisation; it does not simulate browser jitter or certify a real receiver.
+
 `--sync-change-ms N` applies an isolated live adjustment at 15 s in app hardware
 tests. `analyze_live_sync.py RUN --expected-ms N` matches physical captured flashes
 to scheduled frame IDs and compares steady windows before/after, excluding the

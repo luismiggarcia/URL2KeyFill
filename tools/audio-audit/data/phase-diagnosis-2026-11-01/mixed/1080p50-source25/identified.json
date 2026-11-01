@@ -1,0 +1,82 @@
+{
+  "selection": "content",
+  "paint_to_input_callback": {
+    "count": 848,
+    "min_ms": 156.5625,
+    "median_ms": 162.85416666666666,
+    "max_ms": 165.8125
+  },
+  "content_to_input_callback": {
+    "count": 848,
+    "min_ms": 142.95833333333334,
+    "median_ms": 144.4375,
+    "max_ms": 146.0
+  },
+  "audio_content_origin": 11021242288,
+  "health": {
+    "missing_total": 0.0,
+    "api_errors": 0.0,
+    "recoveries": 0.0,
+    "late_video": 0.0,
+    "dropped_video": 0.0,
+    "clock_resets": 0.0,
+    "video_history_misses": 0.0,
+    "video_history_startup_misses": 0.0,
+    "video_conversion_fallbacks": 0.0
+  },
+  "startup_pulse_observations_excluded": [
+    {
+      "elapsed_s": "4.198129",
+      "relative_samples": 96005
+    },
+    {
+      "elapsed_s": "5.199143",
+      "relative_samples": 144005
+    },
+    {
+      "elapsed_s": "6.249130",
+      "relative_samples": 192005
+    },
+    {
+      "elapsed_s": "7.299138",
+      "relative_samples": 240005
+    },
+    {
+      "elapsed_s": "8.349112",
+      "relative_samples": 288005
+    }
+  ],
+  "verified_audio_markers": 2009,
+  "skipped_audio_marker_ids": 1,
+  "source_paint_minus_content": {
+    "count": 859,
+    "min_ms": -20.354166666666668,
+    "median_ms": -18.354166666666668,
+    "max_ms": -13.354166666666666
+  },
+  "received_flash_frame_after_content_onset": {
+    "count": 35,
+    "min_ms": 0.0,
+    "median_ms": 0.0,
+    "max_ms": 0.0
+  },
+  "selected_content_minus_target": {
+    "count": 1600,
+    "min_ms": -22.4375,
+    "median_ms": -12.00543979803721,
+    "max_ms": -1.5752155780792236
+  },
+  "scheduled_audio_minus_video": {
+    "count": 32,
+    "min_ms": -2.3333333333333335,
+    "median_ms": -2.310946363134009,
+    "max_ms": -1.4822009077389249
+  },
+  "captured_audio_minus_video_ms": -1.5625,
+  "capture_pairs": 31,
+  "captured_minus_scheduled_range_ms": [
+    -0.10113242559440838,
+    1.604166666666667
+  ],
+  "limits": "Controlled watermarked VP8/PCM reference only; no independent receiver calibration or drift acceptance. Selection windows and capture windows may differ."
+}
