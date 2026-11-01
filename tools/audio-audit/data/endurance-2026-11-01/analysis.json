@@ -1,0 +1,356 @@
+{
+  "record": "0.5.0 / 1080p25 / Reliable / SDI OUT to IN on same UltraStudio",
+  "windows": [
+    {
+      "source_flash_minus_audio": {
+        "pairs": 30,
+        "median_ms": 36.4375,
+        "min_ms": 31.958333333333332,
+        "max_ms": 39.291666666666664
+      },
+      "scheduled_audio_minus_video": {
+        "pairs": 30,
+        "median_ms": -0.5222995597238576,
+        "min_ms": -0.6312014526047278,
+        "max_ms": -0.2844493245065678
+      },
+      "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.",
+      "label": "start",
+      "elapsed_window_s": [
+        33,
+        65
+      ],
+      "telemetry_medians": {
+        "audio_rate_ppm": -11.277972,
+        "audio_estimated_rate_ppm": -11.277972,
+        "audio_phase_error_ms": -0.431429,
+        "video_selection_age_ms": 13.770833,
+        "rate_uncertainty_ppm": 0.53747
+      }
+    },
+    {
+      "source_flash_minus_audio": {
+        "pairs": 30,
+        "median_ms": 38.72916666666667,
+        "min_ms": 32.354166666666664,
+        "max_ms": 40.0625
+      },
+      "scheduled_audio_minus_video": {
+        "pairs": 30,
+        "median_ms": 24.694273499151073,
+        "min_ms": 24.687039996186893,
+        "max_ms": 24.69587888320287
+      },
+      "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.",
+      "label": "end",
+      "elapsed_window_s": [
+        28786,
+        28818
+      ],
+      "telemetry_medians": {
+        "audio_rate_ppm": 0.0,
+        "audio_estimated_rate_ppm": -0.193429,
+        "audio_phase_error_ms": 0.779019,
+        "video_selection_age_ms": -12.208333,
+        "rate_uncertainty_ppm": 0.078455
+      }
+    },
+    {
+      "source_flash_minus_audio": {
+        "pairs": 113,
+        "median_ms": 38.75,
+        "min_ms": 32.541666666666664,
+        "max_ms": 40.541666666666664
+      },
+      "scheduled_audio_minus_video": {
+        "pairs": 112,
+        "median_ms": 3.880209767880539,
+        "min_ms": 3.829946121200919,
+        "max_ms": 3.92927964652578
+      },
+      "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.",
+      "label": "1h",
+      "elapsed_window_s": [
+        3480,
+        3600
+      ],
+      "telemetry_medians": {
+        "audio_rate_ppm": -0.8434174999999999,
+        "audio_estimated_rate_ppm": -0.8434174999999999,
+        "audio_phase_error_ms": 0.540512,
+        "video_selection_age_ms": 9.34375,
+        "rate_uncertainty_ppm": 0.0272715
+      }
+    },
+    {
+      "source_flash_minus_audio": {
+        "pairs": 114,
+        "median_ms": 38.8125,
+        "min_ms": 35.291666666666664,
+        "max_ms": 44.145833333333336
+      },
+      "scheduled_audio_minus_video": {
+        "pairs": 114,
+        "median_ms": 6.8067143100003396,
+        "min_ms": 6.758460556467374,
+        "max_ms": 6.8549711505572
+      },
+      "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.",
+      "label": "2h",
+      "elapsed_window_s": [
+        7080,
+        7200
+      ],
+      "telemetry_medians": {
+        "audio_rate_ppm": -0.81294,
+        "audio_estimated_rate_ppm": -0.81294,
+        "audio_phase_error_ms": 0.543194,
+        "video_selection_age_ms": 6.5,
+        "rate_uncertainty_ppm": 0.022274
+      }
+    },
+    {
+      "source_flash_minus_audio": {
+        "pairs": 113,
+        "median_ms": 38.270833333333336,
+        "min_ms": 35.770833333333336,
+        "max_ms": 39.979166666666664
+      },
+      "scheduled_audio_minus_video": {
+        "pairs": 113,
+        "median_ms": 9.698774743825197,
+        "min_ms": 9.64412073045969,
+        "max_ms": 9.752953146894773
+      },
+      "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.",
+      "label": "3h",
+      "elapsed_window_s": [
+        10680,
+        10800
+      ],
+      "telemetry_medians": {
+        "audio_rate_ppm": -0.927265,
+        "audio_estimated_rate_ppm": -0.927265,
+        "audio_phase_error_ms": 0.535888,
+        "video_selection_age_ms": 4.53125,
+        "rate_uncertainty_ppm": 0.021101
+      }
+    },
+    {
+      "source_flash_minus_audio": {
+        "pairs": 112,
+        "median_ms": 37.64583333333333,
+        "min_ms": 33.854166666666664,
+        "max_ms": 40.25
+      },
+      "scheduled_audio_minus_video": {
+        "pairs": 112,
+        "median_ms": 12.680076088756323,
+        "min_ms": 12.630467484394709,
+        "max_ms": 12.730393004914125
+      },
+      "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.",
+      "label": "4h",
+      "elapsed_window_s": [
+        14280,
+        14400
+      ],
+      "telemetry_medians": {
+        "audio_rate_ppm": -0.8482405,
+        "audio_estimated_rate_ppm": -0.8482405,
+        "audio_phase_error_ms": 0.5396055,
+        "video_selection_age_ms": 0.9895835,
+        "rate_uncertainty_ppm": 0.025845
+      }
+    },
+    {
+      "source_flash_minus_audio": {
+        "pairs": 112,
+        "median_ms": 38.15625,
+        "min_ms": 32.6875,
+        "max_ms": 39.541666666666664
+      },
+      "scheduled_audio_minus_video": {
+        "pairs": 112,
+        "median_ms": 15.646254360675812,
+        "min_ms": 15.596053001781305,
+        "max_ms": 15.696324497461319
+      },
+      "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.",
+      "label": "5h",
+      "elapsed_window_s": [
+        17880,
+        18000
+      ],
+      "telemetry_medians": {
+        "audio_rate_ppm": -0.8439785,
+        "audio_estimated_rate_ppm": -0.8439785,
+        "audio_phase_error_ms": 0.5404154999999999,
+        "video_selection_age_ms": -2.3229165,
+        "rate_uncertainty_ppm": 0.021742499999999998
+      }
+    },
+    {
+      "source_flash_minus_audio": {
+        "pairs": 112,
+        "median_ms": 38.19791666666667,
+        "min_ms": 36.0,
+        "max_ms": 39.833333333333336
+      },
+      "scheduled_audio_minus_video": {
+        "pairs": 112,
+        "median_ms": 18.59695037702719,
+        "min_ms": 18.546206240852673,
+        "max_ms": 18.646311382452648
+      },
+      "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.",
+      "label": "6h",
+      "elapsed_window_s": [
+        21480,
+        21600
+      ],
+      "telemetry_medians": {
+        "audio_rate_ppm": -0.8429645,
+        "audio_estimated_rate_ppm": -0.8429645,
+        "audio_phase_error_ms": 0.5379805,
+        "video_selection_age_ms": -5.4375,
+        "rate_uncertainty_ppm": 0.020664000000000002
+      }
+    },
+    {
+      "source_flash_minus_audio": {
+        "pairs": 113,
+        "median_ms": 39.229166666666664,
+        "min_ms": 32.104166666666664,
+        "max_ms": 41.583333333333336
+      },
+      "scheduled_audio_minus_video": {
+        "pairs": 113,
+        "median_ms": 21.611000686883926,
+        "min_ms": 21.562437549233437,
+        "max_ms": 21.66151720782121
+      },
+      "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.",
+      "label": "7h",
+      "elapsed_window_s": [
+        25080,
+        25200
+      ],
+      "telemetry_medians": {
+        "audio_rate_ppm": -0.831623,
+        "audio_estimated_rate_ppm": -0.831623,
+        "audio_phase_error_ms": 0.541176,
+        "video_selection_age_ms": -8.5833335,
+        "rate_uncertainty_ppm": 0.0235685
+      }
+    },
+    {
+      "source_flash_minus_audio": {
+        "pairs": 112,
+        "median_ms": 39.17708333333333,
+        "min_ms": 32.416666666666664,
+        "max_ms": 40.166666666666664
+      },
+      "scheduled_audio_minus_video": {
+        "pairs": 112,
+        "median_ms": 24.648133285343647,
+        "min_ms": 24.597546110550564,
+        "max_ms": 24.695685664812725
+      },
+      "limits": "Adaptive inverse mapping uses the first telemetry snapshot of each pulse (not a per-sample output trace). Diagnostic source only; snapshot sampling can omit events. Input offset is included in capture, not independently corrected.",
+      "label": "8h",
+      "elapsed_window_s": [
+        28680,
+        28800
+      ],
+      "telemetry_medians": {
+        "audio_rate_ppm": -0.8334205,
+        "audio_estimated_rate_ppm": -0.8334205,
+        "audio_phase_error_ms": 0.542232,
+        "video_selection_age_ms": -11.875,
+        "rate_uncertainty_ppm": 0.024756
+      }
+    }
+  ],
+  "scheduled_hourly_fit_ms_per_hour": 2.9649714485498233,
+  "equivalent_relative_rate_ppm": 0.8236031801527287,
+  "telemetry": {
+    "rows": 27978,
+    "max_active_interval_s": 1.0524729999999636,
+    "not_ready_after_45s": 0
+  },
+  "power": {
+    "checks": 1899,
+    "invalid": []
+  },
+  "recomputed_captures": {
+    "capture-start": {
+      "sign": "positive = audio later than video",
+      "measurement": "output plus input relative A/V; uncalibrated input",
+      "video_frame_ms": 40.0,
+      "valid_video_frames": 749,
+      "video_timestamp_gaps": 0,
+      "video_timestamp_gaps_within_matched_range": 0,
+      "flashes_after_warmup": 27,
+      "limitations": [
+        "Periodic 1 Hz pattern: nearest pairing assumes offset within 400 ms; larger offsets are ambiguous.",
+        "Browser visual onset is frame-quantised; this does not establish sub-frame source synchrony.",
+        "Input A/V offset requires a known scheduled reference; no input correction applied.",
+        "Shared-device loopback does not test drift between independent devices."
+      ],
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": 0.20833333333333334,
+          "min_ms": 0.10416666666666667,
+          "max_ms": 0.3958333333333333,
+          "stdev_ms": 0.0929263531933617,
+          "unmatched_flashes": 0
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": 0.20833333333333334,
+          "min_ms": 0.10416666666666667,
+          "max_ms": 0.3958333333333333,
+          "stdev_ms": 0.0929263531933617,
+          "unmatched_flashes": 0
+        }
+      }
+    },
+    "capture-end": {
+      "sign": "positive = audio later than video",
+      "measurement": "output plus input relative A/V; uncalibrated input",
+      "video_frame_ms": 40.0,
+      "valid_video_frames": 749,
+      "video_timestamp_gaps": 0,
+      "video_timestamp_gaps_within_matched_range": 0,
+      "flashes_after_warmup": 27,
+      "limitations": [
+        "Periodic 1 Hz pattern: nearest pairing assumes offset within 400 ms; larger offsets are ambiguous.",
+        "Browser visual onset is frame-quantised; this does not establish sub-frame source synchrony.",
+        "Input A/V offset requires a known scheduled reference; no input correction applied.",
+        "Shared-device loopback does not test drift between independent devices."
+      ],
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": 25.395833333333332,
+          "min_ms": 25.395833333333332,
+          "max_ms": 25.395833333333332,
+          "stdev_ms": 0.0,
+          "unmatched_flashes": 0
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": 25.395833333333332,
+          "min_ms": 25.395833333333332,
+          "max_ms": 25.395833333333332,
+          "stdev_ms": 0.0,
+          "unmatched_flashes": 0
+        }
+      }
+    }
+  },
+  "interpretation": "Gradual scheduled phase movement matches physical endpoints; source phase changes much less. Rate correction near -0.84 ppm and changing video selection age support frame-grid phase walk as a hypothesis, not proof of uncontrolled audio drift. No continuous physical capture or content-PTS per-frame trace; do not extrapolate indefinite linear drift.",
+  "method": "analyze_pipeline_sync.analyse on explicit elapsed windows above; least-squares of hourly median scheduled A/V versus hour. Snapshots may omit events. Positive A/V means audio late."
+}

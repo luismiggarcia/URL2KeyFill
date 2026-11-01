@@ -1,0 +1,99 @@
+{
+  "initial_av": {
+    "pairs": 17,
+    "unmatched_flashes": 0,
+    "median_ms": -46.979166666666664,
+    "min_ms": -46.979166666666664,
+    "max_ms": -46.958333333333336,
+    "stdev_ms": 0.008837135479076396,
+    "events": [
+      {
+        "video_pts_48k": 178560,
+        "audio_pts_48k": 176305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 226560,
+        "audio_pts_48k": 224305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 274560,
+        "audio_pts_48k": 272305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 322560,
+        "audio_pts_48k": 320305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 370560,
+        "audio_pts_48k": 368305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 418560,
+        "audio_pts_48k": 416305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 466560,
+        "audio_pts_48k": 464305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 514560,
+        "audio_pts_48k": 512305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 562560,
+        "audio_pts_48k": 560305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 610560,
+        "audio_pts_48k": 608305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 658560,
+        "audio_pts_48k": 656305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 706560,
+        "audio_pts_48k": 704305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 754560,
+        "audio_pts_48k": 752305,
+        "audio_minus_video_ms": -46.979166666666664
+      },
+      {
+        "video_pts_48k": 802560,
+        "audio_pts_48k": 800306,
+        "audio_minus_video_ms": -46.958333333333336
+      },
+      {
+        "video_pts_48k": 850560,
+        "audio_pts_48k": 848306,
+        "audio_minus_video_ms": -46.958333333333336
+      },
+      {
+        "video_pts_48k": 898560,
+        "audio_pts_48k": 896306,
+        "audio_minus_video_ms": -46.958333333333336
+      },
+      {
+        "video_pts_48k": 946560,
+        "audio_pts_48k": 944306,
+        "audio_minus_video_ms": -46.958333333333336
+      }
+    ]
+  },
+  "adjustment_ms": 47,
+  "method": "Negative midpoint of physically measured min/max; same output session"
+}

@@ -1755,3 +1755,121 @@ A aplicação instalada não foi substituída. A candidata assinada está em
 visual/auditiva no recetor com fontes reais. Não há execução noturna agendada nem
 iniciada automaticamente. A entrega disponibiliza correção/calibração/perfis;
 a garantia prolongada de produção continua dependente dessa validação.
+
+
+### 10.13 Resposta de implementação — ensaio físico de oito horas (01-11-2026)
+
+Esta secção atualiza o estado histórico de 10.12.5–10.12.6: o ensaio noturno foi
+explicitamente autorizado pelo Luis, executado e concluído. Não altera retroativamente
+os resultados dos ensaios curtos nem fecha toda a auditoria.
+
+#### 10.13.1 Execução e evidência preservada
+
+Executável da release **0.5.0, build 8**, commit/tag de publicação `fa69079` / `0.5.0`,
+SHA-256 do executável `18859925ee4541947f61c08e9c593c4bb2d3aea10b8154ff2235771124388e2a`.
+Perfil **Reliable**, **1080p25**, loopback **SDI OUT → SDI IN no mesmo UltraStudio**.
+Arranque em 31-10 às 23:57, conclusão em 01-11 perto das 07:58, hora de Lisboa.
+Tempo ativo registado: **28 844,651 s**; janela após calibração: **28 815,168 s**,
+superior às oito horas solicitadas. A aplicação terminou com exit 0 e libertou as
+assertions próprias. Não houve substituição da aplicação instalada.
+
+Evidência em `tools/audio-audit/data/endurance-2026-11-01/`: CSV originais comprimidos
+sem alteração dos bytes descomprimidos, manifest/resultados, capturas, logs,
+`analysis.json` com janelas e método de decomposição, `power-checks.tar.gz` e hashes
+`SHA256SUMS.json`. Não se guardaram caches/perfis de navegação temporários.
+
+**Continuidade: aprovada.** Zero falhas de amostras, erros SDK, recuperações,
+frames atrasados/perdidos, reinícios de relógio, falhas de histórico ou fallback de
+conversão. 27 978 linhas de telemetria; maior intervalo entre linhas ativas de
+**1,052473 s**. Controlador sempre pronto após os primeiros 45 s. Foram revalidadas
+**1 899 verificações de corrente AC e assertions de suspensão**, todas válidas.
+Isto suporta continuidade durante a janela; não é uma certificação de todos os
+estados de energia do macOS.
+
+#### 10.13.2 Sincronismo físico e critérios de aceitação
+
+A calibração inicial mediu áudio adiantado **46,979 ms** e aplicou **+47 ms** apenas
+à instância de diagnóstico. Não é uma nova predefinição para URLs normais.
+
+| Captura física | Mediana áudio − vídeo | Min/max | Eventos por canal |
+|---|---:|---:|---:|
+| Início, após calibração | +0,208 ms | +0,104 a +0,396 ms | 27 |
+| Final | +25,396 ms | +25,396 a +25,396 ms | 27 |
+
+Os dois canais coincidem; cada captura contém 749 frames válidas, sem gaps de
+PTS nem flashes sem correspondência. Sinal positivo significa áudio atrasado.
+Mudança entre medianas: **+25,188 ms**. O runner aprovou continuidade e qualidade
+pelo critério previamente definido: até uma frame de 40 ms, com 1 ms de allowance
+no limite absoluto, e mudança início/fim até uma frame. **Aprovação nesse critério
+não significa deriva nula, sincronismo subframe garantido ou aceitação humana de
+lip sync.** As casas decimais não removem quantização visual nem incerteza da entrada.
+
+#### 10.13.3 O que explica a diferença de 25 ms
+
+Recalculou-se a decomposição com `analyze_pipeline_sync.analyse`, sem modificar os
+registos, nas janelas explicitadas em `analysis.json`. O A/V estimado do agendamento
+é −0,522 ms no início (33–65 s) e +24,694 ms no fim (28 786–28 818 s): mudança
+**+25,217 ms**, coerente com os **+25,188 ms** físicos. O desvio captura–estimativa
+fica próximo de +0,7 ms nas duas extremidades, mas não é uma calibração independente
+da entrada nem uma identidade por amostra: são snapshots e janelas aproximadas.
+
+| Hora | Mediana A/V estimada no agendamento, últimos 120 s |
+|---|---:|
+| 1 | +3,880 ms |
+| 2 | +6,807 ms |
+| 3 | +9,699 ms |
+| 4 | +12,680 ms |
+| 5 | +15,646 ms |
+| 6 | +18,597 ms |
+| 7 | +21,611 ms |
+| 8 | +24,648 ms |
+
+A regressão destas oito medianas dá **+2,965 ms/h**, equivalente a **0,824 ppm** de
+movimento relativo de fase nesta janela. Assim, a telemetria acrescenta evidência
+de evolução gradual, que as duas capturas físicas isoladas não permitiam afirmar.
+Não há fundamento para atribuir os 25 ms apenas a um salto ocorrido entre capturas.
+Não há, porém, captura física contínua que comprove a forma da curva a cada instante.
+
+A fase flash–impulso observada na fonte varia muito menos: medianas de **36,438 →
+38,729 ms** nas janelas das extremidades. O controlador mantém erro de fase de
+**−0,698 a +0,981 ms**, headroom mínimo **39,229 ms** e zero recuperações. Nas janelas
+horárias, a correção de taxa fica aproximadamente entre **−0,81 e −0,93 ppm** e a
+idade de seleção de vídeo passa de **+9,344 para −11,875 ms**. Idade negativa é
+permitida pela tolerância de seleção de meia frame; não demonstra corrupção temporal.
+
+**Hipótese principal, ainda por confirmar:** deslocamento de fase entre a grelha
+de vídeo de 25 fps e os eventos da fonte, enquanto a correção de taxa mantém o
+áudio alinhado ao relógio host/dispositivo. O vídeo continua quantizado a frames,
+mesmo usando o mesmo mapeamento afim. A ordem de grandeza da correção (~0,84 ppm)
+coincide com o movimento estimado (~0,82 ppm). Isto é compatível com fase a percorrer
+a grelha e uma futura mudança da frame selecionada; **não prova um erro no servo
+nem crescimento ilimitado do atraso de áudio**. Os PTS de vídeo normais são de
+chegada da pintura, não PTS de conteúdo. A telemetria disponível não identifica
+por evento a pintura selecionada nem separa todos os relógios do CEF.
+
+Não se deve multiplicar 2,965 ms/h indefinidamente nem anunciar uma hora de falha.
+Uma extrapolação ignora a seleção quantizada, possíveis mudanças de frame e a
+origem ainda não isolada. Também não se deve reduzir a margem Reliable ou alterar
+a correção de taxa com base apenas neste resultado.
+
+#### 10.13.4 Próxima intervenção proposta para validação
+
+1. Instrumentar, apenas em diagnóstico e com armazenamento limitado, cada evento
+   flash/impulso com ID, PTS da pintura selecionada, alvo de seleção, posição SDI,
+   mapeamento e instante de atualização. Associar esses IDs aos eventos capturados.
+2. Comparar a fonte HTML atual com a referência de áudio/vídeo de PTS de conteúdo
+   conhecidos já existente. Isto separa fase da página/CEF, escolha quantizada do
+   vídeo e mapeamento áudio–dispositivo; evita compensar um relógio no sítio errado.
+3. Verificar deterministamente a seleção com desfasamentos de taxa próximos de
+   ±1 ppm e fases iniciais em toda a frame. Medir a envolvente A/V e a mudança de
+   frame, em vez de testar só ausência de underruns ou erro interno do servo.
+4. Decidir uma alteração apenas depois desta atribuição: associação por conteúdo
+   quando disponível, ou política explícita de seleção/calibração limitada pela
+   frame para páginas genéricas. Voltar a medir antes/depois e validar lip sync
+   com fontes reais e o recetor do Luis.
+
+**Estado:** ensaio de oito horas aprovado no Mac/dispositivo/modo testados;
+fiabilidade demonstrada nesta execução; movimento residual de fase reconhecido e
+quantificado; causa exata e comportamento para além da janela ainda não fechados.
+Esta análise não iniciou outro teste físico nem alterou o código de produção.
+A próxima intervenção acima fica pendente de confirmação do Luis.

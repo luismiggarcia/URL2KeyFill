@@ -1,0 +1,19 @@
+{
+  "analysis.json": "a4fa5df392f832df533e41e468b3ee7b00637877e68ba428988e56e182f977f7",
+  "application.csv.gz": "bcd65a60583b9298913e22dd2ff7cf884f93d3483be90c2dd23ffae8d9005874",
+  "calibration.json": "b2415ec07910bb4ac4aabc630d3cfc5e9e328a8d089886b6c08a8003b9c1d86a",
+  "capture-calibration.csv.gz": "d2f22f41e39ebdcf1ef453e45edd6d543901eaf7015b5a549896a09a6b33c3b0",
+  "capture-calibration.log": "26f4e3c8e5e07158638e16dc6b3a441b65b80b5b221e3856c7c96be33ba97d85",
+  "capture-end.csv.gz": "245f9f242ec5936af367cbb873d1cd0587ba5a4712cab6eba36c9de97c5322f6",
+  "capture-end.json": "4f38cd40b2d14e7b1a2307a0de366623f4675847f6e1be4d1e66376d5747d5d4",
+  "capture-end.log": "1f63335417569cbd75aa1b6fda77d8a44093d3b66305416b40f6cf0706d0f353",
+  "capture-start.csv.gz": "380c12134590ef9afea162b264415336659222f6c549b2081dbfd643d69e9ac9",
+  "capture-start.json": "7d8694cb6e734743599d9d5ec4cc4b2384c6846d15017b4d635de374c2407d3c",
+  "capture-start.log": "1f63335417569cbd75aa1b6fda77d8a44093d3b66305416b40f6cf0706d0f353",
+  "manifest.json": "6524e632cc39c3f239c516a31585067af6776dc69e07a66f4421eb6ed0633ba7",
+  "playback.log": "2bcc7ea8291ad2f05cb75525dcf8da6be3c4077224ba4b096797545ac64b9038",
+  "power-checks.tar.gz": "91d57b613f5dc900dc457c3a4b471c6412217bd93cef51e82328bff93e1cc985",
+  "result.json": "13d6d6f98f61d5c79150c52789445eaace55b2c1b0f4c58638d4ccf1336388b3",
+  "runner.log": "13d6d6f98f61d5c79150c52789445eaace55b2c1b0f4c58638d4ccf1336388b3",
+  "sync-calibration.txt": "e3667f7d8c030260bf49046f955ec9bebdb9a4cb8a66b812fd498ded5431a821"
+}

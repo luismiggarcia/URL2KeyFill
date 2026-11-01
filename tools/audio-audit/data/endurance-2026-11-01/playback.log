@@ -1,0 +1,8 @@
+START SDI loopback source: 1080p25 · 25.000 fps (25000/1000) · Fill/Key · BGRA
+[4510:3103610:1031/235746.442659:ERROR:base/mac/process_requirement.cc:159] Unable to derive validation category for current process. Signature validation of current process failed: Error Domain=NSOSStatusErrorDomain Code=-67030 "(null)" (-67030)
+SYNC_CALIBRATION ms=47 active_s=29.442
+[4638:3107491:1101/000044.090366:ERROR:services/on_device_model/ml/gpu_blocklist.cc:120] Unable to get gpu adapter
+[4638:3107503:1101/000044.090856:ERROR:services/on_device_model/ml/gpu_blocklist.cc:120] Unable to get gpu adapter
+PASS scheduled SDI video and stereo audio
+PASS SDI pause, resume and stop restores shared mixer
+CEF shutdown complete
