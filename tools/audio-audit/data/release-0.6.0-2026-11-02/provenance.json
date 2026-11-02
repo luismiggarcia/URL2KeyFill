@@ -1,0 +1,55 @@
+{
+  "release": {
+    "assets": [
+      {
+        "apiUrl": "https://api.github.com/repos/luismiggarcia/URL2KeyFill/releases/assets/703468528",
+        "contentType": "text/plain; charset=utf-8",
+        "createdAt": "2026-11-02T22:59:03Z",
+        "digest": "sha256:2b893db98afddf7e3c14ae59312b654d5d0c4de6ac6f30300bfa413b5bab2fb2",
+        "downloadCount": 0,
+        "id": "RA_kwDOVbMYHc4p7hPw",
+        "label": "",
+        "name": "SHA256SUMS.txt",
+        "size": 100,
+        "state": "uploaded",
+        "updatedAt": "2026-11-02T22:59:04Z",
+        "url": "https://github.com/luismiggarcia/URL2KeyFill/releases/download/0.6.0/SHA256SUMS.txt"
+      },
+      {
+        "apiUrl": "https://api.github.com/repos/luismiggarcia/URL2KeyFill/releases/assets/703468521",
+        "contentType": "application/zip",
+        "createdAt": "2026-11-02T22:59:03Z",
+        "digest": "sha256:a871094ac1b3374dc8cb711bc8248429d92dc2e9906cb4b8d2f80a2a1f7f770e",
+        "downloadCount": 0,
+        "id": "RA_kwDOVbMYHc4p7hPp",
+        "label": "",
+        "name": "URL2KeyFill-0.6.0-macOS-arm64.zip",
+        "size": 148262186,
+        "state": "uploaded",
+        "updatedAt": "2026-11-02T22:59:21Z",
+        "url": "https://github.com/luismiggarcia/URL2KeyFill/releases/download/0.6.0/URL2KeyFill-0.6.0-macOS-arm64.zip"
+      }
+    ],
+    "isDraft": false,
+    "isPrerelease": false,
+    "publishedAt": "2026-11-02T22:59:57Z",
+    "tagName": "0.6.0",
+    "url": "https://github.com/luismiggarcia/URL2KeyFill/releases/tag/0.6.0"
+  },
+  "source_commit": "be969839b294b27aebfcb13a5885ceea78b79bc0",
+  "version": "0.6.0",
+  "bundle_build": "10",
+  "architecture": "arm64",
+  "build_type": "Release",
+  "decklink_enabled": true,
+  "cef_sandbox_enabled": true,
+  "ctests_passed": 8,
+  "python_tests_passed": 72,
+  "browser_ui_controls": "PASS: shared button paint, meters/RMS, gain controls, mono/mute, PFL/AFL selection and routes",
+  "native_smoke_passed": true,
+  "physical_sdi_output_enabled_for_release_checks": false,
+  "archive_extraction_verified": true,
+  "code_signature_verified_deep_strict": true,
+  "notarized": false,
+  "release_notes": "- Precise negative A/V adjustment using a common whole-frame video delay with fractional audio compensation. Zero and positive adjustments retain the existing timing path.\n- Bounded video-history sizing and validation for negative adjustments, including fractional output rates.\n- Detailed SDI recovery, callback and video-scheduling diagnostics, with controlled watchdog shutdown that preserves traces.\n- Shared interface controls and graphite styling, consistent buttons, gain sliders, channel controls and stereo meters.\n- PFL/AFL local monitoring for individual layers and PROGRAM, including a pre-master PROGRAM tap that preserves layer processing and bypasses master controls.\n- The source repository includes the audit, measured results and architectural review accumulated since 0.5.2.\n\nKnown limitations: A/V stability is not certified for arbitrary HTML sources. Generic CEF paint arrival timestamps do not establish common audio/video content timestamps. Intermittent SDI frame drops and failed A/V stability envelopes have been observed at 59.94p; recent clean runs do not invalidate those failures. Negative A/V adjustment can add common latency. The proposed graphics-without-audio mode and verified source-timing architecture are not implemented in this release. Not certified for production.\n\nmacOS Apple Silicon (M1 and later), macOS 13 or later; native Release arm64 build with DeckLink enabled. Ad-hoc signed, not Apple notarized. The ZIP contains the application; SHA256SUMS.txt provides the archive checksum. No new physical SDI endurance test is part of this release build.\n\nRelease validation: 8/8 CTests, 72/72 Python tests, shared-control source consistency, browser UI control integration checks, native CEF smoke test, arm64/version verification and strict deep code-signature verification. The native smoke test exercised transparency, independent layers, visibility, temporary settings, audio capture and bundled diagnostics without enabling SDI output.\n"
+}

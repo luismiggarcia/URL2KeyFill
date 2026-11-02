@@ -2779,3 +2779,37 @@ objetivo de páginas genéricas, caso consiga fornecer esse contrato. Não volta
 a calibrar buffers indefinidamente sobre timestamps de chegada à procura de uma
 garantia que a arquitetura atual não define. Nenhuma destas propostas está
 implementada por este texto e nenhuma garante resolver o descarte SDK já visto.
+
+### 10.20 Publicação expressamente autorizada da versão 0.6.0 (2026-11-02)
+
+A pedido do utilizador, foi compilada e publicada a versão **0.6.0, build 10**,
+para macOS Apple Silicon/arm64. A tag `0.6.0` identifica o commit
+`be969839b294b27aebfcb13a5885ceea78b79bc0`. A build Release com DeckLink e sandbox
+CEF ativos foi feita numa cópia isolada desse commit, incluindo os controlos
+partilhados e a monitorização PFL/AFL existentes no workspace. As propostas de
+arquitetura da secção 10.19 não foram apresentadas como funcionalidades prontas:
+o modo de gráficos sem áudio e um novo contrato de origem A/V não estão
+implementados nesta versão.
+
+Validação da publicação: 8/8 CTests, 72/72 testes Python, consistência dos recursos
+gerados, testes de interface por bridge simulada e smoke test nativo com CEF real
+(transparência, camadas, visibilidade, preferências temporárias, captura áudio e
+páginas incluídas). Estes controlos não ativaram saída SDI nem reiniciaram a
+campanha de ensaios físicos. O ZIP foi extraído e verificado: versão/build,
+executável arm64 idêntico ao compilado e assinaturas `codesign --deep --strict`
+válidas. É assinatura ad-hoc, sem notarização Apple.
+
+Publicação: https://github.com/luismiggarcia/URL2KeyFill/releases/tag/0.6.0
+
+Artefactos: `URL2KeyFill-0.6.0-macOS-arm64.zip` e `SHA256SUMS.txt`. O hash do ZIP
+verificado localmente e confirmado pela API GitHub é
+`a871094ac1b3374dc8cb711bc8248429d92dc2e9906cb4b8d2f80a2a1f7f770e`.
+A release está pública, sem estado de rascunho/pré-release, e marcada como mais
+recente. O código foi enviado para `codex/audio-timing`; a tag fixa a origem
+exata dos binários. Não foi substituída a aplicação instalada no Mac.
+
+As notas publicadas mantêm explícitos os limites conhecidos: estabilidade A/V
+não certificada para HTML genérico, episódios de descartes/envolventes reprovadas
+a 59,94p e custo de latência dos ajustes negativos. A publicação autorizada não
+constitui aprovação de produção nem resolve as pendências das secções anteriores.
+Logs e proveniência: `tools/audio-audit/data/release-0.6.0-2026-11-02/`.

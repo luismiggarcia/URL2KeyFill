@@ -5,3 +5,6 @@ third_party/*
 
 # Local application copies and release packages
 /releases/
+
+# Python diagnostic/test caches
+__pycache__/
