@@ -35,7 +35,7 @@ def analyse(log, capture_rows=None, periodic_host_matching=False):
         for event in events:
             ratio = float(event['ratio'])
             mapped = float(event['mapping_source'])+(int(event['stream_samples'])-int(event['mapping_stream']))*ratio
-            delay = int(event['delay']) if kind == 'audio' else max(0, -int(event['adjustment']))
+            delay = float(event['delay']) if kind == 'audio' else float(event.get('video_delay_source',max(0, -int(event['adjustment']))))
             observed = float(event['source_samples' if kind == 'audio' else 'source_target'])
             if not .9998 <= ratio <= 1.0002 or not math.isfinite(mapped) or not math.isfinite(observed) or abs(mapped-delay-observed) > .001:
                 raise ValueError('Inconsistent '+kind+' affine mapping')

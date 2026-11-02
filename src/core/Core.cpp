@@ -52,6 +52,7 @@ static size_t historyBytes(const TimedFrame& f){return f.frame->pixels.size()+(f
 void FrameHistory::trim(){while(frames_.size()>1&&(frames_.size()>maxFrames_||bytes_>maxBytes_||(frames_.size()>2&&frames_.back().time-frames_[1].time>maxSpan_))){bytes_-=historyBytes(frames_.front());frames_.pop_front();}}
 void FrameHistory::configure(size_t frames,size_t bytes,int64_t span){std::lock_guard<std::mutex> lock(mutex_);++generation_;frames_.clear();bytes_=0;maxFrames_=frames;maxBytes_=bytes;maxSpan_=std::max<int64_t>(0,span);argb_.reset();}
 void FrameHistory::clear(){std::lock_guard<std::mutex> lock(mutex_);++generation_;frames_.clear();bytes_=0;}
+void FrameHistory::retainFrames(size_t frames){if(!frames||frames>256)throw std::invalid_argument("Invalid video history frame limit");std::lock_guard<std::mutex> lock(mutex_);maxFrames_=frames;trim();}
 size_t FrameHistory::bytes()const{std::lock_guard<std::mutex> lock(mutex_);return bytes_;}
 void FrameHistory::prepareOutput(std::optional<bool> argb,size_t budget){
  std::vector<TimedFrame> pending;uint64_t generation;

@@ -49,11 +49,17 @@ int main(){try{
  history.prepareOutput(true,32);toSDR(*first,expected.data(),4,true,true);REQUIRE(*history.at(100).prepared==expected);
  REQUIRE(*prepared.prepared!=expected); // Reader retains the prior immutable BGRA representation.
  history.prepareOutput(std::nullopt,12);REQUIRE(!history.at(100).prepared);REQUIRE(history.bytes()==8);
+ // Changing the frame-count limit keeps existing content and the byte budget.
+ FrameHistory retained;retained.configure(2,32);retained.publish(first,100);retained.publish(second,200);
+ retained.retainFrames(4);retained.publish(first,300);retained.publish(second,400);REQUIRE(retained.at(100).frame==first);
+ retained.retainFrames(2);REQUIRE(!retained.at(100).frame);REQUIRE(retained.at(300).frame==first);
+ retained.prepareOutput(false,32);retained.retainFrames(20);for(int i=0;i<20;++i)retained.publish(first,500+i*100);REQUIRE(retained.bytes()<=32);
+ bool invalidLimit=false;try{retained.retainFrames(0);}catch(const std::invalid_argument&){invalidLimit=true;}REQUIRE(invalidLimit);
  // Selection, bounded publication and clear are safe across independent threads.
  FrameHistory concurrentHistory;concurrentHistory.configure(8,32);concurrentHistory.prepareOutput(false,64);std::atomic<bool> done{false},bad{false};
  std::thread historyWriter([&]{for(int i=0;i<5000;++i)concurrentHistory.publish(i%2?first:second,i);done=true;});
  std::thread historyReader([&]{while(!done){auto selected=concurrentHistory.at(2500);if(selected.frame&&selected.time>2500)bad=true;if(concurrentHistory.bytes()>64)bad=true;}});
- for(int i=0;i<500;++i){concurrentHistory.clear();concurrentHistory.prepareOutput(i%3?std::optional<bool>(bool(i%2)):std::nullopt,64);}historyWriter.join();historyReader.join();REQUIRE(!bad);
+ for(int i=0;i<500;++i){concurrentHistory.retainFrames(8+size_t(i%13));concurrentHistory.clear();concurrentHistory.prepareOutput(i%3?std::optional<bool>(bool(i%2)):std::nullopt,64);}historyWriter.join();historyReader.join();REQUIRE(!bad);
  // Visual identifiers survive decoding thresholds and reject wrong geometry/checksums.
  auto coded=std::make_shared<Frame>(Size{1920,1080});for(size_t i=3;i<coded->pixels.size();i+=4)coded->pixels[i]=255;
  const int code=1234;const uint64_t word=(uint64_t(0xa65c)<<24)|(uint64_t(code)<<12)|((code^0xb6d)&0xfff);

@@ -1,0 +1,17 @@
+{
+  "ctest": {
+    "command": "ctest --test-dir build-audio-core --output-on-failure",
+    "passed": 7,
+    "failed": 0
+  },
+  "python": {
+    "command": "python3 -m unittest discover -s tools/audio-audit -p 'test_*.py'",
+    "passed": 67,
+    "failed": 0
+  },
+  "sanitizers": {
+    "av_adjustment": "AddressSanitizer + UndefinedBehaviorSanitizer: exit 0",
+    "scene_events": "ThreadSanitizer: exit 0"
+  },
+  "candidate_signature": "codesign --verify --deep --strict: exit 0"
+}

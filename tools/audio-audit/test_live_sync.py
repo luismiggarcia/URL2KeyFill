@@ -21,6 +21,11 @@ class LiveSyncTests(unittest.TestCase):
     def test_wrong_change_rejected(self):
         with self.assertRaisesRegex(ValueError,'requested'):analyse(*fixture(5),20)
 
+    def test_nonzero_initial_offset_uses_net_change(self):
+        result=analyse(*fixture(15),20,5)
+        self.assertEqual(result['requested_change_ms'],15)
+        self.assertEqual(result['change_ms'],15)
+
     def test_no_marker_rejected(self):
         log,rows,capture=fixture()
         with self.assertRaisesRegex(ValueError,'marker'):analyse(log.replace('SYNC_ADJUSTMENT','NO_CHANGE'),rows,capture,20)
@@ -28,6 +33,19 @@ class LiveSyncTests(unittest.TestCase):
     def test_loss_rejected(self):
         log,rows,capture=fixture();rows[0]['missing_total']='1'
         with self.assertRaisesRegex(ValueError,'continuity'):analyse(log,rows,capture,20)
+
+    def test_packet_position_corrects_incremental_audio_latency(self):
+        log,rows,capture=fixture();origin=1000000
+        for r in capture:
+            pts=int(r['pts_48k']);second=pts//48000;t=second*48000
+            r['host_48k']=str(origin+(pts if r['kind']=='video_id' else t+1920)+5000)
+        for second in range(7,29):
+            t=second*48000
+            log+=f'REFERENCE_PAINT id={second*50} host_samples={origin+t+200} audio_origin={origin}\n'
+            capture.append(dict(kind='packet',pts_48k=str(t),duration_48k='1920',value='1',host_48k=str(origin+t+1920+5000)))
+        result=analyse(log,rows,capture,20)['incremental_callback_latency_estimate']
+        self.assertAlmostEqual(result['video']['change_ms'],0)
+        self.assertAlmostEqual(result['audio']['change_ms'],20)
 
 
 if __name__=='__main__':unittest.main()

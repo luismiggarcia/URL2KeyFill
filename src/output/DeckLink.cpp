@@ -2,6 +2,7 @@
 #include "core/AudioSchedule.hpp"
 #include "core/MediaClock.hpp"
 #include "core/SyncDiagnostics.hpp"
+#include "core/AVAdjustment.hpp"
 #include "DeckLinkAPI.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <algorithm>
@@ -64,7 +65,7 @@ public:
 };
 class AudioCallback final:public IDeckLinkAudioOutputCallback {
  std::atomic<ULONG> refs_{1};IDeckLinkOutput* output_;std::shared_ptr<AudioMixer> mixer_;std::mutex mutex_;std::condition_variable startCv_;
- int64_t playbackScale_;uint32_t startupPadding_,reserve_;int32_t audioDelay_,oldDelay_=0;std::shared_ptr<std::atomic<int32_t>> adjustment_;AudioMapping oldMapping_;
+ int64_t playbackScale_;uint32_t startupPadding_,reserve_;AVTiming timing_;AVDelay delay_,oldDelay_;std::shared_ptr<std::atomic<int32_t>> adjustment_;AudioMapping oldMapping_;
  AudioDriftServo servo_;AudioResampler resampler_;uint32_t driftResets_=0;
  std::unique_ptr<SyncAudioTrace> syncTrace_;
  std::unique_ptr<SyncEventBuffer<SyncClockEvent>> clockTrace_;int64_t lastClockTrace_=INT64_MIN;
@@ -86,8 +87,8 @@ public:
   if(clockTrace_){for(const auto& e:clockTrace_->events)std::cerr<<std::fixed<<std::setprecision(12)<<"SYNC_CLOCK queue_before="<<e.queueBefore<<" queue_after="<<e.queueAfter<<" consumed="<<e.consumed<<" stream="<<e.stream<<" hardware_before="<<e.hardwareBefore<<" hardware_after="<<e.hardwareAfter<<" hardware="<<e.hardware<<" hardware_valid="<<e.hardwareValid<<" ratio="<<e.ratio<<" phase_error="<<e.phaseError<<'\n';std::cerr<<"SYNC_TRACE kind=clock stored="<<clockTrace_->events.size()<<" omitted="<<clockTrace_->omitted<<'\n';clockTrace_.reset();}
   std::cerr<<"SYNC_TRACE kind=audio stored="<<syncTrace_->events.size()<<" omitted="<<syncTrace_->omitted<<'\n';syncTrace_.reset();
  }
- AudioCallback(IDeckLinkOutput* o,std::shared_ptr<AudioMixer> m,const Mode& mode,uint32_t sourceAge,uint32_t reserve,std::shared_ptr<std::atomic<int32_t>> adjustment):output_(o),mixer_(std::move(m)),playbackScale_(mode.rate.scale),startupPadding_(uint32_t((mode.rate.duration*48000+mode.rate.scale-1)/mode.rate.scale)),reserve_(reserve),audioDelay_(std::max(0,adjustment->load())),adjustment_(std::move(adjustment)),sourceAge_(sourceAge){
-  output_->AddRef();const auto target=uint32_t(std::clamp<int64_t>((reserve*mode.rate.duration*48000+mode.rate.scale-1)/mode.rate.scale,1440,12000));schedule_=AudioSchedule::fromHostAnchor(mediaSampleTime()-startupPadding_,target,sourceAge);phase_.reset(startupPadding_+2*target);sourceOrigin=schedule_.sourceOrigin();servo_.reset(mediaSampleTime(),0,schedule_.sourceOrigin());timeline.publish(servo_.mapping);
+ AudioCallback(IDeckLinkOutput* o,std::shared_ptr<AudioMixer> m,const Mode& mode,uint32_t sourceAge,uint32_t reserve,std::shared_ptr<std::atomic<int32_t>> adjustment):output_(o),mixer_(std::move(m)),playbackScale_(mode.rate.scale),startupPadding_(uint32_t((mode.rate.duration*48000+mode.rate.scale-1)/mode.rate.scale)),reserve_(reserve),timing_(mode.rate),delay_(timing_.plan(adjustment->load())),adjustment_(std::move(adjustment)),sourceAge_(sourceAge){
+  output_->AddRef();const auto target=timing_.audioTarget(reserve);schedule_=AudioSchedule::fromHostAnchor(mediaSampleTime()-startupPadding_,target,sourceAge);phase_.reset(startupPadding_+2*target);sourceOrigin=schedule_.sourceOrigin();servo_.reset(mediaSampleTime(),0,schedule_.sourceOrigin());timeline.publish(servo_.mapping);
  }
  ~AudioCallback(){output_->Release();}
  HRESULT QueryInterface(REFIID iid,LPVOID* p)override{if(!p)return E_INVALIDARG;*p=nullptr;const auto unknown=CFUUIDGetUUIDBytes(IUnknownUUID);if(!std::memcmp(&iid,&unknown,sizeof(iid))||!std::memcmp(&iid,&IID_IDeckLinkAudioOutputCallback,sizeof(iid))){*p=static_cast<IDeckLinkAudioOutputCallback*>(this);AddRef();return S_OK;}return E_NOINTERFACE;}
@@ -110,9 +111,9 @@ public:
    driftReset=true;++recoveries;if(++driftResets_>=3)return fail();
   }
   if(activeTime&&(recovered||driftReset||(!clockCalibrated&&phase_.observe(midpoint,consumed,queueAfter-queueBefore)))){
-   oldMapping_=servo_.mapping;oldDelay_=audioDelay_;startupShift=schedule_.calibrateQueue(midpoint,buffered,sourceAge_);fadePosition_=startupShift?0:240;sourceOrigin=schedule_.sourceOrigin();clockCalibrated=!recovered;servo_.reset(midpoint,consumed,schedule_.sourceOrigin());
+   oldMapping_=servo_.mapping;oldDelay_=delay_;startupShift=schedule_.calibrateQueue(midpoint,buffered,sourceAge_);fadePosition_=startupShift?0:240;sourceOrigin=schedule_.sourceOrigin();clockCalibrated=!recovered;servo_.reset(midpoint,consumed,schedule_.sourceOrigin());
   }
-  const auto requestedDelay=std::max(0,adjustment_->load());if(requestedDelay!=audioDelay_){oldMapping_=servo_.mapping;oldDelay_=audioDelay_;audioDelay_=requestedDelay;fadePosition_=0;}
+  const auto requested=adjustment_->load();if(requested!=delay_.signedSamples){oldMapping_=servo_.mapping;oldDelay_=delay_;delay_=timing_.plan(requested);fadePosition_=0;}
   if(clockTrace_&&activeTime&&(lastClockTrace_==INT64_MIN||queueAfter-lastClockTrace_>=48000)){
    BMDTimeValue hardware=0,inFrame=0,ticks=0;const auto before=mediaSampleTime();const bool valid=output_->GetHardwareReferenceClock(48000,&hardware,&inFrame,&ticks)==S_OK;const auto after=mediaSampleTime();
    clockTrace_->append({queueBefore,queueAfter,consumed,time,before,after,hardware,valid,servo_.mapping.ratio,servo_.phaseError});lastClockTrace_=queueAfter;
@@ -123,13 +124,13 @@ public:
   const uint32_t deviceBuffered=buffered;if(!playbackStarted)buffered=schedule_.bufferedSpan(buffered,0);uint32_t writtenTotal=0;
   try{for(int block=0;buffered<schedule_.target()&&block<24;block++){
    uint32_t count=schedule_.blockSize(buffered,startupPadding_),written=0;const bool padding=schedule_.paddingRemaining(startupPadding_)>0;
-   const double sourceStart=servo_.mapping.at(schedule_.cursor())-audioDelay_;
+   const double sourceStart=delay_.audioSource(servo_.mapping,schedule_.cursor());
    if(!padding)readAge=mediaSampleTime()-int64_t(std::llround(sourceStart+servo_.mapping.ratio*count));
-   auto old=(!padding&&fadePosition_<240&&programActive)?mixer_->mixResampled(oldMapping_.at(schedule_.cursor())-oldDelay_,count,oldMapping_.ratio,resampler_,programActive):std::vector<int32_t>{};
+   auto old=(!padding&&fadePosition_<240&&programActive)?mixer_->mixResampled(oldDelay_.audioSource(oldMapping_,schedule_.cursor()),count,oldMapping_.ratio,resampler_,programActive):std::vector<int32_t>{};
    auto pcm=padding?std::vector<int32_t>(count*2,0):mixer_->mixResampled(sourceStart,count,servo_.mapping.ratio,resampler_,programActive);
    if(!old.empty())for(uint32_t j=0;j<count&&fadePosition_+j<240;++j){const double t=audioTransitionWeight(fadePosition_+j,240);for(int c=0;c<2;++c){const auto i=j*2+c;pcm[i]=int32_t(double(old[i])*(1-t)+double(pcm[i])*t);}}
    if(output_->ScheduleAudioSamples(pcm.data(),count,schedule_.cursor(),48000,&written)!=S_OK){return fail();}
-   if(syncTrace_&&written)syncTrace_->accepted(pcm.data(),written,schedule_.cursor(),queueAfter,servo_.mapping,audioDelay_,fadePosition_<240);
+   if(syncTrace_&&written)syncTrace_->accepted(pcm.data(),written,schedule_.cursor(),queueAfter,servo_.mapping,delay_.audioSourceDelay(servo_.mapping),fadePosition_<240);
    if(!written)break;if(padding)startupPaddingWritten+=written;fadePosition_=std::min<uint32_t>(240,fadePosition_+written);schedule_.advance(written);buffered+=written;writtenTotal+=written;frames+=written;
   }}catch(...){return fail();}bufferedFrames=deviceBuffered+writtenTotal;
   // Begin playback only from a real SDK preroll callback, once both queues are
@@ -153,7 +154,7 @@ class DeckLink final:public Output {
     std::atomic<bool> running_{false},air_{true},quit_{false};
     mutable std::mutex messageMutex_;std::string message_="Output stopped.";
     std::shared_ptr<const Frame> cachedSource_;std::vector<uint8_t> converted_;bool cachedAir_=false;
-    std::thread worker_;Mode mode_;const LatestFrame* source_=nullptr;uint64_t next_=0;
+    std::thread worker_;Mode mode_;AVTiming frameTiming_;const LatestFrame* source_=nullptr;uint64_t next_=0;
     bool referenceDiagnostic_=false;std::vector<std::array<double,8>> referenceSchedule_;
     std::unique_ptr<SyncEventBuffer<SyncVideoEvent>> syncTrace_;
     bool syncDiagnostic_=false,syncWhite_=false;std::atomic<int64_t> scheduledFlashPts_{INT64_MIN};std::atomic<uint64_t> scheduledFlashCount_{0};
@@ -168,16 +169,16 @@ class DeckLink final:public Output {
         check(buffer->StartAccess(bmdBufferAccessWrite),"Access video buffer");
         void* bytes=nullptr;auto result=buffer->GetBytes(&bytes);
         try {
-            check(result,"Get video memory");const auto syncAtFrame=syncOffset_->load();int64_t selectionTime=INT64_MIN;std::shared_ptr<const Frame> image;std::shared_ptr<const std::vector<uint8_t>> prepared;
+            check(result,"Get video memory");const auto syncAtFrame=syncOffset_->load();const auto frameDelay=frameTiming_.plan(syncAtFrame);int64_t selectionTime=INT64_MIN;std::shared_ptr<const Frame> image;std::shared_ptr<const std::vector<uint8_t>> prepared;
             if(audioCallback_){
                 const auto streamPosition=mode_.rate.timestamp(next_+CompletionState::startupLeadFrames)*48000/mode_.rate.scale;
                 if(auto mapping=audioCallback_->timeline.read())videoMapping_=*mapping;
-                const auto target=int64_t(std::llround(videoMapping_.at(streamPosition)-std::max(0,-syncAtFrame)));
+                const auto target=int64_t(std::llround(frameDelay.videoSource(videoMapping_,streamPosition)));
                 auto selected=source_->history.at(target,mode_.rate.duration*48000/(2*mode_.rate.scale));if(selected.frame&&selected.frame->size!=mode_.size)selected={};image=selected.frame;prepared=selected.prepared;selectionTime=selected.time;++historyReads_;
                 if(!image){if(audioCallback_->clockCalibrated)++historyMisses_;else ++historyStartupMisses_;selectedAge_=INT64_MIN;}
                 else selectedAge_=target-selected.time;
             }
-            if(referenceDiagnostic_&&referenceSchedule_.size()<4096&&image){const auto id=referenceFrameId(image->pixels.data(),image->size.width,image->size.height,image->stride);if(id)referenceSchedule_.push_back({double(mode_.rate.timestamp(next_+CompletionState::startupLeadFrames)*48000/mode_.rate.scale),double(*id),double(audioCallback_->sourceOrigin.load()),double(image->paintTime),double(image->contentTime),videoMapping_.at(mode_.rate.timestamp(next_+CompletionState::startupLeadFrames)*48000/mode_.rate.scale)-std::max(0,-syncAtFrame),videoMapping_.ratio,double(syncAtFrame)});}
+            if(referenceDiagnostic_&&referenceSchedule_.size()<4096&&image){const auto id=referenceFrameId(image->pixels.data(),image->size.width,image->size.height,image->stride);if(id)referenceSchedule_.push_back({double(mode_.rate.timestamp(next_+CompletionState::startupLeadFrames)*48000/mode_.rate.scale),double(*id),double(audioCallback_->sourceOrigin.load()),double(image->paintTime),double(image->contentTime),frameDelay.videoSource(videoMapping_,mode_.rate.timestamp(next_+CompletionState::startupLeadFrames)*48000/mode_.rate.scale),videoMapping_.ratio,double(syncAtFrame)});}
             const bool air=air_;
             if(syncDiagnostic_){
                 bool white=false;
@@ -192,7 +193,7 @@ class DeckLink final:public Output {
                         const auto id=referenceDiagnostic_?referenceFrameId(image->pixels.data(),image->size.width,image->size.height,image->stride):std::optional<uint16_t>{};
                         syncTrace_->append({stream,mediaSampleTime(),image->paintTime,image->contentTime,selectionTime,
                             mode_.rate.duration*48000/(2*mode_.rate.scale),id?int64_t(*id):-1,image->sequence,
-                            videoMapping_.at(stream)-std::max(0,-syncAtFrame),videoMapping_,syncAtFrame});
+                            frameDelay.videoSource(videoMapping_,stream),videoMapping_,syncAtFrame,frameDelay.videoFrames,frameDelay.streamSamples});
                     }
                 }
                 syncWhite_=white;
@@ -271,10 +272,22 @@ public:
             if(!dev.modes.empty())result.push_back(std::move(dev));
         }message(result.empty()?"No compatible SDI output device detected.":"Devices checked in the active profile.");return result;
     }
+    void validateVideoDelay(int32_t offset,const LatestFrame& source)const{
+        if(offset>=0)return;
+        const AVTiming geometry(mode_.rate);const auto plan=geometry.plan(offset);
+        const size_t frameBytes=size_t(mode_.size.width)*mode_.size.height*8;
+        if(geometry.minimumHistoryFrames(offset,reserve_,sourceAge_)>(384u*1024*1024)/frameBytes)
+            throw std::runtime_error("A/V adjustment exceeds the bounded video history for this output resolution. Use a smaller negative adjustment.");
+        const auto target=mediaSampleTime()-geometry.audioTarget(reserve_)-sourceAge_-int64_t(std::ceil(plan.streamSamples*1.0002));
+        const auto selected=source.history.at(target,int64_t(mode_.rate.duration*48000/(2*mode_.rate.scale)));
+        if(!selected.frame||selected.frame->size!=mode_.size)
+            throw std::runtime_error("Video history is not ready for this A/V adjustment. Allow the source to play before applying it.");
+    }
     void start(const std::string& id,const Mode& requested,const LatestFrame& source)override{
         stop();auto devices=enumerate();bool found=false;
         for(auto& d:devices)if(d.id==id)for(auto& m:d.modes)if(m.id==requested.id&&m.pixelFormat==requested.pixelFormat&&(requested.keying?m.keying:m.fillOnlySupported)){mode_=m;mode_.keying=requested.keying;found=true;}
         if(!found)throw std::runtime_error("Selected device, profile or mode is no longer available.");
+        validateVideoDelay(syncOffset_->load(),source);
         try{
             Com<IDeckLinkIterator> it(CreateDeckLinkIteratorInstance());if(!it)throw std::runtime_error("Driver unavailable.");
             for(Com<IDeckLink> d;it->Next(d.put())==S_OK;)if(identity(d.get())==id){device_=std::move(d);break;}
@@ -287,7 +300,7 @@ public:
             // SignalGenerator startup order; enabling audio may initialise transport.
             check(output_->EnableAudioOutput(bmdAudioSampleRate48kHz,bmdAudioSampleType32bitInteger,2,bmdAudioOutputStreamTimestamped),"Enable 48 kHz stereo SDI audio");
             audioEnabled_=true;
-            source_=&source;source_->history.prepareOutput(mode_.pixelFormat==bmdFormat8BitARGB,384*1024*1024);next_=0;quit_=false;air_=true;state_=std::make_shared<CompletionState>();callback_=Com<Callback>(new Callback(state_));
+            frameTiming_=AVTiming(mode_.rate);source_=&source;source_->history.prepareOutput(mode_.pixelFormat==bmdFormat8BitARGB,384*1024*1024);next_=0;quit_=false;air_=true;state_=std::make_shared<CompletionState>();callback_=Com<Callback>(new Callback(state_));
             check(output_->SetScheduledFrameCompletionCallback(callback_.get()),"Register video callback");
             videoCallbackSet_=true;
             int32_t stride=0;check(output_->RowBytesForPixelFormat(BMDPixelFormat(mode_.pixelFormat),mode_.size.width,&stride),"Get video stride");
@@ -323,7 +336,7 @@ public:
             message(mode_.keying?"SDI active · Fill + Key · stereo audio":"SDI active · Fill only · stereo audio");
         }catch(...){stop();throw;}
     }
-    void syncAdjustment(int32_t offset)override{if(std::abs(int64_t(offset))>9600)throw std::invalid_argument("A/V adjustment exceeds 200 ms");*syncOffset_=offset;}
+    void syncAdjustment(int32_t offset)override{if(std::abs(int64_t(offset))>9600)throw std::invalid_argument("A/V adjustment exceeds 200 ms");if(running_&&source_)validateVideoDelay(offset,*source_);*syncOffset_=offset;}
     void timing(uint32_t reserve,int32_t offset)override{if(running_)throw std::runtime_error("Stop output before changing timing.");if(reserve<2||reserve>3||std::abs(int64_t(offset))>9600)throw std::invalid_argument("Invalid output timing");reserve_=reserve;*syncOffset_=offset;}
     void referenceDiagnostic(bool enabled)override{if(running_)throw std::runtime_error("Stop output before changing reference diagnostics.");referenceDiagnostic_=enabled;}
     void syncDiagnostic(bool enabled)override{if(running_)throw std::runtime_error("Stop output before changing diagnostics.");syncDiagnostic_=enabled;}
@@ -338,7 +351,7 @@ public:
         videoEnabled_=audioEnabled_=videoCallbackSet_=audioCallbackSet_=keyerEnabled_=playbackStarted_=false;
         for(const auto& r:referenceSchedule_)std::cerr<<std::fixed<<std::setprecision(9)<<"REFERENCE_SCHEDULE stream_samples="<<int64_t(r[0])<<" id="<<int64_t(r[1])<<" audio_output_origin="<<int64_t(r[2])<<" paint_samples="<<int64_t(r[3])<<" content_time="<<int64_t(r[4])<<" source_target="<<r[5]<<" source_ratio="<<r[6]<<" sync_offset="<<int64_t(r[7])<<'\n';referenceSchedule_.clear();
         if(audioCallback_)audioCallback_->dumpSyncTrace();
-        if(syncTrace_){for(const auto& e:syncTrace_->events)std::cerr<<std::fixed<<std::setprecision(9)<<"SYNC_VIDEO stream_samples="<<e.stream<<" host_samples="<<e.host<<" paint_samples="<<e.paint<<" content_time="<<e.content<<" selection_samples="<<e.historyTime<<" max_ahead="<<e.maxAhead<<" id="<<e.identity<<" sequence="<<e.sequence<<" source_target="<<e.target<<" mapping_source="<<e.mapping.source<<" mapping_stream="<<e.mapping.stream<<" ratio="<<e.mapping.ratio<<" adjustment="<<e.adjustment<<'\n';std::cerr<<"SYNC_TRACE kind=video stored="<<syncTrace_->events.size()<<" omitted="<<syncTrace_->omitted<<'\n';syncTrace_.reset();}
+        if(syncTrace_){for(const auto& e:syncTrace_->events)std::cerr<<std::fixed<<std::setprecision(9)<<"SYNC_VIDEO stream_samples="<<e.stream<<" host_samples="<<e.host<<" paint_samples="<<e.paint<<" content_time="<<e.content<<" selection_samples="<<e.historyTime<<" max_ahead="<<e.maxAhead<<" id="<<e.identity<<" sequence="<<e.sequence<<" source_target="<<e.target<<" mapping_source="<<e.mapping.source<<" mapping_stream="<<e.mapping.stream<<" ratio="<<e.mapping.ratio<<" adjustment="<<e.adjustment<<" common_frames="<<e.commonFrames<<" common_stream_samples="<<e.commonStreamSamples<<" video_delay_source="<<e.commonStreamSamples*e.mapping.ratio<<'\n';std::cerr<<"SYNC_TRACE kind=video stored="<<syncTrace_->events.size()<<" omitted="<<syncTrace_->omitted<<'\n';syncTrace_.reset();}
         running_=false;air_=true;mixer_->enabled=true;audioCallback_=Com<AudioCallback>();if(source_)source_->history.prepareOutput(std::nullopt,192*1024*1024);source_=nullptr;cachedSource_.reset();converted_.clear();pool_.clear();callback_=Com<Callback>();keyer_=Com<IDeckLinkKeyer>();output_=Com<IDeckLinkOutput>();device_=Com<IDeckLink>();
     }
     OutputStatus status()const override{std::lock_guard<std::mutex> l(messageMutex_);if(audioCallback_){if(auto m=audioCallback_->timeline.read())statusMapping_=*m;}else statusMapping_={};return {running_,air_,state_->completed,state_->late,state_->dropped,message_,audioCallback_?audioCallback_->frames.load():0,audioCallback_?audioCallback_->errors.load():0,audioCallback_?audioCallback_->recoveries.load():0,audioCallback_?audioCallback_->bufferedFrames.load():0,audioCallback_?audioCallback_->targetFrames():0,sourceAge_,audioCallback_?audioCallback_->readAge.load():INT64_MIN,audioCallback_?audioCallback_->clockCalibrated.load():false,audioCallback_?audioCallback_->startupShift.load():0,audioCallback_?audioCallback_->streamQueuePhase.load():0,audioCallback_?audioCallback_->prerollAudio.load():0,audioCallback_?audioCallback_->prerollVideo.load():0,state_->firstDroppedFrame.load(),state_->warmupFrames.load(),state_->warmupSamples.load(),CompletionState::startupLeadFrames,audioCallback_?audioCallback_->startupPaddingWritten.load():0,historyReads_.load(),historyMisses_.load(),selectedAge_.load(),source_?source_->history.bytes():0,audioCallback_?audioCallback_->sourceOrigin.load():0,scheduledFlashPts_.load(),scheduledFlashCount_.load(),historyStartupMisses_.load(),preparedReads_.load(),conversionFallbacks_.load(),state_->workerQos.load(),audioCallback_?audioCallback_->ratePpm.load():0,audioCallback_?audioCallback_->estimatedRatePpm.load():0,audioCallback_?audioCallback_->phaseError.load():0,audioCallback_?audioCallback_->rateUncertaintyPpm.load():0,audioCallback_?audioCallback_->driftReady.load():false,audioCallback_?audioCallback_->driftRejected.load():0,statusMapping_,reserve_,syncOffset_->load()};}

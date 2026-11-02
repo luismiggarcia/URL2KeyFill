@@ -2148,3 +2148,107 @@ com a página HTML e a referência identificada. A observação SDK pode acompan
 um ensaio mais prolongado, mas os buffers devem ser dimensionados/amostrados para
 essa janela antes de o certificar por evento. Nenhuma nova sessão longa foi
 iniciada. O monitor local/P6 mantém as pendências já identificadas.
+
+### 10.15 Resposta de implementação — ajuste negativo com precisão subframe (2026-11-02)
+
+**Estado: implementação candidata sobre 0.5.2; não constitui uma nova publicação.**
+As conclusões de 10.14 mantêm-se: melhorar a precisão do ajuste não elimina a
+variação de fase da fonte, nem certifica todas as URLs ou receção humana.
+
+**Alteração implementada.** Para um ajuste negativo, `AVTiming` decompõe o pedido
+num atraso comum de vídeo de um número inteiro de frames e numa compensação de
+áudio fracionária. Exemplo: −5 ms a 25p corresponde a vídeo +40 ms e áudio +35 ms;
+a 50p, vídeo +20 ms e áudio +15 ms. O cálculo usa a taxa racional e o mapeamento
+adaptativo do relógio. Zero e ajustes positivos conservam o percurso anterior,
+sem atraso comum adicional. Mantêm-se o servo, as reservas SDK, a idade da fonte
+e a transição áudio de 5 ms. Não foi adicionada uma fila de saída.
+
+**Custo explícito.** A precisão negativa pode acrescentar até quase uma frame de
+latência comum relativamente ao atraso ideal pedido. Não é uma otimização de
+velocidade: é uma troca deliberada de latência por precisão. Para −5 ms, o custo
+nominal adicional de áudio é 35 ms a 25p ou 15 ms a 50p. As estimativas por callback
+medidas na primeira comparação foram vídeo +39,56/áudio +34,56 ms a 25p e vídeo
++20,54/áudio +15,58 ms a 50p. Incluem captura e escalonamento de software; não são
+medições absolutas da latência do fio, do ecrã ou do observador.
+
+**Histórico e falha encontrada durante a validação.** O primeiro candidato passou
+−199 ms a 25p e 50p, mas falhou a 59,94p: 1583 falhas de histórico e 7 no arranque.
+Este resultado foi preservado, sem o reclassificar como aprovado. As 16 frames
+fixas não cobriam o atraso, a idade da fonte e a reserva nessa taxa. O segundo
+candidato dimensiona o limite em frames: 16 a 25p, 18 a 50p e 21 a 59,94p na
+configuração ensaiada, mantendo os limites de bytes de 192 MiB sem preparação e
+384 MiB com preparação. Comparado com 16 frames, o máximo adicional preparado
+em 1080p é aproximadamente 33 MB a 50p ou 83 MB a 59,94p. A seleção mantém a mesma
+conversão por publicação; reter mais frames não acrescenta esse atraso à saída
+quando o ajuste é zero.
+
+O segundo candidato repetiu −199 ms durante 30 s nas três taxas: zero falhas de
+histórico, incluindo arranque, e zero amostras em falta, erros API, recuperações,
+frames atrasadas/descartadas ou resets. Estes ensaios validam continuidade e
+capacidade do histórico; os offsets absolutos entre sessões não servem para
+atribuir erro de calibração ao ajuste. Pedidos que ultrapassam o orçamento de
+histórico da resolução são rejeitados antes de ativar a saída; alterações em
+PLAY também verificam a disponibilidade do histórico antes de serem aceites.
+
+**Precisão física já medida.** Na comparação inicial de 0 para −5 ms, com referência
+de conteúdo identificada e loopback real, a alteração foi −5,000 ms a 25p e
+−5,021 ms a 50p. Houve 31 correspondências físicas de eventos por ensaio e zero
+falhas de continuidade. O analisador separa o ajuste inicial do final e exclui
+as janelas de transição. Isto valida o efeito em regime estável; não certifica a
+perceção subjetiva da transição.
+
+**Verificação automática.** Passaram 7/7 testes C++ e 67 testes Python. O teste de
+ajuste cobre 16040 planos em oito taxas e cinco razões de relógio, incluindo
+±200 ppm, e 2240 comparações com seleção real de histórico a 25p/50p. A execução
+com AddressSanitizer/UndefinedBehaviorSanitizer passou; o teste concorrente de
+retenção/publicação/leitura passou com ThreadSanitizer. Estes testes não
+substituem observação de cor, lip sync humano ou novo ensaio de oito horas.
+
+Evidência bruta e resultados: `tools/audio-audit/data/negative-adjustment-2026-11-02/`.
+As falhas do primeiro candidato estão em `history-v1`, a repetição corrigida em
+`history-v2`, e a matriz final em `live-v2`. A app de teste foi preparada em
+`/tmp/u2k-negative-adjustment-v2/URL2KeyFill.app`; não foi substituída a instalação
+normal nem publicada uma nova versão.
+
+**Matriz final de alterações em PLAY — resultados provisórios.** A 25p, as mudanças
+0→−1, 0→−5, 0→−21 e −5→+5 ms mediram, respetivamente, −1,000, −4,990, −21,000 e
++10,000 ms. A 50p, 0→−1, 0→−5, 0→−21 e +5→−5 ms mediram −1,000, −5,021, −20,979 e
+−10,000 ms. Os oito analisadores registaram aprovação e zero contadores de falha.
+Contudo, o utilizador comunicou ter desligado e voltado a ligar o UltraStudio
+para recuperar o funcionamento. Como não ficou registado o instante dessa
+intervenção, esta matriz fica **provisória**, sem certificação de funcionamento
+ininterrupto do hardware. Os registos originais e esta ressalva são preservados;
+não se usa a ausência de erros dos contadores como prova contra o bloqueio relatado.
+
+**Resposta à fotografia de imagem verde / recuperação do UltraStudio.** A imagem
+uniforme não era o padrão esperado do teste. Foi observada uma diferença entre
+PLAY e repouso: durante PLAY, a captura dos oito pontos das barras devolveu
+valores distintos coerentes com branco, amarelo, ciano, verde, magenta, vermelho,
+azul e preto (por exemplo, extremos YUV 235/128/128 e 16/128/128). Depois de STOP,
+o SDK indicava `Busy=0`; o sinal capturado em repouso apresentou valores anómalos.
+Isto não demonstra, por si só, uma conversão de cor errada durante PLAY nem permite
+atribuir o bloqueio ao driver, ao firmware ou à aplicação.
+
+A consulta, sem escrita persistente, encontrou suporte de saída em repouso,
+operação em preto e passagem de captura em `Clean Switch`. No ensaio reversível,
+com passagem desativada, os oito pontos horizontais amostrados devolveram preto
+16/128/128; com a configuração original restaurada, voltaram valores anómalos.
+O valor médio da região central em repouso incluía linhas com zeros e **não deve
+ser interpretado como uma imagem completa nem como medição colorimétrica válida**.
+A realimentação SDI OUT→SDI IN em repouso é uma hipótese apoiada por esta comparação,
+não uma causa definitivamente demonstrada. O ensaio de cor também fica condicionado
+pela ausência do instante exato do reinício físico comunicado pelo utilizador.
+
+A configuração original foi restaurada (`SetInt` devolveu sucesso); não foi
+chamado `WriteConfigurationToPreferences`. Nenhum processo de teste ficou ativo.
+O utilizador confirmou que o equipamento voltou a funcionar após desligar/ligar.
+Não foi introduzida uma alteração especulativa no percurso de saída para tentar
+ocultar este sintoma. A evidência está em `green-investigation`.
+
+**Próximo passo após validação pelo utilizador/auditor:** um ensaio curto, com hora
+de início/fim e de qualquer reinício registadas, comparando PLAY/STOP e passagem
+SDI desativada temporariamente. Confirmar imagem no LCD e na captura, repetir o
+arranque sem desligar a placa e só depois decidir se é necessário corrigir a
+sequência de STOP ou configurar o ambiente de loopback. Não arrancar novo teste
+longo com este incidente por esclarecer. A precisão negativa candidata está
+implementada; a fiabilidade do hardware perante este sintoma permanece pendente.

@@ -4,6 +4,7 @@
 #import <AVFoundation/AVFoundation.h>
 #include "browser/Browser.hpp"
 #include "output/Output.hpp"
+#include "core/AVAdjustment.hpp"
 #include "core/MediaClock.hpp"
 #include "include/cef_application_mac.h"
 #include "include/wrapper/cef_helpers.h"
@@ -129,7 +130,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  std::vector<ImageInput> images;
  for(NSDictionary* layer in layers){auto it=runtimes.find([layer[@"id"] UTF8String]);if(it==runtimes.end())continue;images.push_back({it->second->frame,[layer[@"visible"] boolValue]});}
  if(auto m=[self selectedMode])for(auto& entry:runtimes)entry.second->browser->frameRate(m->rate);
- scene->configure(std::move(images),size,target);[self configureAudio];
+ scene->configure(std::move(images),size,target);if(auto m=[self selectedMode])scene->frames.history.retainFrames(AVTiming(m->rate).recommendedHistoryFrames(explicitSourceAge?sourceAgeSamples:2880));[self configureAudio];
 }
 -(void)configureAudio{
  std::vector<AudioInput> audio;
@@ -293,8 +294,8 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  [self sendAudioLevels];
  if(++tick%4==0)[self sendState];
  if(smoke){
-  if(hardwareTest&&smokePhase==4&&!syncCalibrationFile.empty()&&tick%20==0){std::ifstream input(syncCalibrationFile);if(input){std::string line;std::getline(input,line);char* end=nullptr;const long n=std::strtol(line.c_str(),&end,10);if(line.empty()||line.size()>32||*end||n< -200||n>200){std::cerr<<"FAIL invalid calibration file\n";[self quit];return;}if(n!=syncCalibrationLast){output->syncAdjustment(int(n)*48);prefs[@"syncOffsetMs"]=@(int(n));syncCalibrationLast=int(n);std::cout<<"SYNC_CALIBRATION ms="<<n<<" active_s="<<std::chrono::duration<double>(now-started).count()<<std::endl;}}}
-  if(hardwareTest&&smokePhase==4&&changedSyncOffset!=INT_MAX&&!syncChanged&&std::chrono::duration<double>(now-started).count()>=syncChangeSeconds){output->syncAdjustment(changedSyncOffset*48);prefs[@"syncOffsetMs"]=@(changedSyncOffset);syncChanged=true;std::cout<<"SYNC_ADJUSTMENT ms="<<changedSyncOffset<<" active_s="<<std::chrono::duration<double>(now-started).count()<<std::endl;}
+  if(hardwareTest&&smokePhase==4&&!syncCalibrationFile.empty()&&tick%20==0){std::ifstream input(syncCalibrationFile);if(input){std::string line;std::getline(input,line);char* end=nullptr;const long n=std::strtol(line.c_str(),&end,10);if(line.empty()||line.size()>32||*end||n< -200||n>200){std::cerr<<"FAIL invalid calibration file\n";[self quit];return;}if(n!=syncCalibrationLast){try{output->syncAdjustment(int(n)*48);}catch(const std::exception& e){std::cerr<<"FAIL calibration adjustment: "<<e.what()<<std::endl;[self quit];return;}prefs[@"syncOffsetMs"]=@(int(n));syncCalibrationLast=int(n);std::cout<<"SYNC_CALIBRATION ms="<<n<<" active_s="<<std::chrono::duration<double>(now-started).count()<<std::endl;}}}
+  if(hardwareTest&&smokePhase==4&&changedSyncOffset!=INT_MAX&&!syncChanged&&std::chrono::duration<double>(now-started).count()>=syncChangeSeconds){try{output->syncAdjustment(changedSyncOffset*48);}catch(const std::exception& e){std::cerr<<"FAIL live adjustment: "<<e.what()<<std::endl;[self quit];return;}prefs[@"syncOffsetMs"]=@(changedSyncOffset);syncChanged=true;std::cout<<"SYNC_ADJUSTMENT ms="<<changedSyncOffset<<" active_s="<<std::chrono::duration<double>(now-started).count()<<std::endl;}
   if(hardwareTest&&smokePhase==4&&(!status.running||!status.onAir)){std::cerr<<"FAIL hardware PLAY interrupted: "<<status.message<<"\n";[self quit];return;}
   if(std::chrono::steady_clock::now()-started>std::chrono::duration<double>((baselineSeconds>0&&(smokePhase==4||smokePhase==5))?baselineSeconds+60:25)){std::cerr<<"FAIL smoke timeout phase "<<smokePhase<<" UI="<<ready<<" video="<<status.completed<<" audio="<<status.audioFrames<<" nonSilent="<<mixer->nonSilent<<" mixPts="<<mixer->lastMixTimestamp<<'\n';for(auto& r:runtimes)std::cerr<<"Source audio frames="<<r.second->audio->received<<" pts="<<r.second->audio->latestTimestamp<<" nonzero="<<r.second->audio->nonZero<<'\n';[self quit];return;}
   auto first=runtimes.find([layers.firstObject[@"id"] UTF8String]);if(first==runtimes.end())return;auto frame=first->second->frame->get();

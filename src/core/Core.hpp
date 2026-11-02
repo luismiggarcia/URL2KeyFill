@@ -54,6 +54,7 @@ class FrameHistory {
     void trim();
 public:
     void configure(size_t frames,size_t bytes,int64_t span=24000);
+    void retainFrames(size_t frames);
     void prepareOutput(std::optional<bool> argb,size_t budget);
     void publish(std::shared_ptr<const Frame>,int64_t time);
     TimedFrame at(int64_t time,int64_t maxAhead=0)const;

@@ -1,0 +1,3 @@
+supports_idle result=0 value=1
+idle_operation result=0 value=626c6163
+capture_passthrough result=0 value=70636c6e

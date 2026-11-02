@@ -1,0 +1,4 @@
+#include "DeckLinkAPI.h"
+#include "DeckLinkAPIConfiguration.h"
+#include <cstdio>
+int main(){auto it=CreateDeckLinkIteratorInstance();if(!it)return 1;IDeckLink*d=nullptr;while(it->Next(&d)==S_OK){IDeckLinkProfileAttributes*a=nullptr;if(d->QueryInterface(IID_IDeckLinkProfileAttributes,(void**)&a)==S_OK){bool v=false;auto r=a->GetFlag(BMDDeckLinkSupportsIdleOutput,&v);printf("supports_idle result=%d value=%d\n",int(r),int(v));a->Release();}IDeckLinkConfiguration*c=nullptr;if(d->QueryInterface(IID_IDeckLinkConfiguration,(void**)&c)==S_OK){int64_t v=0;auto r=c->GetInt(bmdDeckLinkConfigVideoOutputIdleOperation,&v);printf("idle_operation result=%d value=%08llx\n",int(r),(long long)v);v=0;r=c->GetInt(bmdDeckLinkConfigCapturePassThroughMode,&v);printf("capture_passthrough result=%d value=%08llx\n",int(r),(long long)v);c->Release();}d->Release();}it->Release();}

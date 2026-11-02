@@ -1,0 +1,4 @@
+{
+  "status": "provisional",
+  "reason": "User reported hardware power cycle; exact intervention timestamp unavailable. Nominal analyser passes do not certify uninterrupted hardware reliability."
+}

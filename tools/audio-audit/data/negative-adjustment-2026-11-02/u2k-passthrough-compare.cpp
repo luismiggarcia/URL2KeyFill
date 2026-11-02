@@ -1,0 +1,5 @@
+#include "DeckLinkAPI.h"
+#include "DeckLinkAPIConfiguration.h"
+#include <cstdio>
+#include <cstdlib>
+int main(){auto it=CreateDeckLinkIteratorInstance();if(!it)return 1;IDeckLink*d=nullptr;IDeckLinkConfiguration*c=nullptr;while(it->Next(&d)==S_OK){if(d->QueryInterface(IID_IDeckLinkConfiguration,(void**)&c)==S_OK)break;d->Release();d=nullptr;}it->Release();if(!c)return 2;int64_t old=0;auto r=c->GetInt(bmdDeckLinkConfigCapturePassThroughMode,&old);if(r!=S_OK){c->Release();d->Release();return 3;}r=c->SetInt(bmdDeckLinkConfigCapturePassThroughMode,bmdDeckLinkCapturePassthroughModeDisabled);printf("disable_passthrough result=%d previous=%08llx\n",int(r),(long long)old);fflush(stdout);int rc=4;if(r==S_OK)rc=std::system("/tmp/u2k-color-capture --mode 1080p5994 --seconds 5 --color-stats 1 --csv /tmp/u2k-green-investigation/idle-passthrough-disabled.csv");auto restore=c->SetInt(bmdDeckLinkConfigCapturePassThroughMode,old);printf("restore_passthrough result=%d capture_exit=%d\n",int(restore),rc);c->Release();d->Release();return restore==S_OK&&rc==0?0:5;}

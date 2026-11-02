@@ -45,8 +45,8 @@ int main(){try{
   else REQUIRE(hi-lo<1e-8);
   std::cout<<"grid source_fps="<<sourceFps<<" output_fps="<<fps<<" ppm="<<ppm<<" phase="<<phase<<" min_ms="<<lo<<" max_ms="<<hi<<" largest_step_ms="<<maxStep<<'\n';
  }
- // Diagnose existing negative fractional calibration. The alternative below is
- // a test-only mathematical prototype, not the production delay policy.
+ // Retain the historical quantised policy as a diagnostic comparison. The
+ // production AVAdjustment helper has its own variable-rate and rational tests.
  for(int fps:{25,50})for(int ms:{-5,-20,-25}){
   const int64_t frame=48000/fps,pulse=48000*100,desired=ms*48;
   double lo=1e9,hi=-1e9;
@@ -67,7 +67,7 @@ int main(){try{
    REQUIRE(alternative-base==common);
    REQUIRE(double(common+desired+base-alternative)/48==ms);
   }
-  std::cout<<"negative_adjustment fps="<<fps<<" requested_ms="<<ms<<" current_min_ms="<<lo<<" current_max_ms="<<hi<<" common_frame_prototype_delta_ms="<<ms<<" prototype_only=1\n";
+  std::cout<<"negative_adjustment fps="<<fps<<" requested_ms="<<ms<<" legacy_min_ms="<<lo<<" legacy_max_ms="<<hi<<" common_frame_prototype_delta_ms="<<ms<<" prototype_only=1\n";
  }
  return 0;
 }catch(const std::exception& e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}}

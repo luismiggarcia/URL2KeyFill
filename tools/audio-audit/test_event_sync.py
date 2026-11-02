@@ -85,6 +85,18 @@ class EventSyncTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'affine mapping'):
             analyse(log.replace('source_samples=1336240', 'source_samples=1336241'), rows)
 
+    def test_fractional_audio_and_common_video_delay(self):
+        log, rows = fixture();changed=[]
+        for line in log.splitlines():
+            prefix,*fields=line.split();r=dict(field.split('=',1) for field in fields)
+            if prefix=='SYNC_AUDIO':
+                r['delay']='720.125';r['source_samples']=str(float(r['source_samples'])-720.125)
+            elif prefix=='SYNC_VIDEO':
+                r['adjustment']='-240';r['video_delay_source']='960.125';r['source_target']=str(float(r['source_target'])-960.125)
+            changed.append(prefix+' '+' '.join(k+'='+v for k,v in r.items()))
+        result=analyse('\n'.join(changed),rows)
+        self.assertEqual(result['scheduled_av']['median_ms'],5)
+
     def test_future_selection_limit_is_checked_when_available(self):
         log, rows = fixture()
         valid=log.replace('sequence=7 ', 'sequence=7 selection_samples=1336480 max_ahead=480 ')

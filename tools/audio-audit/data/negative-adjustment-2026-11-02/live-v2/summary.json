@@ -1,0 +1,314 @@
+[
+  {
+    "mode": "1080p25",
+    "initial": 0,
+    "final": -1,
+    "process_exit": 0,
+    "before_pairs": 7,
+    "after_pairs": 11,
+    "before_av_ms": 13.520833333333334,
+    "after_av_ms": 12.520833333333334,
+    "change_ms": -1.0,
+    "requested_ms": -1,
+    "initial_ms": 0,
+    "requested_change_ms": -1,
+    "health": {
+      "missing_total": 0.0,
+      "api_errors": 0.0,
+      "recoveries": 0.0,
+      "dropped_video": 0.0,
+      "late_video": 0.0,
+      "clock_resets": 0.0,
+      "video_history_misses": 0.0,
+      "video_conversion_fallbacks": 0.0
+    },
+    "limits": "Steady windows exclude the 5 ms fade and SDK queue drain; this is not subjective validation of the transition.",
+    "incremental_callback_latency_estimate": {
+      "video": {
+        "before_median_ms": 210.1875,
+        "after_median_ms": 249.47916666666666,
+        "change_ms": 39.29166666666666
+      },
+      "audio": {
+        "before_median_ms": 183.60416666666666,
+        "after_median_ms": 221.89583333333334,
+        "change_ms": 38.291666666666686
+      }
+    },
+    "incremental_latency_limits": "Same-session content-to-input-callback estimates, with nominal audio packet-position correction; includes input and software scheduling. Changes are not absolute wire/display latency measurements.",
+    "passed": true
+  },
+  {
+    "mode": "1080p25",
+    "initial": 0,
+    "final": -5,
+    "process_exit": 0,
+    "before_pairs": 7,
+    "after_pairs": 12,
+    "before_av_ms": -2.9791666666666665,
+    "after_av_ms": -7.96875,
+    "change_ms": -4.989583333333334,
+    "requested_ms": -5,
+    "initial_ms": 0,
+    "requested_change_ms": -5,
+    "health": {
+      "missing_total": 0.0,
+      "api_errors": 0.0,
+      "recoveries": 0.0,
+      "dropped_video": 0.0,
+      "late_video": 0.0,
+      "clock_resets": 0.0,
+      "video_history_misses": 0.0,
+      "video_conversion_fallbacks": 0.0
+    },
+    "limits": "Steady windows exclude the 5 ms fade and SDK queue drain; this is not subjective validation of the transition.",
+    "incremental_callback_latency_estimate": {
+      "video": {
+        "before_median_ms": 226.625,
+        "after_median_ms": 265.875,
+        "change_ms": 39.25
+      },
+      "audio": {
+        "before_median_ms": 183.5,
+        "after_median_ms": 217.78125,
+        "change_ms": 34.28125
+      }
+    },
+    "incremental_latency_limits": "Same-session content-to-input-callback estimates, with nominal audio packet-position correction; includes input and software scheduling. Changes are not absolute wire/display latency measurements.",
+    "passed": true
+  },
+  {
+    "mode": "1080p25",
+    "initial": 0,
+    "final": -21,
+    "process_exit": 0,
+    "before_pairs": 7,
+    "after_pairs": 11,
+    "before_av_ms": 19.791666666666668,
+    "after_av_ms": -1.2083333333333333,
+    "change_ms": -21.0,
+    "requested_ms": -21,
+    "initial_ms": 0,
+    "requested_change_ms": -21,
+    "health": {
+      "missing_total": 0.0,
+      "api_errors": 0.0,
+      "recoveries": 0.0,
+      "dropped_video": 0.0,
+      "late_video": 0.0,
+      "clock_resets": 0.0,
+      "video_history_misses": 0.0,
+      "video_conversion_fallbacks": 0.0
+    },
+    "limits": "Steady windows exclude the 5 ms fade and SDK queue drain; this is not subjective validation of the transition.",
+    "incremental_callback_latency_estimate": {
+      "video": {
+        "before_median_ms": 204.1875,
+        "after_median_ms": 244.0,
+        "change_ms": 39.8125
+      },
+      "audio": {
+        "before_median_ms": 183.875,
+        "after_median_ms": 202.6875,
+        "change_ms": 18.8125
+      }
+    },
+    "incremental_latency_limits": "Same-session content-to-input-callback estimates, with nominal audio packet-position correction; includes input and software scheduling. Changes are not absolute wire/display latency measurements.",
+    "passed": true
+  },
+  {
+    "mode": "1080p50",
+    "initial": 0,
+    "final": -1,
+    "process_exit": 0,
+    "before_pairs": 7,
+    "after_pairs": 11,
+    "before_av_ms": 6.979166666666667,
+    "after_av_ms": 5.979166666666667,
+    "change_ms": -1.0,
+    "requested_ms": -1,
+    "initial_ms": 0,
+    "requested_change_ms": -1,
+    "health": {
+      "missing_total": 0.0,
+      "api_errors": 0.0,
+      "recoveries": 0.0,
+      "dropped_video": 0.0,
+      "late_video": 0.0,
+      "clock_resets": 0.0,
+      "video_history_misses": 0.0,
+      "video_conversion_fallbacks": 0.0
+    },
+    "limits": "Steady windows exclude the 5 ms fade and SDK queue drain; this is not subjective validation of the transition.",
+    "incremental_callback_latency_estimate": {
+      "video": {
+        "before_median_ms": 137.20833333333334,
+        "after_median_ms": 157.125,
+        "change_ms": 19.916666666666657
+      },
+      "audio": {
+        "before_median_ms": 124.08333333333333,
+        "after_median_ms": 143.02083333333334,
+        "change_ms": 18.937500000000014
+      }
+    },
+    "incremental_latency_limits": "Same-session content-to-input-callback estimates, with nominal audio packet-position correction; includes input and software scheduling. Changes are not absolute wire/display latency measurements.",
+    "passed": true
+  },
+  {
+    "mode": "1080p50",
+    "initial": 0,
+    "final": -5,
+    "process_exit": 0,
+    "before_pairs": 7,
+    "after_pairs": 11,
+    "before_av_ms": 3.4791666666666665,
+    "after_av_ms": -1.5416666666666667,
+    "change_ms": -5.020833333333333,
+    "requested_ms": -5,
+    "initial_ms": 0,
+    "requested_change_ms": -5,
+    "health": {
+      "missing_total": 0.0,
+      "api_errors": 0.0,
+      "recoveries": 0.0,
+      "dropped_video": 0.0,
+      "late_video": 0.0,
+      "clock_resets": 0.0,
+      "video_history_misses": 0.0,
+      "video_conversion_fallbacks": 0.0
+    },
+    "limits": "Steady windows exclude the 5 ms fade and SDK queue drain; this is not subjective validation of the transition.",
+    "incremental_callback_latency_estimate": {
+      "video": {
+        "before_median_ms": 141.125,
+        "after_median_ms": 161.75,
+        "change_ms": 20.625
+      },
+      "audio": {
+        "before_median_ms": 124.5,
+        "after_median_ms": 140.10416666666666,
+        "change_ms": 15.604166666666657
+      }
+    },
+    "incremental_latency_limits": "Same-session content-to-input-callback estimates, with nominal audio packet-position correction; includes input and software scheduling. Changes are not absolute wire/display latency measurements.",
+    "passed": true
+  },
+  {
+    "mode": "1080p50",
+    "initial": 0,
+    "final": -21,
+    "process_exit": 0,
+    "before_pairs": 7,
+    "after_pairs": 11,
+    "before_av_ms": 8.75,
+    "after_av_ms": -12.229166666666666,
+    "change_ms": -20.979166666666664,
+    "requested_ms": -21,
+    "initial_ms": 0,
+    "requested_change_ms": -21,
+    "health": {
+      "missing_total": 0.0,
+      "api_errors": 0.0,
+      "recoveries": 0.0,
+      "dropped_video": 0.0,
+      "late_video": 0.0,
+      "clock_resets": 0.0,
+      "video_history_misses": 0.0,
+      "video_conversion_fallbacks": 0.0
+    },
+    "limits": "Steady windows exclude the 5 ms fade and SDK queue drain; this is not subjective validation of the transition.",
+    "incremental_callback_latency_estimate": {
+      "video": {
+        "before_median_ms": 135.0,
+        "after_median_ms": 174.16666666666666,
+        "change_ms": 39.16666666666666
+      },
+      "audio": {
+        "before_median_ms": 123.64583333333333,
+        "after_median_ms": 141.875,
+        "change_ms": 18.22916666666667
+      }
+    },
+    "incremental_latency_limits": "Same-session content-to-input-callback estimates, with nominal audio packet-position correction; includes input and software scheduling. Changes are not absolute wire/display latency measurements.",
+    "passed": true
+  },
+  {
+    "mode": "1080p25",
+    "initial": -5,
+    "final": 5,
+    "process_exit": 0,
+    "before_pairs": 7,
+    "after_pairs": 11,
+    "before_av_ms": 9.833333333333334,
+    "after_av_ms": 19.833333333333332,
+    "change_ms": 9.999999999999998,
+    "requested_ms": 5,
+    "initial_ms": -5,
+    "requested_change_ms": 10,
+    "health": {
+      "missing_total": 0.0,
+      "api_errors": 0.0,
+      "recoveries": 0.0,
+      "dropped_video": 0.0,
+      "late_video": 0.0,
+      "clock_resets": 0.0,
+      "video_history_misses": 0.0,
+      "video_conversion_fallbacks": 0.0
+    },
+    "limits": "Steady windows exclude the 5 ms fade and SDK queue drain; this is not subjective validation of the transition.",
+    "incremental_callback_latency_estimate": {
+      "video": {
+        "before_median_ms": 249.20833333333334,
+        "after_median_ms": 209.125,
+        "change_ms": -40.08333333333334
+      },
+      "audio": {
+        "before_median_ms": 218.9375,
+        "after_median_ms": 188.875,
+        "change_ms": -30.0625
+      }
+    },
+    "incremental_latency_limits": "Same-session content-to-input-callback estimates, with nominal audio packet-position correction; includes input and software scheduling. Changes are not absolute wire/display latency measurements.",
+    "passed": true
+  },
+  {
+    "mode": "1080p50",
+    "initial": 5,
+    "final": -5,
+    "process_exit": 0,
+    "before_pairs": 7,
+    "after_pairs": 11,
+    "before_av_ms": 5.604166666666667,
+    "after_av_ms": -4.395833333333333,
+    "change_ms": -10.0,
+    "requested_ms": -5,
+    "initial_ms": 5,
+    "requested_change_ms": -10,
+    "health": {
+      "missing_total": 0.0,
+      "api_errors": 0.0,
+      "recoveries": 0.0,
+      "dropped_video": 0.0,
+      "late_video": 0.0,
+      "clock_resets": 0.0,
+      "video_history_misses": 0.0,
+      "video_conversion_fallbacks": 0.0
+    },
+    "limits": "Steady windows exclude the 5 ms fade and SDK queue drain; this is not subjective validation of the transition.",
+    "incremental_callback_latency_estimate": {
+      "video": {
+        "before_median_ms": 143.58333333333334,
+        "after_median_ms": 163.58333333333334,
+        "change_ms": 20.0
+      },
+      "audio": {
+        "before_median_ms": 129.08333333333334,
+        "after_median_ms": 139.10416666666666,
+        "change_ms": 10.020833333333314
+      }
+    },
+    "incremental_latency_limits": "Same-session content-to-input-callback estimates, with nominal audio packet-position correction; includes input and software scheduling. Changes are not absolute wire/display latency measurements.",
+    "passed": true
+  }
+]

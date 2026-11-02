@@ -1,0 +1,33 @@
+{
+  "mode": "1080p5994",
+  "seconds": 30,
+  "settle_seconds": 4,
+  "source": "application",
+  "playback_sha256": "90ac059c91abfad27477bbca9c056c6dc94fec31cbc38c2691e8efeedd502487",
+  "capture_sha256": "53e0d9becabaae29ec223ddda2e81b63cb93a6dd608d7a949c7ce5b56a0da727",
+  "capture_command": [
+    "/private/tmp/u2k-phase-capture",
+    "--seconds",
+    "40",
+    "--mode",
+    "1080p5994",
+    "--csv",
+    "/private/tmp/u2k-negative-history-v1/1080p5994/capture.csv"
+  ],
+  "playback_command": [
+    "/private/tmp/u2k-negative-adjustment-v1/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+    "--sdi-av-test",
+    "--hardware-test-mode",
+    "1080p5994",
+    "--audio-baseline-seconds",
+    "30",
+    "--timing-profile",
+    "reliable",
+    "--sync-offset-ms",
+    "-199"
+  ],
+  "input_recording_limit_s": 23.905142040981445,
+  "playback_exit": 0,
+  "capture_exit": 0,
+  "analysis_error": "Need at least five clean flash onsets after warmup; check Fill versus Key"
+}
