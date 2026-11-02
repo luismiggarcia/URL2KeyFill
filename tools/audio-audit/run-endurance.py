@@ -116,8 +116,11 @@ def main():
     p.add_argument('--no-calibrate', action='store_true', help='Diagnostic raw run; absolute A/V quality still must pass')
     p.add_argument('--sample-interval-seconds', type=int, default=0,
                    help='Optional intermediate 30 s captures, every 90+ s; 0 disables')
+    p.add_argument('--diagnostic-stop-after-seconds',type=int,default=0,help='Deliberately fail the watchdog after this many active seconds, to verify trace preservation')
     p.add_argument('--dry-run', action='store_true')
     args = p.parse_args()
+    if args.diagnostic_stop_after_seconds and not 2 <= args.diagnostic_stop_after_seconds < args.seconds:
+        p.error('--diagnostic-stop-after-seconds must be 2..seconds-1')
     if not 120 <= args.seconds <= 28800:
         p.error('--seconds must be 120..28800')
     if args.sample_interval_seconds != 0 and args.sample_interval_seconds < 90:
@@ -125,7 +128,8 @@ def main():
     app, capture = str(Path(args.app).resolve()), str(Path(args.capture).resolve())
     root = Path(args.directory).resolve()
     total_seconds=args.seconds+(0 if args.no_calibrate else 45)
-    command = [app,'--sdi-av-test','--hardware-test-mode',args.mode,'--audio-baseline-seconds',str(total_seconds),'--timing-profile',args.timing_profile]
+    stop_file=root/'diagnostic-stop.request'
+    command = [app,'--sdi-diagnostic-stop-file',str(stop_file),'--sdi-av-test','--hardware-test-mode',args.mode,'--audio-baseline-seconds',str(total_seconds),'--timing-profile',args.timing_profile]
     if not args.no_calibrate:command += ['--sdi-sync-calibration-file',str(root/'sync-calibration.txt')]
     if args.dry_run:
         print(json.dumps(dict(command=command, awake=['/usr/bin/caffeinate','-dims','-w','APP_PID'], requirements='AC power, lid open, SDI OUT to IN; no overnight test started'), indent=2))
@@ -154,6 +158,7 @@ def main():
             if args.no_calibrate:measured_began=began
             while play.poll() is None:
                 elapsed = time.monotonic()-began
+                if args.diagnostic_stop_after_seconds and elapsed>=args.diagnostic_stop_after_seconds:raise RuntimeError('Deliberate diagnostic watchdog stop')
                 if awake.poll() is not None:
                     # The assertion can end normally only when its watched app exits.
                     if play.poll() is None:raise RuntimeError('Awake assertion process ended during playback')
@@ -237,6 +242,15 @@ def main():
     except Exception as e:
         metadata['accepted']=False;metadata['error']=str(e);raise
     finally:
+        # Ask this diagnostic app to flush its bounded traces and stop on the UI
+        # thread. Force termination remains bounded if that thread is unresponsive.
+        if children and children[0].poll() is None:
+            stop_file.write_text('stop\n')
+            try:children[0].wait(timeout=8)
+            except subprocess.TimeoutExpired:pass
+        text=(root/'playback.log').read_text() if (root/'playback.log').exists() else ''
+        metadata['diagnostic_stop_acknowledged']='SYNC_DIAGNOSTIC_STOP ' in text
+        metadata['diagnostic_trace_preserved']='SYNC_TRACE kind=callback ' in text and 'SYNC_TRACE kind=recovery ' in text and 'SYNC_TRACE kind=completion ' in text
         # Stop only this runner's app and captures, then release its own assertions.
         for child in reversed(children):
             if child.poll() is None:

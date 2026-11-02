@@ -6,6 +6,10 @@
 using namespace u2k;
 #define REQUIRE(x) do{if(!(x))throw std::runtime_error(#x);}while(0)
 int main(){try{
+ {SyncIncidentWindow<int,8,2> w;for(int i=0;i<12;++i)w.append(i,false);REQUIRE(w.size()==8&&w.at(0)==4&&w.at(7)==11);w.append(12,true);w.append(13,false);w.append(14,true);w.append(15,false);REQUIRE(w.triggered&&w.total==15&&w.size()==8&&w.at(0)==7&&w.at(7)==14);}
+ {AudioDriftServo s;s.reset(1000000,0,991360);REQUIRE(s.observe(1024000,24000,29760,5760,2880,96));REQUIRE(s.decision==AudioClockDecision::slowQuery);REQUIRE(s.observe(999999,0,5760,5760,2880,0));REQUIRE(s.decision==AudioClockDecision::nonMonotonicHost);REQUIRE(s.observe(1024000,-1,5760,5760,2880,0));REQUIRE(s.decision==AudioClockDecision::backwardConsumption);REQUIRE(!s.observe(1500001,500001,505761,5760,2880,0));REQUIRE(s.decision==AudioClockDecision::callbackGap);s.reset(1000000,0,0);REQUIRE(!s.observe(1024000,24000,29760,5760,2880,0));REQUIRE(s.decision==AudioClockDecision::phaseJump);}
+
+ {AudioDriftServo s;s.reset(1000000,0,991360);bool stopped=false;for(int i=1;i<90;++i){const int64_t consumed=int64_t(i)*23976;if(!s.observe(1000000+int64_t(i)*24000,consumed,consumed+5760,5760,2880,0)){stopped=true;break;}}REQUIRE(stopped&&s.decision==AudioClockDecision::rateOutside&&s.candidateRatio>1.0002);}
  // Partial writes: scanning the full attempted block would record the second
  // pulse too early and suppress it when the accepted suffix is resubmitted.
  std::vector<int32_t> pcm(12000*2);pcm[7*2]=10000000;pcm[6007*2]=10000000;

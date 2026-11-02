@@ -1,0 +1,130 @@
+{
+  "mode": "1080p5994",
+  "seconds": 480,
+  "timing_profile": "reliable",
+  "app_sha256": "2c822c86e82e0f942a760ee653eb5ba0336bccf9091bdc071aea49fa1d0e6523",
+  "capture_sha256": "53e0d9becabaae29ec223ddda2e81b63cb93a6dd608d7a949c7ce5b56a0da727",
+  "command": [
+    "/private/tmp/u2k-recovery-diagnostic/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+    "--sdi-diagnostic-stop-file",
+    "/private/tmp/u2k-recovery-validation-20261102/controlled-5994/diagnostic-stop.request",
+    "--sdi-av-test",
+    "--hardware-test-mode",
+    "1080p5994",
+    "--audio-baseline-seconds",
+    "525",
+    "--timing-profile",
+    "reliable",
+    "--sdi-sync-calibration-file",
+    "/private/tmp/u2k-recovery-validation-20261102/controlled-5994/sync-calibration.txt"
+  ],
+  "initial_power": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=22413411)\t100%; charged; 0:00 remaining present: true\n",
+  "runner_sha256": "f1aec297473174b173197f124e0253a2d59462fef0f20ef42fd9fc83e8d3b68d",
+  "sample_interval_seconds": 120,
+  "playback_pid": 48746,
+  "awake_pid": 48747,
+  "calibration": {
+    "initial_av": {
+      "pairs": 17,
+      "unmatched_flashes": 0,
+      "median_ms": 10.1875,
+      "min_ms": 2.6041666666666665,
+      "max_ms": 18.291666666666668,
+      "stdev_ms": 4.777125521561108,
+      "events": [
+        {
+          "video_pts_48k": 174574,
+          "audio_pts_48k": 174939,
+          "audio_minus_video_ms": 7.604166666666667
+        },
+        {
+          "video_pts_48k": 222622,
+          "audio_pts_48k": 222939,
+          "audio_minus_video_ms": 6.604166666666667
+        },
+        {
+          "video_pts_48k": 270670,
+          "audio_pts_48k": 270939,
+          "audio_minus_video_ms": 5.604166666666667
+        },
+        {
+          "video_pts_48k": 318718,
+          "audio_pts_48k": 318939,
+          "audio_minus_video_ms": 4.604166666666667
+        },
+        {
+          "video_pts_48k": 366766,
+          "audio_pts_48k": 366939,
+          "audio_minus_video_ms": 3.6041666666666665
+        },
+        {
+          "video_pts_48k": 414814,
+          "audio_pts_48k": 414939,
+          "audio_minus_video_ms": 2.6041666666666665
+        },
+        {
+          "video_pts_48k": 462061,
+          "audio_pts_48k": 462939,
+          "audio_minus_video_ms": 18.291666666666668
+        },
+        {
+          "video_pts_48k": 510109,
+          "audio_pts_48k": 510939,
+          "audio_minus_video_ms": 17.291666666666668
+        },
+        {
+          "video_pts_48k": 558157,
+          "audio_pts_48k": 558939,
+          "audio_minus_video_ms": 16.291666666666668
+        },
+        {
+          "video_pts_48k": 606205,
+          "audio_pts_48k": 606938,
+          "audio_minus_video_ms": 15.270833333333334
+        },
+        {
+          "video_pts_48k": 654253,
+          "audio_pts_48k": 654938,
+          "audio_minus_video_ms": 14.270833333333334
+        },
+        {
+          "video_pts_48k": 702301,
+          "audio_pts_48k": 702937,
+          "audio_minus_video_ms": 13.25
+        },
+        {
+          "video_pts_48k": 750349,
+          "audio_pts_48k": 750936,
+          "audio_minus_video_ms": 12.229166666666666
+        },
+        {
+          "video_pts_48k": 798397,
+          "audio_pts_48k": 798935,
+          "audio_minus_video_ms": 11.208333333333334
+        },
+        {
+          "video_pts_48k": 846445,
+          "audio_pts_48k": 846934,
+          "audio_minus_video_ms": 10.1875
+        },
+        {
+          "video_pts_48k": 894493,
+          "audio_pts_48k": 894932,
+          "audio_minus_video_ms": 9.145833333333334
+        },
+        {
+          "video_pts_48k": 942541,
+          "audio_pts_48k": 942930,
+          "audio_minus_video_ms": 8.104166666666666
+        }
+      ]
+    },
+    "adjustment_ms": -10,
+    "method": "Negative midpoint of physically measured min/max; same output session"
+  },
+  "measurement_started_after_s": 31.511004208994564,
+  "accepted": false,
+  "error": "Continuity watchdog detected an error",
+  "diagnostic_stop_acknowledged": true,
+  "diagnostic_trace_preserved": true
+}

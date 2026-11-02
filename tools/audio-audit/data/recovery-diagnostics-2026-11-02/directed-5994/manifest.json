@@ -1,0 +1,131 @@
+{
+  "mode": "1080p5994",
+  "seconds": 480,
+  "timing_profile": "reliable",
+  "app_sha256": "eb6fbbabefe931e2e920d5ed79f321dda319c1af34ac19331dffe247ffe42913",
+  "capture_sha256": "53e0d9becabaae29ec223ddda2e81b63cb93a6dd608d7a949c7ce5b56a0da727",
+  "command": [
+    "/private/tmp/u2k-recovery-diagnostic/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+    "--sdi-diagnostic-stop-file",
+    "/private/tmp/u2k-recovery-validation-20261102/directed-5994/diagnostic-stop.request",
+    "--sdi-av-test",
+    "--hardware-test-mode",
+    "1080p5994",
+    "--audio-baseline-seconds",
+    "525",
+    "--timing-profile",
+    "reliable",
+    "--sdi-sync-calibration-file",
+    "/private/tmp/u2k-recovery-validation-20261102/directed-5994/sync-calibration.txt"
+  ],
+  "initial_power": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=22413411)\t100%; charged; 0:00 remaining present: true\n",
+  "runner_sha256": "f1aec297473174b173197f124e0253a2d59462fef0f20ef42fd9fc83e8d3b68d",
+  "sample_interval_seconds": 120,
+  "playback_pid": 48510,
+  "awake_pid": 48511,
+  "calibration": {
+    "initial_av": {
+      "pairs": 17,
+      "unmatched_flashes": 0,
+      "median_ms": -12.0,
+      "min_ms": -20.0,
+      "max_ms": -4.291666666666667,
+      "stdev_ms": 4.791478921651651,
+      "events": [
+        {
+          "video_pts_48k": 171371,
+          "audio_pts_48k": 170843,
+          "audio_minus_video_ms": -11.0
+        },
+        {
+          "video_pts_48k": 219419,
+          "audio_pts_48k": 218843,
+          "audio_minus_video_ms": -12.0
+        },
+        {
+          "video_pts_48k": 267467,
+          "audio_pts_48k": 266843,
+          "audio_minus_video_ms": -13.0
+        },
+        {
+          "video_pts_48k": 315515,
+          "audio_pts_48k": 314843,
+          "audio_minus_video_ms": -14.0
+        },
+        {
+          "video_pts_48k": 363563,
+          "audio_pts_48k": 362843,
+          "audio_minus_video_ms": -15.0
+        },
+        {
+          "video_pts_48k": 411611,
+          "audio_pts_48k": 410843,
+          "audio_minus_video_ms": -16.0
+        },
+        {
+          "video_pts_48k": 459659,
+          "audio_pts_48k": 458843,
+          "audio_minus_video_ms": -17.0
+        },
+        {
+          "video_pts_48k": 507707,
+          "audio_pts_48k": 506843,
+          "audio_minus_video_ms": -18.0
+        },
+        {
+          "video_pts_48k": 555755,
+          "audio_pts_48k": 554843,
+          "audio_minus_video_ms": -19.0
+        },
+        {
+          "video_pts_48k": 603803,
+          "audio_pts_48k": 602843,
+          "audio_minus_video_ms": -20.0
+        },
+        {
+          "video_pts_48k": 651050,
+          "audio_pts_48k": 650844,
+          "audio_minus_video_ms": -4.291666666666667
+        },
+        {
+          "video_pts_48k": 699098,
+          "audio_pts_48k": 698844,
+          "audio_minus_video_ms": -5.291666666666667
+        },
+        {
+          "video_pts_48k": 747146,
+          "audio_pts_48k": 746845,
+          "audio_minus_video_ms": -6.270833333333333
+        },
+        {
+          "video_pts_48k": 795194,
+          "audio_pts_48k": 794846,
+          "audio_minus_video_ms": -7.25
+        },
+        {
+          "video_pts_48k": 843242,
+          "audio_pts_48k": 842848,
+          "audio_minus_video_ms": -8.208333333333334
+        },
+        {
+          "video_pts_48k": 891290,
+          "audio_pts_48k": 890849,
+          "audio_minus_video_ms": -9.1875
+        },
+        {
+          "video_pts_48k": 939338,
+          "audio_pts_48k": 938850,
+          "audio_minus_video_ms": -10.166666666666666
+        }
+      ]
+    },
+    "adjustment_ms": 12,
+    "method": "Negative midpoint of physically measured min/max; same output session"
+  },
+  "measurement_started_after_s": 31.55021041596774,
+  "playback_exit": 1,
+  "accepted": false,
+  "error": "A required physical capture failed",
+  "diagnostic_stop_acknowledged": true,
+  "diagnostic_trace_preserved": true
+}

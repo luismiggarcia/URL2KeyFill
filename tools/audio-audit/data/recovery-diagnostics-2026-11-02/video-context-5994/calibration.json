@@ -1,0 +1,99 @@
+{
+  "initial_av": {
+    "pairs": 17,
+    "unmatched_flashes": 0,
+    "median_ms": 6.0,
+    "min_ms": -9.666666666666666,
+    "max_ms": 20.645833333333332,
+    "stdev_ms": 9.308242064876236,
+    "events": [
+      {
+        "video_pts_48k": 174574,
+        "audio_pts_48k": 175392,
+        "audio_minus_video_ms": 17.041666666666668
+      },
+      {
+        "video_pts_48k": 222622,
+        "audio_pts_48k": 223392,
+        "audio_minus_video_ms": 16.041666666666668
+      },
+      {
+        "video_pts_48k": 271471,
+        "audio_pts_48k": 271392,
+        "audio_minus_video_ms": -1.6458333333333333
+      },
+      {
+        "video_pts_48k": 318718,
+        "audio_pts_48k": 319392,
+        "audio_minus_video_ms": 14.041666666666666
+      },
+      {
+        "video_pts_48k": 367567,
+        "audio_pts_48k": 367392,
+        "audio_minus_video_ms": -3.6458333333333335
+      },
+      {
+        "video_pts_48k": 414814,
+        "audio_pts_48k": 415392,
+        "audio_minus_video_ms": 12.041666666666666
+      },
+      {
+        "video_pts_48k": 463663,
+        "audio_pts_48k": 463392,
+        "audio_minus_video_ms": -5.645833333333333
+      },
+      {
+        "video_pts_48k": 510910,
+        "audio_pts_48k": 511392,
+        "audio_minus_video_ms": 10.041666666666666
+      },
+      {
+        "video_pts_48k": 559759,
+        "audio_pts_48k": 559392,
+        "audio_minus_video_ms": -7.645833333333333
+      },
+      {
+        "video_pts_48k": 607006,
+        "audio_pts_48k": 607391,
+        "audio_minus_video_ms": 8.020833333333334
+      },
+      {
+        "video_pts_48k": 655855,
+        "audio_pts_48k": 655391,
+        "audio_minus_video_ms": -9.666666666666666
+      },
+      {
+        "video_pts_48k": 703102,
+        "audio_pts_48k": 703390,
+        "audio_minus_video_ms": 6.0
+      },
+      {
+        "video_pts_48k": 751150,
+        "audio_pts_48k": 751389,
+        "audio_minus_video_ms": 4.979166666666667
+      },
+      {
+        "video_pts_48k": 798397,
+        "audio_pts_48k": 799388,
+        "audio_minus_video_ms": 20.645833333333332
+      },
+      {
+        "video_pts_48k": 847246,
+        "audio_pts_48k": 847386,
+        "audio_minus_video_ms": 2.9166666666666665
+      },
+      {
+        "video_pts_48k": 894493,
+        "audio_pts_48k": 895385,
+        "audio_minus_video_ms": 18.583333333333332
+      },
+      {
+        "video_pts_48k": 943342,
+        "audio_pts_48k": 943383,
+        "audio_minus_video_ms": 0.8541666666666666
+      }
+    ]
+  },
+  "adjustment_ms": -5,
+  "method": "Negative midpoint of physically measured min/max; same output session"
+}

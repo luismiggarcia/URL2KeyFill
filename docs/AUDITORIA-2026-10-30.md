@@ -2417,3 +2417,122 @@ só então repetir um ensaio curto dirigido ao evento 59,94p e ao comportamento
 PLAY/STOP. Esse passo requer nova decisão do utilizador/auditor. Não foi publicada
 versão nem repetido o ensaio de oito horas. O acompanhamento periódico termina
 com esta consolidação; os registos não dependem de o chat continuar ativo.
+
+### 10.17 Instrumentação da recuperação e ensaio dirigido (2026-11-02)
+
+**Alteração autorizada e implementada:** o servo expõe o motivo da sua última
+decisão sem alterar os limiares, a estimativa, a correção ou as regras de retorno.
+O diagnóstico distingue fila áudio vazia de recuperação pedida pelo servo por
+intervalo excessivo, salto de fase ou taxa estimada fora do limite. Consultas
+lentas, tempo não monótono e consumo recuado também ficam identificados quando
+observados, mesmo que não determinem recuperação. Preserva-se a estimativa bruta
+que levou à decisão, antes de um reset a apagar.
+
+No modo explícito de diagnóstico, acrescentou-se uma janela circular de 512
+callbacks áudio. Guarda intervalo entre entradas, duração, buffer **antes** do
+reabastecimento, cursor, consumo, tempo de stream e motivo. No primeiro incidente
+(recuperação ou intervalo não-preroll superior a 50 ms), conserva o contexto
+anterior e mais 128 callbacks, congelando depois a janela. As recuperações e
+notificações de vídeo atrasado/descartado têm buffers separados, limitados a
+4096 eventos, com contagem de omissões. A memória é reservada antes do PLAY;
+não se escreve no terminal nem se aloca memória ao acrescentar estes eventos.
+Não foram aumentadas reservas nem alterados o perfil Reliable ou o caminho de
+seleção de frames para tentar ocultar a falha.
+
+`analyze_recovery.py` valida os resumos/contagens e rejeita diagnóstico ausente ou
+truncado. Compara o instante da notificação de vídeo com o intervalo do callback
+áudio (antes, durante ou depois). Isto estabelece **ordem de notificações SDK**,
+não ordem física no cabo nem causalidade entre o atraso e a recuperação. A janela
+é limitada: não contém todos os callbacks de uma sessão longa e pode congelar
+num incidente anterior ao evento que se pretenda investigar.
+
+**Encerramento por watchdog:** `run-endurance.py` passa um ficheiro de controlo
+privado à app de teste. Em caso de interrupção, pede STOP/quit pelo temporizador
+da aplicação, aguarda até 8 s para guardar os traces e só depois usa a terminação
+forçada já existente se necessário. O mecanismo é restrito ao teste SDI explícito,
+não ao uso normal da interface. O manifesto distingue confirmação do pedido e
+preservação do diagnóstico; não considera o teste aprovado por ter terminado bem.
+
+**Verificação do próprio mecanismo, 08:44:54–08:45:42:** foi provocada uma paragem
+intencional do watchdog aos 45 s, em 59,94p. O executor terminou com erro esperado,
+mas a app confirmou `SYNC_DIAGNOSTIC_STOP`, guardou os três novos resumos, os traces
+A/V/relógio e `CEF shutdown complete`. Foram preservados 512 callbacks, sem
+recuperações ou notificações de atraso/descarte nessa janela. Máximos observados:
+intervalo 21,042 ms, consulta 0,104 ms e duração 0,417 ms. A paragem intencional
+**não é uma falha espontânea de continuidade nem um ensaio de fiabilidade aprovado**.
+
+**Controlo de variáveis:** a primeira compilação incluiu recursos de interface de
+outro trabalho ainda não commitado. O ensaio dirigido inicial foi parado
+controladamente às 08:47:45 e classificado como inconclusivo, preservando os seus
+registos e motivo. O erro genérico de captura no manifesto resulta dessa paragem
+antecipada; não foi atribuído à placa. Antes da repetição, foram repostos na
+candidata os recursos da candidata anterior; os hashes dos 35 ficheiros de base
+coincidem. As alterações de interface no workspace foram preservadas e não fazem
+parte deste trabalho. A repetição controlada tem oito minutos de medição após
+calibração, com capturas periódicas; não é um novo ensaio de oito horas.
+
+**Validação automática:** passaram os oito CTests atualmente configurados (incluindo
+a verificação de recursos UI existente no workspace) e 72 testes Python. A nova
+cobertura verifica congelamento/ordem da janela circular, motivos de rejeição do
+servo, rejeição de diagnóstico incompleto e classificação temporal sobreposta.
+O teste C++ de diagnóstico passou também com AddressSanitizer e
+UndefinedBehaviorSanitizer, incluindo os novos casos de motivos. Não foi feita
+publicação nem substituída a instalação normal da aplicação.
+
+**08:50 — falha reproduzida com interface controlada:** o ensaio de oito minutos
+foi interrompido pelo watchdog antes de completar a duração. A primeira linha
+com falha surge aos **87,202 s**, com 1 frame descartada (índice 5157); a última
+telemetria, aos 92,402 s, mantém 0 recuperações áudio, 0 frames atrasadas e 0
+amostras em falta. O servo permanece pronto. O trace confirmou a notificação SDK
+`result=2` dessa frame e nenhuma recuperação áudio. A app confirmou o pedido de
+paragem e guardou todos os resumos, encerrando CEF normalmente. O contexto áudio
+retido teve máximos de intervalo 24,521 ms, consulta 0,208 ms e duração 0,500 ms;
+estes máximos da janela não provam que toda a sessão foi livre de perturbações.
+
+Este resultado separa uma falha de vídeo de uma recuperação áudio: não se deve
+atribuir automaticamente qualquer frame descartada ao servo ou ao esvaziamento
+da fila áudio. A causa do descarte continua em aberto. O ensaio é **reprovado e
+incompleto**, preservado sem alterar os critérios.
+
+**Ajuste do diagnóstico:** uma notificação de atraso/descarte de vídeo passa a
+acionar também o congelamento das janelas de contexto áudio e agendamento de
+vídeo. Isto evita perder contexto quando a falha não provoca recuperação áudio.
+O contexto de agendamento reutiliza a consulta de tempo SDK já existente no
+worker; não introduz consultas adicionais ao dispositivo. Regista início/fim,
+última conclusão do slot e tempo previsto de apresentação. O analisador calcula
+espera do worker e margem estimada usando a idade dessa observação, assumindo
+reprodução a 1×; essa margem não é medição independente de prazo de hardware.
+A repetição seguinte limita-se a três minutos após calibração, sem alterar
+reservas, reiniciar a placa ou modificar os recursos de interface de referência.
+
+**Conclusão da repetição curta:** a execução configurada para 180 s de medição
+completou 194,141 s após calibração (a preparação terminou antes da margem fixa
+reservada pelo executor). Todos os contadores de continuidade/histórico/conversão
+ficaram a zero, mas a qualidade foi **reprovada**: envolvente amostrada −14,688 a
++24,958 ms, amplitude 39,646 ms, acima da frame de 16,683 ms mais 1 ms de tolerância.
+Não houve recuperações áudio nem notificações de frames atrasadas/descartadas.
+Não se usa esta execução sem falhas de continuidade para invalidar o descarte
+observado no ensaio controlado anterior.
+
+Na janela final de 512 agendamentos, sem incidente, a duração máxima foi 1,813 ms,
+a espera máxima do worker 0,188 ms e a margem estimada mínima 31,354 ms. Estes
+números caracterizam essa janela saudável, **não** a frame 5157 descartada antes
+de existir a instrumentação de agendamento. As tentativas opcionais de
+correspondência física por host periódico nos três ficheiros de captura foram
+rejeitadas pelo analisador por discordância da época de vídeo entrada/saída.
+Essa correspondência não foi aceite nem usada para atribuir a variação A/V à
+fonte, ao SDK ou ao hardware. O resultado de qualidade acima vem do analisador
+físico de capturas, sem depender dessa associação adicional.
+
+**Entrega e pendência:** a instrumentação e o encerramento controlado ficaram
+implementados e validados; não foi aplicada uma correção causal ao descarte nem
+à envolvente A/V. A causa exige capturar uma recorrência com ambas as novas
+janelas acionadas. O passo seguinte proposto é esse ensaio dirigido, mantendo a
+mesma interface e reservas, antes de discutir alterações de buffers, worker ou
+servo. Aguardará decisão do utilizador/auditor. Todos os ensaios deste passo
+terminaram antes das 09:00; a verificação final confirmou `Busy=0` e ausência de
+processos de teste próprios. Não se repetiu o teste de oito horas.
+
+Evidência deste passo: `tools/audio-audit/data/recovery-diagnostics-2026-11-02/`.
+A candidata local é `/tmp/u2k-recovery-diagnostic/URL2KeyFill.app`; o seu executável
+é identificado nos manifestos por ensaio. Não houve publicação de versão.

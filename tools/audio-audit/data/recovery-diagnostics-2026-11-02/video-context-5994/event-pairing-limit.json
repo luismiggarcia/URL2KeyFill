@@ -1,0 +1,11 @@
+{
+  "accepted": false,
+  "analysis": "analyze_event_sync periodic host matching",
+  "captures": [
+    "capture-start.csv",
+    "capture-end.csv",
+    "capture-sample-000.csv"
+  ],
+  "error": "Periodic matches disagree on input/output video epoch",
+  "consequence": "No accepted PCM/physical event correspondence or causal attribution asserted from these periodic matches."
+}

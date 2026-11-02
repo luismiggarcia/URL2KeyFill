@@ -1,0 +1,19 @@
+{
+  "callbacks_stored": 512,
+  "recoveries": [],
+  "video_notifications": [
+    {
+      "host_samples": 14119415974,
+      "frame": 5157,
+      "result": 2
+    }
+  ],
+  "diagnostic_stop_acknowledged": true,
+  "callback_window_triggered": false,
+  "limits": "Bounded diagnostic window; callbacks freeze after the first incident and its tail. Completion host times describe SDK notifications, not wire emission or causality. No incident in a short run does not prove reliability.",
+  "callback_window_max_ms": {
+    "entry_gap": 24.520833333333332,
+    "query_span": 0.20833333333333334,
+    "duration": 0.5
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "av_quality_passed": false,
+  "av_frame_limit_ms": 16.683333333333334,
+  "measurement_allowance_ms": 1,
+  "active_duration_s": 224.64980200000002,
+  "health": {
+    "missing_total": 0.0,
+    "api_errors": 0.0,
+    "recoveries": 0.0,
+    "late_video": 0.0,
+    "dropped_video": 0.0,
+    "clock_resets": 0.0,
+    "video_history_misses": 0.0,
+    "video_history_startup_misses": 0.0,
+    "video_conversion_fallbacks": 0.0
+  },
+  "first_av_ms": 2.25,
+  "last_av_ms": 18.25,
+  "av_change_ms": 16.0,
+  "rate_ppm_range": [
+    -49.087481,
+    62.258908
+  ],
+  "phase_error_ms_range": [
+    -2.563532,
+    1.388259
+  ],
+  "minimum_source_headroom_ms": 37.770833,
+  "limits": "One Mac/device/mode; same-device SDI captures at start/end, not continuous independent physical capture.",
+  "sampled_av_min_ms": -14.6875,
+  "sampled_av_max_ms": 24.958333333333332,
+  "sampled_av_span_ms": 39.64583333333333,
+  "sampled_quality_limit": "Absolute A/V and full sampled envelope <= one frame + 1 ms allowance; not a continuous capture guarantee.",
+  "intermediate_captures": [
+    {
+      "name": "capture-sample-000",
+      "measurement_elapsed_s": 90.24804979201872,
+      "channels": {
+        "audio_L": {
+          "pairs": 27,
+          "median_ms": -3.3958333333333335,
+          "min_ms": -11.375,
+          "max_ms": 6.291666666666667
+        },
+        "audio_R": {
+          "pairs": 27,
+          "median_ms": -3.3958333333333335,
+          "min_ms": -11.375,
+          "max_ms": 6.291666666666667
+        }
+      }
+    }
+  ],
+  "post_calibration_duration_s": 194.14114554203115
+}

@@ -1,0 +1,9 @@
+{
+  "started": "2026-11-02T08:44:54.262317+00:00",
+  "finished": "2026-11-02T08:45:42.193109+00:00",
+  "process_exit": 1,
+  "stop_acknowledged": true,
+  "trace_preserved": true,
+  "expected_failure": "Deliberate diagnostic watchdog stop",
+  "passed": true
+}

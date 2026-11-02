@@ -1,0 +1,28 @@
+{
+  "mode": "1080p5994",
+  "seconds": 120,
+  "timing_profile": "reliable",
+  "app_sha256": "eb6fbbabefe931e2e920d5ed79f321dda319c1af34ac19331dffe247ffe42913",
+  "capture_sha256": "53e0d9becabaae29ec223ddda2e81b63cb93a6dd608d7a949c7ce5b56a0da727",
+  "command": [
+    "/private/tmp/u2k-recovery-diagnostic/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+    "--sdi-diagnostic-stop-file",
+    "/private/tmp/u2k-recovery-validation-20261102/watchdog-flush/diagnostic-stop.request",
+    "--sdi-av-test",
+    "--hardware-test-mode",
+    "1080p5994",
+    "--audio-baseline-seconds",
+    "120",
+    "--timing-profile",
+    "reliable"
+  ],
+  "initial_power": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=22413411)\t100%; charged; 0:00 remaining present: true\n",
+  "runner_sha256": "f1aec297473174b173197f124e0253a2d59462fef0f20ef42fd9fc83e8d3b68d",
+  "sample_interval_seconds": 0,
+  "playback_pid": 48428,
+  "awake_pid": 48429,
+  "accepted": false,
+  "error": "Deliberate diagnostic watchdog stop",
+  "diagnostic_stop_acknowledged": true,
+  "diagnostic_trace_preserved": true
+}
