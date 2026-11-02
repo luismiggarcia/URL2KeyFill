@@ -33,7 +33,7 @@ def summarize(rows, first, last, mode, expected_seconds):
     if not ready or float(ready[-1]['elapsed_s']) < float(active[-1]['elapsed_s'])-2:
         raise ValueError('Drift controller did not remain ready')
     delta = last['channels']['audio_L']['median_ms']-first['channels']['audio_L']['median_ms']
-    limit = 40 if mode == '1080p25' else 20
+    limit = {'1080p25':40.,'1080p50':20.,'1080p5994':1001/60}[mode]
     if abs(delta) > limit:
         raise ValueError('A/V start/end change exceeds one output frame')
     quality=all(abs(value)<=limit+1 for capture in (first,last) for channel in capture['channels'].values() for value in (channel.get('min_ms',channel['median_ms']),channel.get('max_ms',channel['median_ms'])))
@@ -110,7 +110,7 @@ def main():
     p.add_argument('--app', required=True, help='Signed Contents/MacOS/URL2KeyFill')
     p.add_argument('--capture', required=True)
     p.add_argument('--directory', required=True, help='New evidence directory')
-    p.add_argument('--mode', choices=['1080p25','1080p50'], default='1080p25')
+    p.add_argument('--mode', choices=['1080p25','1080p50','1080p5994'], default='1080p25')
     p.add_argument('--seconds', type=int, default=28800)
     p.add_argument('--timing-profile', choices=['reliable','low'], default='reliable')
     p.add_argument('--no-calibrate', action='store_true', help='Diagnostic raw run; absolute A/V quality still must pass')

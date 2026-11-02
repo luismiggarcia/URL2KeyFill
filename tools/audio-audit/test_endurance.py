@@ -21,6 +21,12 @@ class EnduranceTests(unittest.TestCase):
         self.assertFalse(result['av_quality_passed'])
         self.assertEqual(result['health']['missing_total'],0)
 
+    def test_fractional_frame_limit(self):
+        result=m.summarize(self.rows(),self.capture(),self.capture(16),'1080p5994',120)
+        self.assertAlmostEqual(result['av_frame_limit_ms'],1001/60)
+        with self.assertRaisesRegex(ValueError,'one output frame'):
+            m.summarize(self.rows(),self.capture(),self.capture(17),'1080p5994',120)
+
     def test_gap_rejected(self):
         rows=self.rows();rows[50]['missing_total']='1'
         with self.assertRaisesRegex(ValueError,'Continuity'):m.summarize(rows,self.capture(),self.capture(),'1080p25',120)

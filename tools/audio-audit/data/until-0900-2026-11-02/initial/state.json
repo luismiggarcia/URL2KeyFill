@@ -1,0 +1,125 @@
+{
+  "started_at": "2026-11-02T02:44:16.911203+00:00",
+  "deadline": "2026-11-02T09:00:00",
+  "timezone": "Europe/Lisbon",
+  "pid": 40068,
+  "status": "failed",
+  "cases": [
+    {
+      "name": "cycle00-live-1080p25-0-to--1",
+      "mode": "1080p25",
+      "kind": "live",
+      "started_at": "2026-11-02T02:44:18.201439+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T02:44:58.078127+00:00",
+      "change_ms": -1.0
+    },
+    {
+      "name": "cycle00-live-1080p25-0-to--5",
+      "mode": "1080p25",
+      "kind": "live",
+      "started_at": "2026-11-02T02:44:58.345091+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T02:45:37.715276+00:00",
+      "change_ms": -5.020833333333334
+    },
+    {
+      "name": "cycle00-live-1080p25-0-to--21",
+      "mode": "1080p25",
+      "kind": "live",
+      "started_at": "2026-11-02T02:45:37.980745+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T02:46:17.356740+00:00",
+      "change_ms": -21.0
+    },
+    {
+      "name": "cycle00-live-1080p25--5-to-5",
+      "mode": "1080p25",
+      "kind": "live",
+      "started_at": "2026-11-02T02:46:17.626940+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T02:46:57.063715+00:00",
+      "change_ms": 10.0
+    },
+    {
+      "name": "cycle00-live-1080p50-0-to--1",
+      "mode": "1080p50",
+      "kind": "live",
+      "started_at": "2026-11-02T02:46:57.333054+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T02:47:37.779132+00:00",
+      "change_ms": -0.9791666666666661
+    },
+    {
+      "name": "cycle00-live-1080p50-0-to--5",
+      "mode": "1080p50",
+      "kind": "live",
+      "started_at": "2026-11-02T02:47:38.054912+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T02:48:18.428722+00:00",
+      "change_ms": -4.979166666666666
+    },
+    {
+      "name": "cycle00-live-1080p50-0-to--21",
+      "mode": "1080p50",
+      "kind": "live",
+      "started_at": "2026-11-02T02:48:18.699083+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T02:48:59.173495+00:00",
+      "change_ms": -21.020833333333336
+    },
+    {
+      "name": "cycle00-live-1080p50-5-to--5",
+      "mode": "1080p50",
+      "kind": "live",
+      "started_at": "2026-11-02T02:48:59.448858+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T02:49:39.829236+00:00",
+      "change_ms": -10.020833333333332
+    },
+    {
+      "name": "cycle00-sampled-1080p25",
+      "mode": "1080p25",
+      "kind": "sampled",
+      "started_at": "2026-11-02T02:49:40.101331+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T03:10:26.776882+00:00",
+      "av_quality_passed": true,
+      "av_change_ms": 9.708333333333334
+    },
+    {
+      "name": "cycle00-sampled-1080p50",
+      "mode": "1080p50",
+      "kind": "sampled",
+      "started_at": "2026-11-02T03:10:27.051877+00:00",
+      "status": "quality_failed",
+      "process_exit": 1,
+      "finished_at": "2026-11-02T03:31:13.465963+00:00",
+      "av_quality_passed": false,
+      "av_change_ms": -7.312500000000002
+    },
+    {
+      "name": "cycle00-sampled-1080p5994",
+      "mode": "1080p5994",
+      "kind": "sampled",
+      "started_at": "2026-11-02T03:31:13.736011+00:00",
+      "status": "harness_rejected_mode",
+      "process_exit": 2,
+      "finished_at": "2026-11-02T03:31:13.993312+00:00"
+    }
+  ],
+  "limits": "Same Mac and UltraStudio; sampled physical captures, no independent clock or human lip-sync certification.",
+  "awake_pid": 40069,
+  "stop_reason": "Missing application telemetry",
+  "finished_at": "2026-11-02T03:31:13.995499+00:00",
+  "continuation_directory": "/tmp/u2k-until-0900-20261102-resume1"
+}

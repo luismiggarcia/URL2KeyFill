@@ -1,0 +1,34 @@
+{
+  "before_pairs": 7,
+  "after_pairs": 11,
+  "before_av_ms": 14.1875,
+  "after_av_ms": 9.166666666666666,
+  "change_ms": -5.020833333333334,
+  "requested_ms": -5,
+  "initial_ms": 0,
+  "requested_change_ms": -5,
+  "health": {
+    "missing_total": 0.0,
+    "api_errors": 0.0,
+    "recoveries": 0.0,
+    "dropped_video": 0.0,
+    "late_video": 0.0,
+    "clock_resets": 0.0,
+    "video_history_misses": 0.0,
+    "video_conversion_fallbacks": 0.0
+  },
+  "limits": "Steady windows exclude the 5 ms fade and SDK queue drain; this is not subjective validation of the transition.",
+  "incremental_callback_latency_estimate": {
+    "video": {
+      "before_median_ms": 210.3125,
+      "after_median_ms": 250.85416666666666,
+      "change_ms": 40.54166666666666
+    },
+    "audio": {
+      "before_median_ms": 184.39583333333334,
+      "after_median_ms": 219.91666666666666,
+      "change_ms": 35.520833333333314
+    }
+  },
+  "incremental_latency_limits": "Same-session content-to-input-callback estimates, with nominal audio packet-position correction; includes input and software scheduling. Changes are not absolute wire/display latency measurements."
+}

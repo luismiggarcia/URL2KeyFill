@@ -131,7 +131,10 @@ def main():
             if time.time()+150>=deadline:break
         state['status']='completed';state['stop_reason']='Insufficient time to start another complete test before 09:00'
     except TimeoutError as e:state.update(status='deadline_reached',stop_reason=str(e))
-    except BaseException as e:state.update(status='failed',stop_reason=str(e));raise
+    except BaseException as e:
+        state.update(status='failed',stop_reason=str(e))
+        if state['cases'] and state['cases'][-1]['status']=='running':state['cases'][-1].update(status='failed',error=str(e))
+        raise
     finally:
         cleanup()
         if awake is not None:

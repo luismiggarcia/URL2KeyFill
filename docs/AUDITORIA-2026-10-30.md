@@ -2283,3 +2283,137 @@ resultados nesta secção depois da conclusão. Este parágrafo descreve o plano
 o arranque, **não uma aprovação antecipada dos resultados**. O teste de 20 minutos
 usa capturas amostradas; não equivale a medição física contínua nem certifica
 lip sync humano, todas as URLs ou um relógio independente.
+
+**Ponto de controlo 02:59:** a nova matriz completou os oito ensaios entre 02:44 e
+02:49, com todos os analisadores aprovados. As mudanças medidas foram −1,000,
+−5,021, −21,000 e +10,000 ms a 25p; −0,979, −4,979, −21,021 e −10,021 ms a 50p.
+O erro máximo da mudança pedida foi 0,021 ms. O primeiro bloco de 20 minutos a
+25p está em curso; aos 589,6 s, os contadores de continuidade e de histórico
+permaneciam a zero, a fonte avançava e o controlador estava pronto. As verificações
+de alimentação/asserções de repouso continuam válidas. Ainda não é resultado final
+do bloco nem prova de ausência do incidente de imagem no LCD.
+
+**Ponto de controlo 03:14:** o primeiro bloco a 25p terminou às 03:10:26 e passou
+o critério configurado. A janela de medição foi de 20 minutos após calibração;
+a atividade total incluiu 45 s de preparação (1244,6 s de telemetria ativa).
+Todos os contadores de continuidade/histórico/conversão permaneceram a zero.
+Nas capturas amostradas, A/V variou entre +0,583 e +11,604 ms (amplitude 11,021 ms);
+a mediana inicial foi +1,479 ms e a final +11,188 ms, diferença +9,708 ms. Esta
+diferença entre extremos não estabelece uma deriva linear nem permite prever
+quando o sincronismo se tornaria inaceitável. O bloco a 50p arrancou às 03:10:27;
+aos 240,8 s continuava sem falhas, com fonte e servo ativos. Alimentação e
+asserções de repouso continuam válidas. A observação do LCD permanece separada
+da aprovação dos contadores e das capturas A/V.
+
+**Ponto de controlo 03:29 — reprovação de qualidade já observável a 50p:** embora
+o bloco ainda esteja em curso (1140,9 s), as capturas concluídas já contêm valores
+entre −18,063 e +15,938 ms, amplitude de pelo menos 34,000 ms. Isto ultrapassa o
+critério da envolvente completa amostrada de uma frame mais 1 ms (21 ms a 50p),
+independentemente do resultado da última captura. Os valores absolutos observados
+continuam dentro de ±21 ms, mas isso não basta para aprovar a estabilidade da
+envolvente. Os contadores de continuidade/histórico permanecem todos a zero,
+a fonte avança e o servo está pronto. Este achado não demonstra bloqueio do
+UltraStudio nem autoriza extrapolar uma deriva linear; confirma que o ajuste
+preciso e os contadores sem erros não asseguram, por si só, estabilidade de fase
+da fonte. Mantém-se o bloco até concluir a amostragem e a sequência prossegue
+nas outras taxas conforme a distinção já prevista entre qualidade e continuidade.
+
+**03:44 — conclusão 50p e correção do executor:** o bloco 50p terminou às
+03:31:13, com continuidade aprovada mas qualidade reprovada: envolvente completa
+−20,104 a +19,958 ms, amplitude 40,063 ms; medianas inicial/final −10,042/−17,354 ms.
+O lançamento seguinte a 59,94p foi rejeitado pelo parser do executor de duração,
+que só aceitava 25p/50p. Não chegou a abrir a placa; não é um bloqueio do hardware.
+Corrigiu-se a opção e o limite racional de frame para 1001/60 ms a 59,94p, com
+12 testes do executor aprovados e dry-run desse modo validado. Os dados originais
+foram preservados, e a sequência retomada em
+`/tmp/u2k-until-0900-20261102-resume1`, mantendo o prazo das 09:00. A placa estava
+livre antes da retoma. A falha de qualidade 50p permanece reprovada.
+
+**03:59 — retoma acompanhada:** a segunda matriz de oito alterações terminou às
+03:50:28, novamente com todos os analisadores aprovados. O bloco seguinte a 25p
+mantém-se em curso, sem falhas de continuidade/histórico aos 537,3 s, com fonte e
+servo ativos. Alimentação AC e asserções de energia válidas. Esta repetição de
+ajustes estáveis não altera a reprovação da envolvente de fase já observada a 50p.
+
+**04:14 — segunda medição de 20 minutos a 25p:** terminou às 04:11:15 com
+aprovação, zero contadores de falha e envolvente amostrada −6,083 a +0,042 ms
+(amplitude 6,125 ms). Medianas inicial/final −0,583/−0,042 ms; diferença +0,542 ms.
+A diferença para o primeiro bloco reforça que não há fundamento para extrapolar
+uma taxa linear única a partir de um par início/fim. A repetição a 50p está em
+curso desde 04:11:15, com continuidade e alimentação válidas nesta verificação.
+
+**04:44 — falha real de continuidade a 59,94p; sequência física interrompida.**
+A repetição a 50p terminou às 04:32:02 e passou: envolvente −1,167 a +12,792 ms,
+amplitude 13,958 ms; medianas inicial/final +0,813/+12,563 ms, sem erros. Assim,
+a falha de qualidade anterior a 50p não se reproduziu nesta sessão, mas continua
+válida e impede uma garantia geral de estabilidade baseada apenas nesta aprovação.
+
+O ensaio 59,94p arrancou às 04:32:02 e foi interrompido pelo watchdog às 04:39:40.
+A primeira linha com erro surge aos 442,498 s de telemetria (cerca de 04:39:25):
+1 recuperação áudio, 1 frame atrasada e 1 descartada; o servo deixou de estar
+pronto. As amostras em falta, erros API, resets de relógio, falhas de histórico e
+conversões de recurso continuaram a zero. Antes do evento, a margem mínima de
+fonte era cerca de 61,5 ms e o buffer indicado 2403 amostras; esses valores
+amostrados não excluem uma interrupção breve entre linhas. A causa não está
+estabelecida. Não é legítimo atribuí-la ao histórico ou ao bloqueio visto no LCD
+sem evidência adicional.
+
+O watchdog verificava a cada 15 s, pelo que a reação ocorreu cerca de 14,5 s após
+a primeira linha de erro. Os subprocessos próprios terminaram; verificação
+posterior confirmou dispositivo livre (`Busy=0`). Não houve reinício automático
+nem repetição cega a 59,94p. Até ao limite autorizado, prossegue a análise dos
+registos e da capacidade de diagnóstico, sem iniciar outro teste físico contra
+esta falha por esclarecer. A alimentação AC e as asserções de repouso estavam
+válidas na última verificação anterior à interrupção. Este bloco é **reprovado e
+incompleto**, não um ensaio de 20 minutos aprovado. Os eventos detalhados SDK,
+normalmente despejados no STOP, não constam do log terminado pelo watchdog; a
+telemetria existente não permite reconstruir a ordem subsegundo dos três erros.
+
+**04:59 — análise offline do evento 59,94p:** a primeira frame descartada tem
+índice 26437. Entre as linhas aos 441,498 e 442,498 s, `startup_shift_ms` muda de
+38,583 para 10,083 ms e o mapeamento publicado volta a `mapping_stream=0`;
+`clock_calibrated` permanece 1, enquanto `audio_drift_ready` passa a 0. O código
+usa o mesmo contador `recoveries` para recuperação de fila e rejeição/reset do
+servo; portanto, o valor 1 isolado não prova uma fila vazia. As amostras de buffer
+posteriores ao callback indicam 2403, exatamente o alvo, e podem já refletir
+reabastecimento. Sem o evento detalhado anterior ao reabastecimento não é possível
+separar com segurança essas causas nem estabelecer se o atraso de vídeo precedeu
+a recuperação áudio. Não foi alterada a aplicação com base numa atribuição causal
+não demonstrada.
+
+**05:14 — preservação e limites do diagnóstico:** os dois segmentos completos,
+incluindo a falha incompleta a 59,94p, foram copiados para
+`tools/audio-audit/data/until-0900-2026-11-02/`, com logs/CSV comprimidos, estados,
+resultados e manifesto SHA-256; caches e perfis temporários CEF foram excluídos.
+Para um futuro ensaio de diagnóstico, é necessário distinguir explicitamente
+os motivos de recuperação (fila vazia versus rejeição do servo), preservar o
+buffer antes do reabastecimento, a duração/intervalo dos callbacks e o motivo de
+rejeição, e permitir que o watchdog obtenha um despejo limitado antes de encerrar.
+Esta é uma proposta de instrumentação, não uma correção da causa nem uma alteração
+já aplicada ao percurso de áudio. Os testes físicos permanecem parados.
+
+**Consolidação às 05:29 — encerramento antecipado por falha, sem novo arranque.**
+O limite das 09:00 era o prazo máximo autorizado. Os testes físicos terminaram
+às 04:39:40 por reprovação de continuidade; a análise e preservação subsequentes
+estão concluídas. Não se ocupa o tempo restante com repetições sem capacidade de
+distinguir a causa. A verificação dos 745 ficheiros do manifesto não encontrou
+qualquer divergência SHA-256.
+
+| Verificação após recuperação comunicada | Resultado |
+| --- | --- |
+| Duas matrizes de oito alterações A/V a 25p/50p | 16 ensaios aprovados; erro máximo da mudança cerca de 0,021 ms |
+| Dois blocos de 20 minutos a 25p | Ambos aprovados; amplitudes amostradas 11,021 e 6,125 ms |
+| Dois blocos de 20 minutos a 50p | Primeiro reprovado, amplitude 40,063 ms; segundo aprovado, 13,958 ms |
+| Bloco a 59,94p | Incompleto e reprovado: recuperação áudio, frame atrasada e descartada aos 442,5 s |
+| Energia durante os ensaios | Verificações AC e asserções de repouso válidas até às interrupções |
+| Fiabilidade geral / bloqueio do LCD | Não certificada; causa do incidente permanece por esclarecer |
+
+A precisão dos ajustes negativos ficou demonstrada nas condições controladas;
+a fiabilidade a 59,94p e a estabilidade de fase a 50p não ficam aprovadas. Não há
+base para prometer um tempo até o lip sync se tornar inaceitável ou uma melhoria
+percentual global. A proposta seguinte é instrumentar o motivo de recuperação e
+a cronologia dos callbacks, garantir o despejo no encerramento por watchdog e
+só então repetir um ensaio curto dirigido ao evento 59,94p e ao comportamento
+PLAY/STOP. Esse passo requer nova decisão do utilizador/auditor. Não foi publicada
+versão nem repetido o ensaio de oito horas. O acompanhamento periódico termina
+com esta consolidação; os registos não dependem de o chat continuar ativo.

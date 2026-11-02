@@ -1,0 +1,125 @@
+{
+  "started_at": "2026-11-02T03:45:06.373018+00:00",
+  "deadline": "2026-11-02T09:00:00",
+  "timezone": "Europe/Lisbon",
+  "pid": 42232,
+  "status": "failed",
+  "cases": [
+    {
+      "name": "cycle00-live-1080p25-0-to--1",
+      "mode": "1080p25",
+      "kind": "live",
+      "started_at": "2026-11-02T03:45:07.672307+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T03:45:46.603326+00:00",
+      "change_ms": -1.0
+    },
+    {
+      "name": "cycle00-live-1080p25-0-to--5",
+      "mode": "1080p25",
+      "kind": "live",
+      "started_at": "2026-11-02T03:45:46.871718+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T03:46:26.346338+00:00",
+      "change_ms": -5.020833333333333
+    },
+    {
+      "name": "cycle00-live-1080p25-0-to--21",
+      "mode": "1080p25",
+      "kind": "live",
+      "started_at": "2026-11-02T03:46:26.621247+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T03:47:06.065818+00:00",
+      "change_ms": -21.0
+    },
+    {
+      "name": "cycle00-live-1080p25--5-to-5",
+      "mode": "1080p25",
+      "kind": "live",
+      "started_at": "2026-11-02T03:47:06.344398+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T03:47:45.667161+00:00",
+      "change_ms": 10.0
+    },
+    {
+      "name": "cycle00-live-1080p50-0-to--1",
+      "mode": "1080p50",
+      "kind": "live",
+      "started_at": "2026-11-02T03:47:45.936917+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T03:48:26.380448+00:00",
+      "change_ms": -0.9791666666666665
+    },
+    {
+      "name": "cycle00-live-1080p50-0-to--5",
+      "mode": "1080p50",
+      "kind": "live",
+      "started_at": "2026-11-02T03:48:26.658398+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T03:49:07.155269+00:00",
+      "change_ms": -4.979166666666666
+    },
+    {
+      "name": "cycle00-live-1080p50-0-to--21",
+      "mode": "1080p50",
+      "kind": "live",
+      "started_at": "2026-11-02T03:49:07.435607+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T03:49:47.909443+00:00",
+      "change_ms": -21.0
+    },
+    {
+      "name": "cycle00-live-1080p50-5-to--5",
+      "mode": "1080p50",
+      "kind": "live",
+      "started_at": "2026-11-02T03:49:48.186271+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T03:50:28.672714+00:00",
+      "change_ms": -9.979166666666666
+    },
+    {
+      "name": "cycle00-sampled-1080p25",
+      "mode": "1080p25",
+      "kind": "sampled",
+      "started_at": "2026-11-02T03:50:28.951959+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T04:11:15.573680+00:00",
+      "av_quality_passed": true,
+      "av_change_ms": 0.5416666666666667
+    },
+    {
+      "name": "cycle00-sampled-1080p50",
+      "mode": "1080p50",
+      "kind": "sampled",
+      "started_at": "2026-11-02T04:11:15.844363+00:00",
+      "status": "passed",
+      "process_exit": 0,
+      "finished_at": "2026-11-02T04:32:02.425358+00:00",
+      "av_quality_passed": true,
+      "av_change_ms": 11.75
+    },
+    {
+      "name": "cycle00-sampled-1080p5994",
+      "mode": "1080p5994",
+      "kind": "sampled",
+      "started_at": "2026-11-02T04:32:02.699506+00:00",
+      "status": "failed",
+      "process_exit": 1,
+      "finished_at": "2026-11-02T04:39:40.469670+00:00",
+      "error": "Continuity counters failed: {'missing_total': 0.0, 'api_errors': 0.0, 'recoveries': 1.0, 'late_video': 1.0, 'dropped_video': 1.0, 'clock_resets': 0.0, 'video_history_misses': 0.0, 'video_history_startup_misses': 0.0, 'video_conversion_fallbacks': 0.0}"
+    }
+  ],
+  "limits": "Same Mac and UltraStudio; sampled physical captures, no independent clock or human lip-sync certification.",
+  "awake_pid": 42233,
+  "stop_reason": "Continuity counters failed: {'missing_total': 0.0, 'api_errors': 0.0, 'recoveries': 1.0, 'late_video': 1.0, 'dropped_video': 1.0, 'clock_resets': 0.0, 'video_history_misses': 0.0, 'video_history_startup_misses': 0.0, 'video_conversion_fallbacks': 0.0}",
+  "finished_at": "2026-11-02T04:39:40.475611+00:00"
+}
