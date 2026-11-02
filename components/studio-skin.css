@@ -1,0 +1,63 @@
+/* Approved graphite facade, matte keys and asymmetric monitor recess.
+   This stylesheet changes paint only; layout and the native preview rect stay intact. */
+#studio-refined .sr-chassis {
+  --sr-relief:var(--studio-relief);
+  background-color:#0b0d10;
+  background-image:linear-gradient(180deg,#232528 0%,#202225 5%,#1b1d20 17%,#141619 40%,#0e1013 70%,#090b0e 94%,#07090c 100%);
+  background-size:100% var(--studio-front-height,335px);background-repeat:no-repeat;
+  border-color:#474b50 #1b2025 #070a0d #30353b;
+  box-shadow:inset 0 1px 1px #c0c8d026,inset 0 -10px 16px #03070c66;
+}
+#studio-refined .sr-front {
+  position:relative;isolation:isolate;border-radius:11px 11px 0 0;
+  background:radial-gradient(ellipse 160% 100% at 35% -10%,#c0c4c908,transparent 70%);
+}
+#studio-refined .sr-front > * {position:relative;z-index:3}
+#studio-refined .sr-front::before {
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+  background:linear-gradient(180deg,#d9e0e509,transparent 24%,transparent 70%,#00000030);
+}
+#studio-refined .sr-front::after {
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Cpath fill='%23888888' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+  background-size:100px 100px;opacity:.14;filter:contrast(1.1);mix-blend-mode:soft-light;
+  -webkit-mask-image:linear-gradient(#000,#0009);mask-image:linear-gradient(#000,#0009);
+}
+#studio-refined .sr-layer-row,
+#studio-refined .sr-layer-row.is-off {
+  background:var(--studio-face);border-color:var(--studio-edge);border-radius:6px;
+  box-shadow:var(--studio-relief);
+}
+/* Left + right remain 10px in total, preserving the existing video viewport. */
+#studio-refined .sr-lcd {
+  border-style:solid;border-width:5px 8px 5px 2px;border-radius:8px;
+  border-color:#10151b #202830 #252f39 #39434e;background:#080c12;
+  box-shadow:-1px 0 0 #89939e6b,1px 0 0 #57616c55,0 -1px 1px #151a20,0 1px 1px #5d68734a,inset -2px 0 2px #000c,inset 0 2px 3px #000b;
+}
+#studio-refined .sr-lcd-top,#studio-refined .sr-monitor-config {background:#080c12}
+/* Keep the status banner distinct from black video without moving the preview. */
+#studio-refined .sr-lcd-top {box-shadow:inset 0 -1px 0 #46515e}
+/* Recessed tray: dark contact edge under the facade, fading into the tray. */
+#studio-refined .sr-drawer {
+  position:relative;isolation:isolate;
+  background:linear-gradient(180deg,#0a0e13 0,#121920 10px,#192129 32px,#1b232b 100%);
+  box-shadow:inset 5px 0 8px #03070b66,inset -5px 0 8px #03070b66;
+}
+#studio-refined .sr-drawer::before {
+  content:'';position:absolute;inset:0 0 auto;height:14px;pointer-events:none;z-index:1;
+  background:linear-gradient(180deg,#020407cc,#03070b66 35%,transparent);
+  box-shadow:inset 0 1px 0 #000b;
+}
+#studio-refined .sr-drawer :is(.sr-settings,.sr-layer-editor) {border-top-color:#06090d}
+/* A separate raised diagnostic strip: a 3px shoulder and a short contact shadow. */
+#studio-refined footer {
+  position:relative;isolation:isolate;z-index:2;
+  background:linear-gradient(180deg,#333b43 0%,#2a323a 12%,#232b33 82%,#1a2129 100%);
+  border-top-color:#68727c;color:#b8c5d2;
+  box-shadow:0 -3px 5px #0009,inset 0 1px 0 #c4cfda24,inset 0 -2px 1px #080d13b3;
+}
+#studio-refined footer::before {
+  content:'';position:absolute;left:0;right:0;top:-3px;height:2px;pointer-events:none;
+  background:linear-gradient(#11171d,#4b555f);box-shadow:0 -2px 3px #0007;
+}
+#studio-refined .sr-diagnostics {background:#161e26;border-top:1px solid #0b1118}

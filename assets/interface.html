@@ -1,17 +1,52 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'"><title>URL2KeyFill</title><style>html,body{margin:0;background:transparent;color:#eef1f5;overflow:hidden;overscroll-behavior:none}#studio-refined{padding:0 0 7px!important}#studio-refined .sr-chassis{border-radius:12px;box-shadow:none}#studio-refined .sr-layer-audio{margin:25px 0 10px;-webkit-app-region:no-drag}#studio-refined .sr-layer-audio-title{color:#b8c7da;font-size:11px}#studio-refined .sr-audio-fields{display:flex;align-items:center;gap:24px;margin-top:16px}#studio-refined button:disabled{opacity:.45}#studio-refined .sr-dummy:disabled{opacity:1}#studio-refined .sr-device-form select:disabled{opacity:.65}#studio-refined i{font-style:normal}#studio-refined .sr-select-wrap>i{position:absolute;right:13px;top:50%;transform:translateY(-50%);width:12px;height:8px;font-size:0;line-height:0;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23c6d3e4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px 8px no-repeat}#studio-refined .sr-key>i{font-size:22px;line-height:1}#studio-refined .sr-refresh>i{font-size:14px}
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'"><title>URL2KeyFill</title><!-- BEGIN GENERATED BUTTON BASE -->
+<style>
+/* Shared native button geometry and LED lenses. Application context owns placement. */
+#studio-refined button:disabled{opacity:.45}
+#studio-refined .sr-key>i{font-size:22px;line-height:1}
+#studio-refined .sr-refresh>i{font-size:14px}
+#studio-refined button{font:500 11px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.3px;cursor:default}
+#studio-refined .sr-key{width:var(--sr-key-size);height:var(--sr-key-size);border-radius:5px;border:1px solid #6c747f;box-shadow:var(--sr-relief);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:5px;white-space:nowrap}
+#studio-refined .sr-key:active{transform:translateY(1px)}
+#studio-refined .sr-key svg{width:18px;height:18px}
+#studio-refined .sr-power-icon{display:block;width:22px;height:22px;flex:0 0 22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;color:#88f5a7;filter:drop-shadow(0 0 2px #69e78eaa) drop-shadow(0 0 5px #69e78e66)}
+#studio-refined .sr-small-button{background:linear-gradient(#4e5c6c,#354353);color:#ecf2f9;border:1px solid #7c8ea4;border-radius:4px;min-height:36px;padding:8px 14px;box-shadow:inset 0 1px 0 #ffffff15}
+#studio-refined .sr-key>span{text-align:center;line-height:1.35}
+#studio-refined .sr-refresh{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:0;min-height:22px}
+#studio-refined .sr-refresh svg{width:12px;height:12px}
+#studio-refined .sr-led-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:39px;padding:10px 16px;white-space:nowrap}
+/* All round status LEDs use the layer drawer's size, lens and glow. */
+#studio-refined{
+ --sr-led-white:radial-gradient(circle at 35% 30%,#fff,#d9dee4 55%,#939da9);
+ --sr-led-green:radial-gradient(circle at 35% 30%,#dcffe5,#69e78e 55%,#27994b);
+ --sr-led-red:radial-gradient(circle at 35% 30%,#ffd6ce,#f2796c 55%,#b42c28);
+ --sr-led-white-glow:0 0 4px #ffffff35,inset 0 0 1px #fff;
+ --sr-led-green-glow:0 0 5px #69e78e9c;
+ --sr-led-red-glow:0 0 5px #f2796c9c;
+}
+#studio-refined :is(.sr-led,.sr-air-dot,.sr-visibility-light,.sr-status-led){display:inline-block;width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:var(--sr-led-white);box-shadow:var(--sr-led-white-glow)}
+#studio-refined :is(.sr-led:not(.sr-offline),.sr-layer-row:not(.is-off) .sr-visibility-light,.sr-led-button[aria-pressed=true] .sr-status-led){background:var(--sr-led-green);box-shadow:var(--sr-led-green-glow)}
+#studio-refined :is(.sr-air-dot:not(.not-live),:is(.sr-layer-mute,.sr-master-mute-button,.sr-layer-mono,.sr-audio-mute,.sr-audio-mono)[aria-pressed=true] .sr-status-led){background:var(--sr-led-red);box-shadow:var(--sr-led-red-glow)}
+</style>
+<!-- END GENERATED BUTTON BASE -->
+<style>html,body{margin:0;background:transparent;color:#eef1f5;overflow:hidden;overscroll-behavior:none}#studio-refined{padding:0 0 7px!important}#studio-refined .sr-chassis{border-radius:12px;box-shadow:none}#studio-refined .sr-layer-audio{margin:25px 0 10px;-webkit-app-region:no-drag}#studio-refined .sr-layer-audio-title{color:#b8c7da;font-size:11px}#studio-refined .sr-audio-fields{display:flex;align-items:center;gap:24px;margin-top:16px}#studio-refined .sr-dummy:disabled{opacity:1}#studio-refined .sr-device-form select:disabled{opacity:.65}#studio-refined i{font-style:normal}#studio-refined .sr-select-wrap>i{position:absolute;right:13px;top:50%;transform:translateY(-50%);width:12px;height:8px;font-size:0;line-height:0;pointer-events:none;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%23c6d3e4' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px 8px no-repeat}
 #studio-refined .sr-master-audio{margin-top:auto;margin-bottom:0}#studio-refined .sr-master-meter-caption{display:none}
-#studio-refined .sr-audio-mixer{display:grid;grid-template-columns:minmax(0,1fr) 190px}#studio-refined .sr-audio-lanes{display:flex;overflow-x:auto;min-width:0;padding-bottom:12px;scrollbar-color:#637181 #1e252d}#studio-refined .sr-audio-strip{flex:0 0 190px;min-width:0;padding:0 18px;border-right:1px solid #424c57}#studio-refined .sr-audio-output{background:#141b23;padding:15px 18px;margin:-15px 0 -12px;border-left:1px solid #424c57}#studio-refined .sr-audio-output .sr-audio-strip{padding:0;border:0}#studio-refined .sr-audio-title{display:block;height:36px;font-size:12px;color:#eef1f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#studio-refined .sr-audio-db{text-align:center;display:block;margin-bottom:15px;color:#c6d3e4;font-variant-numeric:tabular-nums}#studio-refined .sr-vertical-controls{height:180px;display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:18px}#studio-refined .sr-vertical-controls input{writing-mode:vertical-lr;direction:rtl;appearance:none;-webkit-appearance:none;flex:none;width:6px;height:180px;margin:0 10px;border:1px solid #111820;border-radius:3px;background:linear-gradient(90deg,#0d141c,#354252);box-shadow:inset 1px 0 3px #0009}#studio-refined .sr-vertical-controls input::-webkit-slider-thumb{-webkit-appearance:none;width:25px;height:13px;border:1px solid #84909e;border-radius:3px;background:linear-gradient(#9da7b3,#56616e 40%,#d6dde5 44%,#d6dde5 56%,#53606e 60%,#727e8b);box-shadow:0 2px 4px #0008}#studio-refined .sr-vertical-scale{position:relative;height:167px;width:32px;color:#9aabbd;font-size:10px}#studio-refined .sr-vertical-scale span{position:absolute;transform:translateY(50%);left:4px}#studio-refined .sr-vertical-scale span:before{content:'';position:absolute;left:-7px;top:50%;width:5px;height:1px;background:#8797a8}#studio-refined .sr-vertical-meter{height:180px!important;width:30px!important;gap:5px!important;margin:0!important;flex-basis:30px!important}#studio-refined .sr-vertical-meter .sr-meter-channel{width:11px;height:180px;display:flex;flex-direction:column;justify-content:space-between}#studio-refined .sr-vertical-meter .sr-meter-led{width:11px;height:8px;border-radius:1px}#studio-refined .sr-audio-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}#studio-refined .sr-audio-buttons button{height:34px;min-height:34px;padding:0 5px;font-size:10px;justify-content:center;gap:5px}#studio-refined .sr-audio-buttons .sr-audio-monitor{grid-column:1/-1}#studio-refined .sr-listen-label{font-size:10px;letter-spacing:0;margin:0 12px;color:#9aabbd}@media(max-width:520px){#studio-refined .sr-audio-mixer{grid-template-columns:minmax(0,1fr) 145px}#studio-refined .sr-audio-strip{flex-basis:145px;padding:0 10px}#studio-refined .sr-audio-output{padding:15px 10px}}
+#studio-refined .sr-audio-mixer{display:grid;grid-template-columns:minmax(0,1fr) 190px}#studio-refined .sr-audio-lanes{display:flex;overflow-x:auto;min-width:0;padding-bottom:12px;scrollbar-color:#637181 #1e252d}#studio-refined .sr-audio-strip{flex:0 0 190px;min-width:0;padding:0 18px;border-right:1px solid #424c57}#studio-refined .sr-audio-output{background:#141b23;padding:15px 18px;margin:-15px 0 -12px;border-left:1px solid #424c57}#studio-refined .sr-audio-output .sr-audio-strip{padding:0;border:0}#studio-refined .sr-audio-title{display:block;height:36px;font-size:12px;color:#eef1f5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#studio-refined .sr-audio-db{text-align:center;display:block;margin-bottom:15px;color:#c6d3e4;font-variant-numeric:tabular-nums}#studio-refined .sr-vertical-controls{height:180px;display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:18px}#studio-refined .sr-vertical-meter{height:180px!important;width:30px!important;gap:5px!important;margin:0!important;flex-basis:30px!important}#studio-refined .sr-audio-buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}#studio-refined .sr-audio-buttons button{height:34px;min-height:34px;padding:0 5px;font-size:10px;justify-content:center;gap:5px}#studio-refined .sr-listen-label{font-size:10px;letter-spacing:0;margin:0 12px;color:#9aabbd}@media(max-width:520px){#studio-refined .sr-audio-mixer{grid-template-columns:minmax(0,1fr) 145px}#studio-refined .sr-audio-strip{flex-basis:145px;padding:0 10px}#studio-refined .sr-audio-output{padding:15px 10px}}
 
 /* Shared audio states and meter zones, including inactive LEDs. */
-#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:nth-child(-n+6){background:#514329}
-#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:first-child{background:#542b28}
-#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:nth-child(-n+6).is-lit,#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:nth-child(-n+6).is-peak{background:#edc06b;box-shadow:0 0 3px #edc06b50}
-#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:first-child.is-lit,#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:first-child.is-peak{background:#ee8d80;box-shadow:0 0 3px #ee8d8050}
+
+
+
+
 #studio-refined .sr-master-audio{flex:1;min-height:0;margin-top:0;align-self:stretch}
 #studio-refined .sr-master-meter-slot{display:flex;flex:1;min-height:0;justify-content:center;width:100%}
 #studio-refined .sr-master-meter-slot .sr-audio-meter{height:100%;align-items:stretch}
-#studio-refined .sr-master-meter-slot .sr-meter-channel{height:100%;justify-content:space-between;gap:2px}
-#studio-refined .sr-master-meter-slot .sr-meter-led{flex:1;min-height:1px;height:auto;max-height:8px}
+
+
+
+#studio-refined .sr-monitor-tooltip{position:fixed;z-index:10000;pointer-events:none;max-width:min(280px,calc(100vw - 16px));padding:10px 12px;background:#101820;color:#eef1f5;border:1px solid #718296;border-radius:5px;box-shadow:0 4px 12px #0006;font:400 11px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-align:left}
+#studio-refined .sr-monitor-tooltip[hidden]{display:none}
+#studio-refined .sr-monitor-tooltip strong{display:block;font-weight:500;margin-bottom:4px}
+#studio-refined .sr-monitor-tooltip span{display:block}
 </style></head><body><div id="studio-refined">
  <div class="sr-chassis" aria-label="URL2KeyFill Studio Rack design">
   <div class="sr-front">
@@ -21,8 +56,8 @@
     <button class="sr-key sr-dark sr-power" data-action="power" aria-label="Quit URL2KeyFill"><svg class="sr-power-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9M6.35 5.65a9 9 0 1 0 11.3 0"/></svg><span>POWER</span></button>
    </aside>
    <section class="sr-controls" aria-label="Operation controls"><div class="sr-matrix">
-    <button class="sr-key sr-green" data-action="play" aria-pressed="true">PLAY</button>
-    <button class="sr-key sr-dark" data-action="pause" aria-pressed="false">PAUSE</button>
+    <button class="sr-key sr-green" data-action="play" aria-pressed="true"><span>PLAY</span></button>
+    <button class="sr-key sr-dark" data-action="pause" aria-pressed="false"><span>PAUSE</span></button>
     <button class="sr-key sr-dark layers-active" data-action="layers" aria-expanded="true">LAYERS</button>
     <button class="sr-key sr-dark" data-action="edit" aria-pressed="false"><span>EDIT<br>LAYER</span></button>
     <button class="sr-key sr-dark" data-action="add"><span>ADD<br>LAYER</span></button>
@@ -80,16 +115,16 @@
 #studio-refined .sr-chassis{--sr-key-size:62px;--sr-screen-height:calc(4 * var(--sr-key-size) - 38px);--sr-monitor-width:calc(var(--sr-screen-height) * 16 / 9 + 84px);--sr-relief:inset 0 1px 0 #ffffff38,0 3px 0 #111417,0 5px 8px #0004;position:relative;isolation:isolate;background:linear-gradient(115deg,#34373b,#25282c 55%,#303438);border:1px solid #565d65;border-radius:13px;box-shadow:none;overflow:hidden;-webkit-app-region:drag}
 #studio-refined .sr-front{display:grid;grid-template-columns:minmax(180px,204px) 134px minmax(135px,1fr) var(--sr-monitor-width);gap:22px;padding:27px 24px 24px;align-items:stretch}
 #studio-refined button,#studio-refined input,#studio-refined select,#studio-refined details,#studio-refined .sr-layer-row,#studio-refined .sr-url-editor,#studio-refined .sr-modal{-webkit-app-region:no-drag}
-#studio-refined button{font:500 11px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.3px;cursor:default}
+
 #studio-refined button:focus-visible,#studio-refined input:focus-visible,#studio-refined select:focus-visible{outline:none}
-#studio-refined .sr-key{width:var(--sr-key-size);height:var(--sr-key-size);border-radius:5px;border:1px solid #6c747f;box-shadow:var(--sr-relief);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:5px;white-space:nowrap}
-#studio-refined .sr-key:active{transform:translateY(1px)}
-#studio-refined .sr-dark{background:linear-gradient(#4c535c,#353b43);color:#edf1f6}
-#studio-refined .sr-pale{background:linear-gradient(#f4f5ef,#c8cdd3);color:#252c33;border-color:#c6cdd6}
-#studio-refined .sr-green{background:linear-gradient(#c2ebc6,#79b889);color:#1e3a26;border-color:#a5d9af}
-#studio-refined .sr-red{background:linear-gradient(#f4b2a9,#d2776c);color:#4b201b;border-color:#e5a699}
-#studio-refined .sr-amber{background:linear-gradient(#f8dfa8,#d9a556);color:#453318;border-color:#e5c18b}
-#studio-refined .sr-key svg{width:18px;height:18px}
+
+
+
+
+
+
+
+
 #studio-refined .sr-identity{display:flex;flex-direction:column;align-items:start;gap:20px;min-width:0}
 #studio-refined .sr-logo{font-size:21px;font-weight:600;letter-spacing:-1px;white-space:nowrap}
 #studio-refined .sr-logo>span{color:#e4ad54}
@@ -102,7 +137,7 @@
 #studio-refined .sr-output-kind{display:block;color:#b6c2d2;font-size:11px;margin-top:3px}
 #studio-refined .sr-air-state{font-size:11px;letter-spacing:1px;color:#f3aaa1;margin-top:10px}
 #studio-refined .sr-power{margin-top:auto}
-#studio-refined .sr-power-icon{display:block;width:22px;height:22px;flex:0 0 22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;color:#88f5a7;filter:drop-shadow(0 0 2px #69e78eaa) drop-shadow(0 0 5px #69e78e66)}
+
 #studio-refined .sr-heading{display:flex;align-items:center;justify-content:space-between;min-height:18px;margin:0 0 12px}
 #studio-refined .sr-matrix{display:grid;grid-template-columns:repeat(2,var(--sr-key-size));gap:12px 10px}
 #studio-refined .sr-controls{align-self:start}
@@ -134,7 +169,7 @@
 #studio-refined .sr-monitor-air{display:flex;align-items:center;justify-content:center;min-width:0;padding:0 6px;color:#bfcbd9;font-size:24px;font-weight:600;line-height:1;letter-spacing:.5px;white-space:nowrap}
 #studio-refined .sr-monitor-air[data-state=live]{color:#ff2535}
 #studio-refined .sr-monitor-air[data-state=paused]{color:#edc06b}
-#studio-refined .sr-picture{position:relative;min-height:0;aspect-ratio:16/9;isolation:isolate;overflow:hidden;background-color:#262e38;background-image:conic-gradient(#333d49 25%,transparent 0 50%,#333d49 0 75%,transparent 0);background-size:18px 18px}
+#studio-refined .sr-picture{position:relative;min-height:0;aspect-ratio:16/9;isolation:isolate;overflow:hidden;background-color:#262e38;background-image:conic-gradient(#333d49 25%,transparent 0 50%,#333d49 0 75%,transparent 0);background-size:9px 9px}
 #studio-refined .sr-scene{position:absolute;inset:0;background:radial-gradient(ellipse at 80% 0,#527284 0,transparent 65%),linear-gradient(145deg,#304555,#152638 70%,#24394c)}
 #studio-refined .sr-bug{position:absolute;right:10px;top:10px;font-size:11px;background:#aa5147;color:#ffede7;padding:2px 7px;letter-spacing:.8px}
 #studio-refined .sr-weather{position:absolute;right:9px;bottom:14px;font-size:11px;color:#e2ebf6;border-top:1px solid #acbccd;padding-top:4px}
@@ -147,8 +182,8 @@
 #studio-refined .sr-master-audio{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px}
 #studio-refined .sr-master-meter-caption{font-size:8px;letter-spacing:.2px;color:#9aabbd;white-space:nowrap}
 #studio-refined .sr-master-meter-slot .sr-audio-meter{margin-left:0;width:26px;height:32px;gap:6px;flex-basis:26px}
-#studio-refined .sr-master-meter-slot .sr-meter-channel{width:10px;gap:.5px}
-#studio-refined .sr-master-meter-slot .sr-meter-led{width:10px;height:1.5px;border-radius:1px}
+
+
 #studio-refined .is-key .sr-picture{background:#07090c}
 #studio-refined .is-key .sr-scene{background:#fff}
 #studio-refined .is-key .sr-bug{background:#fff;color:#fff}
@@ -192,7 +227,7 @@
 #studio-refined .sr-url-examples{cursor:pointer}
 #studio-refined .sr-url-input{min-width:0;width:100%;padding:10px;font:400 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#17212c;color:#e7effa;border:1px solid #7c8ea5;border-radius:3px}
 #studio-refined .sr-editor-actions{display:flex;justify-content:end;gap:10px;margin-top:14px}
-#studio-refined .sr-small-button{background:linear-gradient(#4e5c6c,#354353);color:#ecf2f9;border:1px solid #7c8ea4;border-radius:4px;min-height:36px;padding:8px 14px;box-shadow:inset 0 1px 0 #ffffff15}
+
 #studio-refined .sr-save{background:linear-gradient(#efce98,#cda266);color:#352a1b;border-color:#e7c597}
 #studio-refined .sr-modal{position:absolute;inset:0;min-height:100%;z-index:40;padding:24px;display:flex;align-items:center;justify-content:center;background:#10151cc9;backdrop-filter:blur(3px);border-radius:12px}
 #studio-refined .sr-dialog{background:#2d3743;color:#e9eff7;border:1px solid #78889c;border-radius:8px;padding:24px;max-width:100%;width:320px;text-align:center;box-shadow:0 12px 30px #0007}
@@ -203,12 +238,12 @@
 #studio-refined .sr-live-warning .sr-dialog{border:2px solid #e68175;width:420px}
 #studio-refined .sr-live-warning h3{color:#ffb0a4}
 #studio-refined .sr-live-warning p{font-size:14px;line-height:1.6}
-#studio-refined .sr-quit{background:linear-gradient(#d3978c,#aa695e);color:#fff0e9;border-color:#dcaa9b}
+
 @media(max-width:940px){#studio-refined .sr-front{grid-template-columns:187.5px 134px minmax(155px,1fr) minmax(260px,1.6fr);gap:15px;padding:24px 18px}#studio-refined .sr-logo{font-size:19px}#studio-refined .sr-monitor-row{grid-template-columns:minmax(0,1fr) var(--sr-key-size);gap:9px}}
 @media(max-width:780px){#studio-refined .sr-front{grid-template-columns:187.5px 134px minmax(0,1fr);gap:20px}#studio-refined .sr-monitor{grid-column:2 / span 2;grid-row:2}#studio-refined .sr-identity{grid-column:1;grid-row:1 / span 2}#studio-refined .sr-fields{grid-template-columns:1fr 1fr}#studio-refined .sr-layers{grid-column:3;grid-row:1}#studio-refined .sr-layer-list{min-height:0}#studio-refined .sr-monitor-row{grid-template-columns:minmax(0,1fr) var(--sr-key-size)}#studio-refined .sr-power{margin-top:auto}}
 @media(max-width:520px){#studio-refined .sr-front{grid-template-columns:1fr 1fr;gap:20px 16px;padding:20px 16px}#studio-refined .sr-identity{grid-column:1 / span 2;grid-row:auto;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}#studio-refined .sr-logo{font-size:22px}#studio-refined .sr-output{grid-column:2;grid-row:2}#studio-refined .sr-power{grid-column:1;grid-row:2;margin:0}#studio-refined .sr-controls{grid-column:1;grid-row:2}#studio-refined .sr-layers{grid-column:2;grid-row:2}#studio-refined .sr-monitor{grid-column:1 / span 2;grid-row:3}#studio-refined .sr-fields{grid-template-columns:1fr}#studio-refined .sr-layer-name{font-size:11px}#studio-refined .sr-layer-toggle{padding-left:7px;gap:5px}#studio-refined .sr-layer-number{display:none}#studio-refined .sr-link{flex-basis:27px}#studio-refined .sr-settings{padding:18px 16px}#studio-refined select,#studio-refined .sr-url-input{font-size:16px}#studio-refined .sr-matrix{gap:12px 8px}#studio-refined footer{padding:6px 16px;font-size:11px}#studio-refined .sr-feedback{max-width:65%}#studio-refined .sr-layer-row{min-height:42px}}
-#studio-refined .sr-delete{margin-right:auto;background:#403638;color:#e0b4ad;border-color:#756066}
-#studio-refined .sr-controls .layers-active{background:linear-gradient(#646b73,#454e58);color:#f1f4f7}
+#studio-refined .sr-delete{margin-right:auto}
+
 #studio-refined .sr-output-values{display:flex;align-items:baseline;gap:4.5px;flex-wrap:wrap;margin-top:6px}
 #studio-refined .sr-output-values .sr-format-label,#studio-refined .sr-output-values .sr-output-kind{margin:0;display:inline}
 
@@ -217,19 +252,19 @@
 #studio-refined .sr-layer-toggle{padding-right:12px;gap:9px}
 #studio-refined .sr-audio-meter{-webkit-app-region:no-drag;user-select:none}
 #studio-refined .is-mono .sr-audio-meter{justify-content:center}
-#studio-refined .is-mono .sr-meter-channel:nth-child(2){display:none}
+
 #studio-refined .sr-layer-row .sr-audio-meter,#studio-refined .sr-composite-audio-meter{cursor:pointer}
 #studio-refined .sr-audio-meter{display:flex;align-items:end;gap:3px;flex:0 0 13px;width:13px;height:24px;margin-left:auto}
-#studio-refined .sr-meter-channel{display:flex;flex-direction:column;gap:.5px;width:5px}
-#studio-refined .sr-meter-led{display:block;width:5px;height:1px;border-radius:.5px;background:#1b2924;box-shadow:inset 0 0 1px #000a}
-#studio-refined .sr-meter-led.is-lit{background:#6bd78f;box-shadow:0 0 3px #6bd78f50}
-#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:nth-child(2).is-lit,#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:nth-child(3).is-lit,#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:nth-child(4).is-lit,#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:nth-child(5).is-lit,#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:nth-child(6).is-lit{background:#edc06b;box-shadow:0 0 3px #edc06b50}
-#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:first-child.is-lit{background:#ee8d80;box-shadow:0 0 3px #ee8d8050}
-#studio-refined .is-audio-muted .sr-meter-led{background:#30363e}
-#studio-refined .is-audio-muted .sr-meter-led.is-lit{background:#a4adb8;box-shadow:0 0 2px #a4adb830}
-#studio-refined .sr-meter-led.is-peak{background:#d8f7e1;box-shadow:0 0 2px #b8f2ca80}
-#studio-refined :is(.sr-vertical-meter,.sr-composite-audio-meter) .sr-meter-led:first-child.is-peak{background:#ffaaa0}
-#studio-refined .is-audio-muted .sr-meter-led.is-peak{background:#d6dde5;box-shadow:none}
+
+
+
+
+
+
+
+
+
+
 #studio-refined .sr-audio-meter+.sr-visibility-light{margin-left:3px}
 
 #studio-refined .sr-name-input{min-width:0;width:100%;padding:10px;font:400 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#17212c;color:#e7effa;border:1px solid #7c8ea5;border-radius:3px}
@@ -243,14 +278,15 @@
 #studio-refined .sr-device strong,#studio-refined .sr-output .sr-format-label{font-size:13px;font-weight:500;line-height:1.4;letter-spacing:0}
 #studio-refined .sr-device strong{margin-top:6px}
 #studio-refined .sr-device .sr-caption,#studio-refined .sr-output>.sr-caption{font-size:11px;font-weight:400;line-height:1.4;letter-spacing:.65px}
-#studio-refined .sr-key>span{text-align:center;line-height:1.35}
+
 #studio-refined .sr-dummy:disabled{opacity:1}
-#studio-refined .sr-key[data-action="pause"]:disabled{opacity:.5}
+#studio-refined .sr-key:is([data-action="play"],[data-action="pause"]):disabled{opacity:1}
+#studio-refined .sr-key:is([data-action="play"],[data-action="pause"]):disabled>span{opacity:.22;text-shadow:none}
 #studio-refined .sr-edit-active{background:linear-gradient(#e5d0ac,#ba9b71);color:#322b22;border-color:#bda580}
 #studio-refined .sr-timing-settings{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}#studio-refined .sr-timing-settings input{background:#171e26;color:#e3ebf5;border:1px solid #546172;border-radius:4px;padding:10px 12px;max-width:150px}#studio-refined .sr-timing-hint{font-size:12px;color:#afbdcf;line-height:1.5}
 #studio-refined .sr-device-label{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:22px}
-#studio-refined .sr-refresh{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:0;min-height:22px}
-#studio-refined .sr-refresh svg{width:12px;height:12px}
+
+
 #studio-refined .sr-fields{align-items:end}
 #studio-refined .sr-custom-size{display:flex;align-items:end;gap:12px;margin-top:16px;color:#afbdcf;font-size:12px}
 #studio-refined .sr-custom-size label{max-width:135px}
@@ -259,16 +295,16 @@
 #studio-refined .sr-layer-editor{padding:18px 24px 22px;border-top:1px solid #4b5868}
 #studio-refined .sr-layer-fields{display:grid;grid-template-columns:minmax(120px,1fr) minmax(180px,2.2fr) auto;align-items:end;gap:16px}
 #studio-refined .sr-visible-field{flex-direction:row;align-items:center;gap:8px;min-height:39px;white-space:nowrap}
-#studio-refined .sr-led-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:39px;padding:10px 16px;white-space:nowrap}
+
 
 #studio-refined .sr-gain-field{display:flex;flex-direction:column;gap:8px;min-width:340px;width:440px;max-width:100%}
 #studio-refined .sr-audio-fader{display:flex;align-items:start;gap:20px}
 #studio-refined .sr-fader-track{flex:1;min-width:0;position:relative;padding-bottom:26px}
 #studio-refined .sr-fader-track .sr-layer-gain{width:100%}
 #studio-refined .sr-fader-track .sr-layer-gain{position:relative;z-index:2}
-#studio-refined .sr-gain-scale{z-index:1;pointer-events:none}
-#studio-refined .sr-layer-gain{-webkit-appearance:none;appearance:none;min-width:0;flex:1;height:6px;margin:10px 0;border:1px solid #111820;border-radius:3px;background:linear-gradient(#0d141c,#354252);box-shadow:inset 0 1px 3px #0009;cursor:pointer}
-#studio-refined .sr-layer-gain::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:25px;border:1px solid #84909e;border-radius:3px;background:linear-gradient(#9da7b3,#56616e 45%,#d6dde5 48%,#d6dde5 52%,#53606e 55%,#727e8b);box-shadow:0 2px 4px #0008}
+
+
+
 #studio-refined .sr-layer-editor .sr-delete,#studio-refined .sr-layer-editor [data-action="reload-one"]{position:relative;top:10px}
 #studio-refined .sr-layer-audio label{max-width:none;margin-top:0}
 #studio-refined .sr-gain-entry{display:flex;flex-direction:row;align-items:center;gap:7px;font-size:12px;color:#c6d3e4}
@@ -278,16 +314,16 @@
 #studio-refined .sr-gain-stepper{position:absolute;right:3px;top:2px;bottom:2px;width:17px;display:flex;flex-direction:column}
 #studio-refined .sr-gain-step{display:grid;place-items:center;flex:1;min-height:0;padding:0;border:0;background:transparent;color:#eef4fc;font:12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer}
 #studio-refined .sr-gain-step:hover{background:#ffffff18;border-radius:2px}
-#studio-refined .sr-gain-scale{position:absolute;left:6px;right:6px;top:18px;height:25px;color:#9aabbd;font-size:10px;letter-spacing:0}
-#studio-refined .sr-gain-scale>span{position:absolute;top:9px;transform:translateX(-50%);white-space:nowrap}
-#studio-refined .sr-gain-scale>span::before{content:"";position:absolute;bottom:calc(100% + 3px);left:50%;height:6px;width:1px;background:#8797a8}
-#studio-refined .sr-gain-scale>.sr-unity-tick::before{height:9px;background:#d8e1eb}
+
+
+
+
 #studio-refined .sr-editor-meter{display:flex;align-items:center;gap:14px;min-height:65px;padding-left:8px;width:148px;flex:0 0 148px}
 #studio-refined .sr-meter-caption{width:96px;flex:0 0 96px;white-space:nowrap;font-size:10px;letter-spacing:.7px;color:#9aabbd}
 #studio-refined .sr-drawer-meter-slot{width:30px;flex:0 0 30px}
 #studio-refined .sr-drawer-audio-meter{margin-left:0;width:30px;height:47px;gap:6px;flex-basis:30px}
-#studio-refined .sr-drawer-audio-meter .sr-meter-channel{width:12px;gap:1px}
-#studio-refined .sr-drawer-audio-meter .sr-meter-led{width:12px;height:2px;border-radius:1px}
+
+
 
 #studio-refined .sr-editor-title{overflow-wrap:anywhere}
 @media(max-width:780px){#studio-refined .sr-layer-fields{grid-template-columns:1fr 1fr}#studio-refined .sr-layer-fields>label:nth-child(2){grid-column:1 / span 2;grid-row:2}}
@@ -303,7 +339,6 @@
 #studio-refined .sr-driver-help li span{display:block;font-size:12px;line-height:1.6}
 #studio-refined .sr-driver-help a{color:#e3c18c}
 
-#studio-refined .sr-key[data-action="play"]:disabled{opacity:.5}
 @media(max-width:600px){#studio-refined .sr-driver-help ol{grid-template-columns:1fr}#studio-refined .sr-driver-head{flex-wrap:wrap}}
 #studio-refined .sr-test-pattern{position:absolute;left:10%;right:10%;top:20%;padding:12px;background:#14263bd9;border-left:3px solid #d7ad72;color:#edf2f7;box-shadow:0 5px 15px #0005}
 #studio-refined .sr-test-pattern strong{display:block;font-size:16px;font-weight:500}
@@ -325,8 +360,8 @@
 /* Stretch the monitor meter from below KEY to the monitor bottom. */
 #studio-refined .sr-master-audio{flex:1;min-height:0;margin-top:0;margin-bottom:0;align-self:stretch}
 #studio-refined .sr-master-meter-slot .sr-audio-meter{height:100%;align-items:stretch}
-#studio-refined .sr-master-meter-slot .sr-meter-channel{height:100%;justify-content:space-between;gap:2px}
-#studio-refined .sr-master-meter-slot .sr-meter-led{flex:1;min-height:1px;height:auto;max-height:none}
+
+
 
 /* The output backdrop reaches the drawer edges behind its header. */
 #studio-refined .sr-audio-content{position:relative;isolation:isolate}
@@ -343,8 +378,8 @@
 #studio-refined .sr-layer-editor .sr-editor-meter{width:auto;min-width:0;min-height:65px;padding:0;display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:8px}
 #studio-refined .sr-layer-editor .sr-drawer-meter-slot{width:100%;flex:none}
 #studio-refined .sr-layer-editor .sr-drawer-audio-meter{display:flex;flex-direction:column;align-items:stretch;gap:4px;width:100%;height:24px;flex:none;margin:0}
-#studio-refined .sr-layer-editor .sr-drawer-audio-meter .sr-meter-channel{display:flex;flex-direction:row-reverse;gap:2px;width:100%;height:10px}
-#studio-refined .sr-layer-editor .sr-drawer-audio-meter .sr-meter-led{flex:1;min-width:1px;width:auto;height:10px;border-radius:1px}
+
+
 #studio-refined .sr-layer-channel-buttons{display:flex;align-items:center;justify-content:flex-end;gap:12px}
 @media(max-width:780px){#studio-refined .sr-layer-editor .sr-audio-fields{grid-template-columns:minmax(0,1fr) minmax(120px,1fr)}#studio-refined .sr-layer-channel-buttons{grid-column:1/-1}}
 
@@ -353,36 +388,126 @@
 #studio-refined .sr-layer-editor .sr-editor-meter .sr-meter-caption{position:absolute;top:0;left:0;width:auto;flex:none}
 
 #studio-refined .sr-layer-channel-buttons{position:relative;top:5px}
-/* All round status LEDs use the layer drawer's size, lens and glow. */
-#studio-refined{
- --sr-led-white:radial-gradient(circle at 35% 30%,#fff,#d9dee4 55%,#939da9);
- --sr-led-green:radial-gradient(circle at 35% 30%,#dcffe5,#69e78e 55%,#27994b);
- --sr-led-red:radial-gradient(circle at 35% 30%,#ffd6ce,#f2796c 55%,#b42c28);
- --sr-led-white-glow:0 0 4px #ffffff35,inset 0 0 1px #fff;
- --sr-led-green-glow:0 0 5px #69e78e9c;
- --sr-led-red-glow:0 0 5px #f2796c9c;
-}
-#studio-refined :is(.sr-led,.sr-air-dot,.sr-visibility-light,.sr-status-led){display:inline-block;width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:var(--sr-led-white);box-shadow:var(--sr-led-white-glow)}
-#studio-refined :is(.sr-led:not(.sr-offline),.sr-layer-row:not(.is-off) .sr-visibility-light,.sr-led-button[aria-pressed=true] .sr-status-led){background:var(--sr-led-green);box-shadow:var(--sr-led-green-glow)}
-#studio-refined :is(.sr-air-dot:not(.not-live),:is(.sr-layer-mute,.sr-master-mute-button,.sr-layer-mono,.sr-audio-mute,.sr-audio-mono)[aria-pressed=true] .sr-status-led){background:var(--sr-led-red);box-shadow:var(--sr-led-red-glow)}
-
 /* Shared standalone audio controls: layout adapters only. */
 #studio-refined .sr-monitor-row{grid-template-rows:minmax(0,1fr)}
 #studio-refined .sr-master-meter-slot{contain:size}
 #studio-refined gain-slider{-webkit-app-region:no-drag;flex:none}
 #studio-refined .sr-fader-track{padding-bottom:0}
 #studio-refined .sr-fader-track .sr-layer-gain{display:block;width:100%;height:50px;margin:0;border:0;background:none;box-shadow:none}
-#studio-refined .sr-vertical-controls{height:242px;align-items:center}
+#studio-refined .sr-vertical-controls{height:180px;align-items:center}
 #studio-refined .sr-vertical-controls gain-slider{height:180px;width:60px}
 #studio-refined .sr-audio-meter{display:inline-block;align-self:center;flex:none;width:auto;height:auto;margin:0 0 0 auto;user-select:none;-webkit-app-region:no-drag}
 #studio-refined .sr-layer-row .sr-audio-meter{width:17px;height:33px}
-#studio-refined .sr-vertical-meter{width:auto!important;height:auto!important;flex-basis:auto!important;margin:0!important}
+#studio-refined .sr-vertical-meter{width:auto!important;height:auto!important;flex-basis:auto!important;margin:0!important;--audio-led-size:6px;--audio-led-gap:2px}
 #studio-refined .sr-master-meter-slot .sr-audio-meter{width:auto;height:auto;margin:0}
 #studio-refined .sr-layer-editor .sr-drawer-audio-meter{display:inline-block;flex:none;width:auto;height:auto;margin:0;--audio-led-gap:2px}
 #studio-refined .sr-layer-editor .sr-drawer-meter-slot{display:flex;align-items:center;min-width:0}
+/* Read-only layer visibility, separated from the audio controls. */
+#studio-refined .sr-audio-active{display:flex;align-items:center;justify-content:center;gap:8px;height:26px;margin:0 0 18px;color:#aebbc9;font-size:10px;letter-spacing:.6px;user-select:none}
+#studio-refined .sr-audio-active.is-active .sr-status-led{background:var(--sr-led-green);box-shadow:var(--sr-led-green-glow)}
+#studio-refined .sr-audio-active:not(.is-active) .sr-status-led{background:#303841;box-shadow:inset 0 1px 2px #0009}
+#studio-refined .sr-audio-active.is-output{visibility:hidden}
+#studio-refined .sr-audio-strip.is-hidden :is(.sr-audio-title,.sr-audio-db){color:#535e6a}
+#studio-refined .sr-audio-strip.is-hidden gain-slider{opacity:.35}
+#studio-refined .sr-audio-strip.is-hidden .sr-audio-active{color:#626e7b}
 </style>
+<!-- BEGIN GENERATED STUDIO SKIN -->
+<style>
+/* Approved button material; used by native buttons and studio-button[skin="graphite"]. */
+/* Approved graphite facade, matte keys and asymmetric monitor recess.
+   This stylesheet changes paint only; layout and the native preview rect stay intact. */
+#studio-refined {
+  --sr-key-size:var(--studio-key-size,62px);
+  --studio-face:radial-gradient(ellipse at 35% 0%,#67707925,transparent 75%),linear-gradient(135deg,#434b53,#30373f 55%,#262c33);
+  --studio-edge:#101418;
+  --studio-relief:inset 0 1px 1px #c5d0da3b,inset 1px 0 1px #c5d0da16,inset -2px -3px 4px #05080c88,0 1px 0 #080b0d,1px 3px 3px #000a,-1px -1px 1px #090c10;
+}
+#studio-refined :is(.sr-key,.sr-small-button) {
+  background:var(--studio-face);border-color:var(--studio-edge);box-shadow:var(--studio-relief);color:#c5cdd5;
+}
+#studio-refined .sr-key {border-radius:9px;color:#adb4bb;text-shadow:0 1px 1px #0005}
+#studio-refined .sr-small-button {border-radius:6px}
+#studio-refined .sr-key.sr-amber {color:#ffd077;text-shadow:0 0 2px #ffc15b70,0 0 8px #ffad2230}
+#studio-refined .sr-key.sr-red {color:#ff1427;text-shadow:0 0 2px #ff0b2380,0 0 8px #ff001d33}
+#studio-refined .sr-key.sr-green {color:#88f5a7;text-shadow:0 0 4px #69e78e50}
+#studio-refined .sr-small-button.sr-delete {color:#ff9b8e;text-shadow:0 0 5px #ff66551f}
+#studio-refined .sr-small-button.sr-quit {color:#ff9b8e}
+#studio-refined :is(.sr-key,.sr-small-button):active:not(:disabled) {
+  box-shadow:inset 0 1px 3px #0008,0 1px 1px #0009;
+}
+
+/* Approved graphite facade, matte keys and asymmetric monitor recess.
+   This stylesheet changes paint only; layout and the native preview rect stay intact. */
+#studio-refined .sr-chassis {
+  --sr-relief:var(--studio-relief);
+  background-color:#0b0d10;
+  background-image:linear-gradient(180deg,#232528 0%,#202225 5%,#1b1d20 17%,#141619 40%,#0e1013 70%,#090b0e 94%,#07090c 100%);
+  background-size:100% var(--studio-front-height,335px);background-repeat:no-repeat;
+  border-color:#474b50 #1b2025 #070a0d #30353b;
+  box-shadow:inset 0 1px 1px #c0c8d026,inset 0 -10px 16px #03070c66;
+}
+#studio-refined .sr-front {
+  position:relative;isolation:isolate;border-radius:11px 11px 0 0;
+  background:radial-gradient(ellipse 160% 100% at 35% -10%,#c0c4c908,transparent 70%);
+}
+#studio-refined .sr-front > * {position:relative;z-index:3}
+#studio-refined .sr-front::before {
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+  background:linear-gradient(180deg,#d9e0e509,transparent 24%,transparent 70%,#00000030);
+}
+#studio-refined .sr-front::after {
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Cpath fill='%23888888' filter='url(%23n)' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+  background-size:100px 100px;opacity:.14;filter:contrast(1.1);mix-blend-mode:soft-light;
+  -webkit-mask-image:linear-gradient(#000,#0009);mask-image:linear-gradient(#000,#0009);
+}
+#studio-refined .sr-layer-row,
+#studio-refined .sr-layer-row.is-off {
+  background:var(--studio-face);border-color:var(--studio-edge);border-radius:6px;
+  box-shadow:var(--studio-relief);
+}
+/* Left + right remain 10px in total, preserving the existing video viewport. */
+#studio-refined .sr-lcd {
+  border-style:solid;border-width:5px 8px 5px 2px;border-radius:8px;
+  border-color:#10151b #202830 #252f39 #39434e;background:#080c12;
+  box-shadow:-1px 0 0 #89939e6b,1px 0 0 #57616c55,0 -1px 1px #151a20,0 1px 1px #5d68734a,inset -2px 0 2px #000c,inset 0 2px 3px #000b;
+}
+#studio-refined .sr-lcd-top,#studio-refined .sr-monitor-config {background:#080c12}
+/* Keep the status banner distinct from black video without moving the preview. */
+#studio-refined .sr-lcd-top {box-shadow:inset 0 -1px 0 #46515e}
+/* Recessed tray: dark contact edge under the facade, fading into the tray. */
+#studio-refined .sr-drawer {
+  position:relative;isolation:isolate;
+  background:linear-gradient(180deg,#0a0e13 0,#121920 10px,#192129 32px,#1b232b 100%);
+  box-shadow:inset 5px 0 8px #03070b66,inset -5px 0 8px #03070b66;
+}
+#studio-refined .sr-drawer::before {
+  content:'';position:absolute;inset:0 0 auto;height:14px;pointer-events:none;z-index:1;
+  background:linear-gradient(180deg,#020407cc,#03070b66 35%,transparent);
+  box-shadow:inset 0 1px 0 #000b;
+}
+#studio-refined .sr-drawer :is(.sr-settings,.sr-layer-editor) {border-top-color:#06090d}
+/* A separate raised diagnostic strip: a 3px shoulder and a short contact shadow. */
+#studio-refined footer {
+  position:relative;isolation:isolate;z-index:2;
+  background:linear-gradient(180deg,#333b43 0%,#2a323a 12%,#232b33 82%,#1a2129 100%);
+  border-top-color:#68727c;color:#b8c5d2;
+  box-shadow:0 -3px 5px #0009,inset 0 1px 0 #c4cfda24,inset 0 -2px 1px #080d13b3;
+}
+#studio-refined footer::before {
+  content:'';position:absolute;left:0;right:0;top:-3px;height:2px;pointer-events:none;
+  background:linear-gradient(#11171d,#4b555f);box-shadow:0 -2px 3px #0007;
+}
+#studio-refined .sr-diagnostics {background:#161e26;border-top:1px solid #0b1118}
+</style>
+<!-- END GENERATED STUDIO SKIN -->
 <!-- BEGIN GENERATED AUDIO CONTROLS -->
 <script>
+// Generated by tools/sync-ui-controls.py; edit the CSS sources.
+const classicButtonCSS = ":host{display:inline-block;vertical-align:middle;--studio-key-size:62px}\n    button{box-sizing:border-box;font:500 11px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;letter-spacing:.3px;cursor:default;background:linear-gradient(#4e5c6c,#354353);color:#ecf2f9;border:1px solid #7c8ea4;border-radius:4px;min-height:36px;padding:8px 14px;box-shadow:inset 0 1px 0 #ffffff15;display:inline-flex;align-items:center;justify-content:center;gap:10px}\n    button:disabled{opacity:.45}\n    :host([square]) button{width:var(--studio-key-size);height:var(--studio-key-size);min-height:0;border-radius:5px;border:1px solid #6c747f;box-shadow:inset 0 1px 0 #ffffff38,0 3px 0 #111417,0 5px 8px #0004;flex-direction:column;gap:7px;padding:5px;white-space:nowrap;background:linear-gradient(#4c535c,#353b43);color:#edf1f6}\n    :host([square]) button:active:not(:disabled){transform:translateY(1px)}\n    :host([variant=\"amber\"]) button{background:linear-gradient(#f8dfa8,#d9a556);color:#453318;border-color:#e5c18b}\n    :host([square][variant=\"play\"][pressed]) button{background:linear-gradient(#d3978c,#aa695e);color:#fff0e9;border-color:#dcaa9b}\n    :host([variant=\"delete\"]) button{background:#403638;color:#e0b4ad;border-color:#756066}\n    :host([variant=\"quit\"]) button{background:linear-gradient(#d3978c,#aa695e);color:#fff0e9;border-color:#dcaa9b}\n    :host([variant=\"refresh\"]) button{gap:5px;font-size:11px;padding:0;min-height:22px}\n    :host([led]) button{min-height:39px;padding:10px 16px;white-space:nowrap}\n    :host([square][led]) button{padding:5px;min-height:0}\n    .text{text-align:center;line-height:1.35}\n    .power-icon{display:none;width:22px;height:22px;flex:0 0 22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;color:#88f5a7;filter:drop-shadow(0 0 2px #69e78eaa) drop-shadow(0 0 5px #69e78e66)}\n    :host([variant=\"power\"]) .power-icon{display:block}\n    :host([variant=\"power\"]) .led{display:none}\n    :host([variant=\"power\"][disabled]) .power-icon{color:#91a298;filter:none}\n    .led{display:none;width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#d9dee4 55%,#939da9);box-shadow:0 0 4px #ffffff35,inset 0 0 1px #fff}\n    :host([led]) .led{display:inline-block}\n    :host([led=\"green\"][pressed]) .led{background:radial-gradient(circle at 35% 30%,#dcffe5,#69e78e 55%,#27994b);box-shadow:0 0 5px #69e78e9c}\n    :host([led=\"red\"][pressed]) .led{background:radial-gradient(circle at 35% 30%,#ffd6ce,#f2796c 55%,#b42c28);box-shadow:0 0 5px #f2796c9c}\n";
+const nativeButtonCSS = "/* Shared native button geometry and LED lenses. Application context owns placement. */\n#studio-refined button:disabled{opacity:.45}\n#studio-refined .sr-key>i{font-size:22px;line-height:1}\n#studio-refined .sr-refresh>i{font-size:14px}\n#studio-refined button{font:500 11px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;letter-spacing:.3px;cursor:default}\n#studio-refined .sr-key{width:var(--sr-key-size);height:var(--sr-key-size);border-radius:5px;border:1px solid #6c747f;box-shadow:var(--sr-relief);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:5px;white-space:nowrap}\n#studio-refined .sr-key:active{transform:translateY(1px)}\n#studio-refined .sr-key svg{width:18px;height:18px}\n#studio-refined .sr-power-icon{display:block;width:22px;height:22px;flex:0 0 22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;color:#88f5a7;filter:drop-shadow(0 0 2px #69e78eaa) drop-shadow(0 0 5px #69e78e66)}\n#studio-refined .sr-small-button{background:linear-gradient(#4e5c6c,#354353);color:#ecf2f9;border:1px solid #7c8ea4;border-radius:4px;min-height:36px;padding:8px 14px;box-shadow:inset 0 1px 0 #ffffff15}\n#studio-refined .sr-key>span{text-align:center;line-height:1.35}\n#studio-refined .sr-refresh{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:0;min-height:22px}\n#studio-refined .sr-refresh svg{width:12px;height:12px}\n#studio-refined .sr-led-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:39px;padding:10px 16px;white-space:nowrap}\n/* All round status LEDs use the layer drawer's size, lens and glow. */\n#studio-refined{\n --sr-led-white:radial-gradient(circle at 35% 30%,#fff,#d9dee4 55%,#939da9);\n --sr-led-green:radial-gradient(circle at 35% 30%,#dcffe5,#69e78e 55%,#27994b);\n --sr-led-red:radial-gradient(circle at 35% 30%,#ffd6ce,#f2796c 55%,#b42c28);\n --sr-led-white-glow:0 0 4px #ffffff35,inset 0 0 1px #fff;\n --sr-led-green-glow:0 0 5px #69e78e9c;\n --sr-led-red-glow:0 0 5px #f2796c9c;\n}\n#studio-refined :is(.sr-led,.sr-air-dot,.sr-visibility-light,.sr-status-led){display:inline-block;width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:var(--sr-led-white);box-shadow:var(--sr-led-white-glow)}\n#studio-refined :is(.sr-led:not(.sr-offline),.sr-layer-row:not(.is-off) .sr-visibility-light,.sr-led-button[aria-pressed=true] .sr-status-led){background:var(--sr-led-green);box-shadow:var(--sr-led-green-glow)}\n#studio-refined :is(.sr-air-dot:not(.not-live),:is(.sr-layer-mute,.sr-master-mute-button,.sr-layer-mono,.sr-audio-mute,.sr-audio-mono)[aria-pressed=true] .sr-status-led){background:var(--sr-led-red);box-shadow:var(--sr-led-red-glow)}\n";
+const graphiteButtonCSS = "/* Approved button material; used by native buttons and studio-button[skin=\"graphite\"]. */\n/* Approved graphite facade, matte keys and asymmetric monitor recess.\n   This stylesheet changes paint only; layout and the native preview rect stay intact. */\n#studio-refined {\n  --sr-key-size:var(--studio-key-size,62px);\n  --studio-face:radial-gradient(ellipse at 35% 0%,#67707925,transparent 75%),linear-gradient(135deg,#434b53,#30373f 55%,#262c33);\n  --studio-edge:#101418;\n  --studio-relief:inset 0 1px 1px #c5d0da3b,inset 1px 0 1px #c5d0da16,inset -2px -3px 4px #05080c88,0 1px 0 #080b0d,1px 3px 3px #000a,-1px -1px 1px #090c10;\n}\n#studio-refined :is(.sr-key,.sr-small-button) {\n  background:var(--studio-face);border-color:var(--studio-edge);box-shadow:var(--studio-relief);color:#c5cdd5;\n}\n#studio-refined .sr-key {border-radius:9px;color:#adb4bb;text-shadow:0 1px 1px #0005}\n#studio-refined .sr-small-button {border-radius:6px}\n#studio-refined .sr-key.sr-amber {color:#ffd077;text-shadow:0 0 2px #ffc15b70,0 0 8px #ffad2230}\n#studio-refined .sr-key.sr-red {color:#ff1427;text-shadow:0 0 2px #ff0b2380,0 0 8px #ff001d33}\n#studio-refined .sr-key.sr-green {color:#88f5a7;text-shadow:0 0 4px #69e78e50}\n#studio-refined .sr-small-button.sr-delete {color:#ff9b8e;text-shadow:0 0 5px #ff66551f}\n#studio-refined .sr-small-button.sr-quit {color:#ff9b8e}\n#studio-refined :is(.sr-key,.sr-small-button):active:not(:disabled) {\n  box-shadow:inset 0 1px 3px #0008,0 1px 1px #0009;\n}\n";
+
 /** Gain slider extracted from assets/interface.html; no application dependencies. */
 class GainSlider extends HTMLElement {
   static observedAttributes = ['value', 'orientation', 'disabled', 'label'];
@@ -423,6 +548,20 @@ class GainSlider extends HTMLElement {
       event.stopPropagation();
       this.setAttribute('value', this.#input.value);
       this.dispatchEvent(new Event(type,{bubbles:true,composed:true}));
+    });
+    this.#input.addEventListener('keydown',event=>{
+      if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
+      event.preventDefault();
+      if(this.disabled)return;
+      const vertical=this.getAttribute('orientation')==='vertical';
+      const up=vertical?'ArrowUp':'ArrowRight',down=vertical?'ArrowDown':'ArrowLeft';
+      if(event.key!==up&&event.key!==down)return;
+      const direction=event.key===up?1:-1;
+      const db=this.decibels;
+      // Silence has no finite dB value; the first upward step enters at −60 dB.
+      const next=db===-Infinity?(direction>0?-60:-Infinity):Math.round((db+direction*.1)*10)/10;
+      this.decibels=next < -60?-Infinity:Math.min(20*Math.log10(2),next);
+      for(const type of ['input','change'])this.dispatchEvent(new Event(type,{bubbles:true,composed:true}));
     });
     this.#input.addEventListener('dblclick',()=>{
       if(this.disabled) return;
@@ -479,17 +618,21 @@ class AudioLevelMeter extends HTMLElement {
     const shadow = this.attachShadow({mode: 'open'});
     shadow.innerHTML = `<style>
       :host { display:inline-block; vertical-align:middle; --audio-led-size:8px; --audio-led-gap:3px; --audio-channel-gap:5px; --audio-meter-padding:7px; --audio-meter-background:#111820; --audio-meter-off:#303840; --audio-meter-green:#6bd78f; --audio-meter-yellow:#edc06b; --audio-meter-red:#ee8d80; }
-      .meter { display:flex; width:max-content; gap:var(--audio-channel-gap); padding:var(--audio-meter-padding); background:var(--audio-meter-background); border-radius:3px; }
+      .meter { display:flex; width:max-content; min-width:calc(2 * var(--audio-led-width, var(--audio-led-size)) + var(--audio-channel-gap)); justify-content:center; gap:var(--audio-channel-gap); padding:var(--audio-meter-padding); background:var(--audio-meter-background); border-radius:3px; }
       .channel { display:flex; flex-direction:column-reverse; gap:var(--audio-led-gap); }
       .led { flex:none; width:var(--audio-led-size); height:var(--audio-led-size); border-radius:1px; background:var(--audio-meter-off); }
       .lit { background:var(--zone); opacity:.82; }
       .peak { background:var(--zone); opacity:1; box-shadow:0 0 3px var(--zone); }
-      :host([orientation="horizontal"]) .meter { flex-direction:column; }
+      :host([orientation="horizontal"]) .meter { flex-direction:column; min-width:0; min-height:calc(2 * var(--audio-led-height, var(--audio-led-size)) + var(--audio-channel-gap)); }
       :host([orientation="horizontal"]) .channel { flex-direction:row; }
       :host([compact]) { --audio-led-size:2px; --audio-led-gap:1px; --audio-channel-gap:2px; --audio-meter-padding:4px; }
-      :host([layer-compact]) { --audio-led-gap:1px; --audio-channel-gap:3px; --audio-meter-padding:2px; }
+      :host([layer-compact]) { --audio-led-gap:1px; --audio-channel-gap:3px; --audio-meter-padding:2px; --audio-led-width:5px; --audio-led-height:2px; }
       :host([layer-compact]) .led { width:5px; height:2px; }
       :host([layer-compact]) .led:nth-child(n+11) { display:none; }
+      /* Keep the stereo layout box; paint only the single visible channel's well. */
+      :host([mono]) .meter { position:relative; isolation:isolate; background:transparent; }
+      :host([mono]) .meter::before { content:''; position:absolute; z-index:-1; top:0; bottom:0; left:50%; transform:translateX(-50%); width:calc(var(--audio-led-width, var(--audio-led-size)) + 2 * var(--audio-meter-padding)); background:var(--audio-meter-background); border-radius:inherit; }
+      :host([mono][orientation="horizontal"]) .meter::before { left:0; right:0; top:50%; bottom:auto; transform:translateY(-50%); width:auto; height:calc(var(--audio-led-height, var(--audio-led-size)) + 2 * var(--audio-meter-padding)); }
       :host([mono]) .channel:nth-child(2) { display:none; }
       :host([muted]) :is(.lit,.peak) { background:#a4adb8; box-shadow:none; }
     </style><div class="meter" role="img"></div>`;
@@ -580,6 +723,49 @@ class AudioLevelMeter extends HTMLElement {
   }
 }
 if (!customElements.get('audio-level-meter')) customElements.define('audio-level-meter', AudioLevelMeter);
+
+/** Buttons extracted from assets/interface.html; presentation and local state only. */
+class StudioButton extends HTMLElement {
+  static observedAttributes=['variant','square','led','pressed','toggle','disabled','label','skin'];
+  #button;
+  constructor(){
+    super();
+    this.attachShadow({mode:'open'}).innerHTML=`<style>${classicButtonCSS}</style><style id="graphite-style"></style><span id="studio-refined"><button type="button"><span class="led" aria-hidden="true"></span><svg class="power-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9M6.35 5.65a9 9 0 1 0 11.3 0"/></svg><span class="text"><slot></slot></span></button></span>`;
+    this.#button=this.shadowRoot.querySelector('button');
+    this.#button.addEventListener('click',()=>{
+      if(this.hasAttribute('toggle')){
+        this.pressed=!this.pressed;
+        this.dispatchEvent(new Event('change',{bubbles:true,composed:true}));
+      }
+    });
+  }
+  connectedCallback(){this.#render()}
+  attributeChangedCallback(){this.#render()}
+  get pressed(){return this.hasAttribute('pressed')}
+  set pressed(value){this.toggleAttribute('pressed',Boolean(value))}
+  get disabled(){return this.hasAttribute('disabled')}
+  set disabled(value){this.toggleAttribute('disabled',Boolean(value))}
+  focus(options){this.#button.focus(options)}
+  #render(){
+    if(!this.#button)return;
+    this.#button.disabled=this.disabled;
+    const graphite=this.getAttribute('skin')==='graphite';
+    this.shadowRoot.querySelector('#graphite-style').textContent=graphite ? nativeButtonCSS+'\n'+graphiteButtonCSS : '';
+    const variant=this.getAttribute('variant');
+    this.#button.className=(this.hasAttribute('square')?'sr-key':'sr-small-button')+
+      (this.hasAttribute('led')?' sr-led-button':'')+
+      (variant==='amber'?' sr-amber':variant==='play'&&this.pressed?' sr-red':variant==='delete'?' sr-delete':variant==='quit'?' sr-quit':variant==='power'?' sr-power':'')+
+      (this.getAttribute('led')==='red'?' sr-layer-mono':'');
+    this.#button.setAttribute('aria-pressed',String(this.pressed));
+    this.shadowRoot.querySelector('.led').classList.toggle('sr-status-led',this.hasAttribute('led')&&variant!=='power');
+    this.shadowRoot.querySelector('.power-icon').classList.toggle('sr-power-icon',variant==='power');
+    if(this.hasAttribute('toggle')||this.hasAttribute('led')||this.getAttribute('variant')==='play')this.#button.setAttribute('aria-pressed',String(this.pressed));
+    else this.#button.removeAttribute('aria-pressed');
+    const label=this.getAttribute('label');
+    if(label)this.#button.setAttribute('aria-label',label);else this.#button.removeAttribute('aria-label');
+  }
+}
+if(!customElements.get('studio-button'))customElements.define('studio-button',StudioButton);
 </script>
 <!-- END GENERATED AUDIO CONTROLS -->
 <script>
@@ -660,9 +846,22 @@ const meterLayout=new ResizeObserver(entries=>{for(const {target,contentRect} of
 }});
 meterLayout.observe(root.querySelector('.sr-master-meter-slot'));
 meterLayout.observe(root.querySelector('.sr-drawer-meter-slot'));
-function setAudio(open){audioOpen=open;const panel=root.querySelector('.sr-audio-drawer');panel.classList.toggle('open',open);panel.inert=!open;panel.setAttribute('aria-hidden',String(!open));button('audio').setAttribute('aria-expanded',String(open));if(open){setSetup(false);closeLayer();drawAudio();}colors();report();}
+function setAudio(open){audioOpen=open;if(!open)hideMonitorTooltip();const panel=root.querySelector('.sr-audio-drawer');panel.classList.toggle('open',open);panel.inert=!open;panel.setAttribute('aria-hidden',String(!open));button('audio').setAttribute('aria-expanded',String(open));if(open){setSetup(false);closeLayer();drawAudio();}colors();report();}
 const audioStrips=new Map();
-function drawAudio(){if(!state)return;const ids=new Set([...state.layers.map(l=>l.id),'output']);for(const [id,el] of audioStrips)if(!ids.has(id)){el.remove();audioStrips.delete(id);}const sources=[...state.layers,{id:'output',name:'OUTPUT',gain:state.audioGain??1,mono:state.audioMono,muted:state.audioMuted,left:state.audioLeft,right:state.audioRight}];sources.forEach(layer=>{const global=layer.id==='output';let el=audioStrips.get(layer.id);if(!el){el=document.createElement('section');el.className='sr-audio-strip';el.dataset.id=layer.id;const title=document.createElement('span');title.className='sr-audio-title';el.append(title);el.insertAdjacentHTML('beforeend','<span class="sr-audio-db"></span><div class="sr-vertical-controls"><gain-slider orientation="vertical" value="1"></gain-slider></div><div class="sr-audio-buttons"></div>');el.querySelector('.sr-vertical-controls').append(createAudioMeter('sr-vertical-meter'));const sendField=(field,value)=>send(global?'audioGlobal':'layer',{...(global?{}:{id:layer.id}),[field]:value});const input=el.querySelector('gain-slider');input.addEventListener('input',()=>{readout();sendField('gain',Number(input.value));});function readout(){const gain=Number(input.value);el.querySelector('.sr-audio-db').textContent=gain>0?(20*Math.log10(gain)).toFixed(1)+' dB':'−∞ dB';}['left','right','mono','muted','monitor'].forEach(field=>{const b=document.createElement('button');b.type='button';b.className='sr-small-button sr-led-button sr-audio-'+(field==='muted'?'mute':field);b.innerHTML='<i class="sr-status-led" aria-hidden="true"></i>'+({left:'L',right:'R',mono:'MONO',muted:'MUTE',monitor:global?'MONITOR':'PFL'})[field];b.dataset.field=field;b.title=field==='monitor'?(global?'Listen to the program mix':'Pre-fader listen: before gain, mute and visibility; after input channel selection and mono'):(field==='left'||field==='right'?(global?'Enable output channel':'Select input channel before mono'):'');b.onclick=()=>{const value=b.getAttribute('aria-pressed')!=='true';if(field==='monitor')send('audioMonitor',{id:layer.id});else if(global&&field==='muted')send('audioMute',{value});else sendField(field,value);};el.querySelector('.sr-audio-buttons').append(b);});audioStrips.set(layer.id,el);}const host=root.querySelector(global?'.sr-audio-output':'.sr-audio-lanes');const index=global?0:state.layers.indexOf(layer);if(host.children[index]!==el)host.insertBefore(el,host.children[index]||null);el.querySelector('.sr-audio-title').textContent=global?'OUTPUT':String(index+1).padStart(2,'0')+' · '+layer.name+(layer.visible?'':' · HIDDEN');el.querySelector('.sr-audio-title').title=layer.name;el.querySelector('gain-slider').setAttribute('label','Audio gain · '+layer.name);if(document.activeElement!==el.querySelector('gain-slider'))el.querySelector('gain-slider').value=layer.gain;const g=Number(el.querySelector('gain-slider').value);el.querySelector('.sr-audio-db').textContent=g>0?(20*Math.log10(g)).toFixed(1)+' dB':'−∞ dB';el.querySelectorAll('[data-field]').forEach(b=>{const f=b.dataset.field;b.setAttribute('aria-pressed',String(f==='monitor'?(global?state.monitorOutput:(state.monitoredLayers||[]).includes(layer.id)):(f==='left'||f==='right'?layer[f]!==false:!!layer[f])));});el.classList.toggle('is-mono',!!layer.mono);el.classList.toggle('is-audio-muted',!!layer.muted||(!global&&!layer.visible));});root.querySelector('.sr-listen-label').textContent=state.monitorOutput?'LOCAL MONITOR · OUTPUT':(state.monitoredLayers||[]).length?'LOCAL MONITOR · '+state.monitoredLayers.length+' LAYERS':'LOCAL MONITOR OFF';paintDrawerAudio();}
+// One overlay outside the scrolling strips keeps two-line tooltips unclipped.
+const monitorTooltip=document.createElement('div');monitorTooltip.className='sr-monitor-tooltip';monitorTooltip.id='sr-monitor-tooltip';monitorTooltip.setAttribute('role','tooltip');monitorTooltip.hidden=true;root.append(monitorTooltip);
+let monitorTooltipTimer;
+function hideMonitorTooltip(){clearTimeout(monitorTooltipTimer);monitorTooltipTimer=undefined;monitorTooltip.hidden=true;}
+function attachMonitorTooltip(button,mode,global){
+ const description=global?(mode==='pfl'?'Listen to the program mix before master gain, output channel selection, mono and mute; respects all layer options':'Listen to the program mix after all master options, including gain, output channel selection, mono and mute'):(mode==='pfl'?'Pre-fader listen: before gain, mute and visibility; after input channel selection and mono':'After-fader listen: after all layer options, including input channel selection, mono, gain, mute and visibility');
+ const text=mode.toUpperCase()+' MONITOR'+String.fromCharCode(10)+description;
+ button.dataset.monitorTooltip=text;button.setAttribute('aria-description',text);
+ const show=()=>{monitorTooltip.replaceChildren();const heading=document.createElement('strong');heading.textContent=mode.toUpperCase()+' MONITOR';const detail=document.createElement('span');detail.textContent=description;monitorTooltip.append(heading,detail);monitorTooltip.hidden=false;const r=button.getBoundingClientRect(),box=monitorTooltip.getBoundingClientRect();monitorTooltip.style.left=Math.max(8,Math.min(r.left,window.innerWidth-box.width-8))+'px';monitorTooltip.style.top=Math.max(8,r.top-box.height-8)+'px';};
+ const schedule=()=>{hideMonitorTooltip();monitorTooltipTimer=setTimeout(()=>{monitorTooltipTimer=undefined;if(button.isConnected&&audioOpen)show();},1000);};
+ button.addEventListener('mouseenter',schedule);button.addEventListener('focus',schedule);button.addEventListener('mouseleave',hideMonitorTooltip);button.addEventListener('blur',hideMonitorTooltip);button.addEventListener('keydown',e=>{if(e.key==='Escape')hideMonitorTooltip();});
+}
+window.addEventListener('scroll',hideMonitorTooltip,true);window.addEventListener('resize',hideMonitorTooltip);
+function drawAudio(){if(!state)return;const ids=new Set([...state.layers.map(l=>l.id),'output']);for(const [id,el] of audioStrips)if(!ids.has(id)){el.remove();audioStrips.delete(id);}const sources=[...state.layers,{id:'output',name:'PROGRAM',gain:state.audioGain??1,mono:state.audioMono,muted:state.audioMuted,left:state.audioLeft,right:state.audioRight}];sources.forEach(layer=>{const global=layer.id==='output';let el=audioStrips.get(layer.id);if(!el){el=document.createElement('section');el.className='sr-audio-strip';el.dataset.id=layer.id;const title=document.createElement('span');title.className='sr-audio-title';el.append(title);el.insertAdjacentHTML('beforeend','<span class="sr-audio-db"></span><div class="sr-vertical-controls"><gain-slider orientation="vertical" value="1"></gain-slider></div><span class="sr-audio-active" role="status"><i class="sr-status-led" aria-hidden="true"></i>ACTIVE</span><div class="sr-audio-buttons"></div>');el.querySelector('.sr-audio-title').after(el.querySelector('.sr-audio-active'));el.querySelector('.sr-vertical-controls').append(createAudioMeter('sr-vertical-meter'));const sendField=(field,value)=>send(global?'audioGlobal':'layer',{...(global?{}:{id:layer.id}),[field]:value});const input=el.querySelector('gain-slider');input.addEventListener('input',()=>{readout();sendField('gain',Number(input.value));});function readout(){const gain=Number(input.value);el.querySelector('.sr-audio-db').textContent=gain>0?(20*Math.log10(gain)).toFixed(1)+' dB':'−∞ dB';}['left','right','mono','muted','pfl','afl'].forEach(field=>{const b=document.createElement('button');b.type='button';b.className='sr-small-button sr-led-button sr-audio-'+(field==='muted'?'mute':field);b.innerHTML='<i class="sr-status-led" aria-hidden="true"></i>'+({left:'L',right:'R',mono:'MONO',muted:'MUTE',pfl:'PFL MON.',afl:'AFL MON.'})[field];b.dataset.field=field;if(field==='pfl'||field==='afl')attachMonitorTooltip(b,field,global);else b.title=field==='left'||field==='right'?(global?'Enable output channel':'Select input channel before mono'):'';b.onclick=()=>{const value=b.getAttribute('aria-pressed')!=='true';if(field==='pfl'||field==='afl')send('audioMonitor',{id:layer.id,mode:field});else if(global&&field==='muted')send('audioMute',{value});else sendField(field,value);};el.querySelector('.sr-audio-buttons').append(b);});audioStrips.set(layer.id,el);}const host=root.querySelector(global?'.sr-audio-output':'.sr-audio-lanes');const index=global?0:state.layers.indexOf(layer);if(host.children[index]!==el)host.insertBefore(el,host.children[index]||null);el.querySelector('.sr-audio-title').textContent=global?'PROGRAM':String(index+1).padStart(2,'0')+' · '+layer.name;el.querySelector('.sr-audio-title').title=layer.name;el.classList.toggle('is-hidden',!global&&!layer.visible);const active=el.querySelector('.sr-audio-active');active.classList.toggle('is-active',!global&&!!layer.visible);active.classList.toggle('is-output',global);active.setAttribute('aria-hidden',String(global));active.setAttribute('aria-label',layer.visible?'Layer active':'Layer inactive');el.querySelector('gain-slider').setAttribute('label','Audio gain · '+layer.name);if(document.activeElement!==el.querySelector('gain-slider'))el.querySelector('gain-slider').value=layer.gain;const g=Number(el.querySelector('gain-slider').value);el.querySelector('.sr-audio-db').textContent=g>0?(20*Math.log10(g)).toFixed(1)+' dB':'−∞ dB';el.querySelectorAll('[data-field]').forEach(b=>{const f=b.dataset.field;b.setAttribute('aria-pressed',String((f==='pfl'||f==='afl')?(global?(!!state.monitorOutput&&(f==='pfl'?!!state.monitorOutputPFL:!state.monitorOutputPFL)):((state.monitoredLayers||[]).includes(layer.id)&&(f==='afl'?(state.monitoredAFL||[]).includes(layer.id):!(state.monitoredAFL||[]).includes(layer.id)))):(f==='left'||f==='right'?layer[f]!==false:!!layer[f])));});el.classList.toggle('is-mono',!!layer.mono);el.classList.toggle('is-audio-muted',!!layer.muted||(!global&&!layer.visible));});root.querySelector('.sr-listen-label').textContent=state.monitorOutput?'LOCAL MONITOR · OUTPUT · '+(state.monitorOutputPFL?'PFL':'AFL'):(state.monitoredLayers||[]).length?'LOCAL MONITOR · '+state.monitoredLayers.length+' LAYERS':'LOCAL MONITOR OFF';paintDrawerAudio();}
 function paintDrawerAudio(){for(const [id,el] of audioStrips)paintAudioMeter(el.querySelector('.sr-audio-meter'),id==='output'?masterMeterLevels:audioMeterLevels.get(id));}
 function insertion(y){const rows=[...list.querySelectorAll('.sr-layer-row')].filter(r=>r.dataset.id!==drag.id);let index=rows.findIndex(r=>{const b=r.getBoundingClientRect();return y<b.top+b.height/2;});if(index<0)index=rows.length;const lr=list.getBoundingClientRect();let top=0;if(rows.length)top=index===0?rows[0].getBoundingClientRect().top-lr.top-5:index===rows.length?rows.at(-1).getBoundingClientRect().bottom-lr.top+4:(rows[index-1].getBoundingClientRect().bottom+rows[index].getBoundingClientRect().top)/2-lr.top;return {index,top:top+list.scrollTop};}
 function scrollDrag(){if(!drag?.active)return;const r=list.getBoundingClientRect();if(drag.y<r.top+30)list.scrollTop-=7;if(drag.y>r.bottom-30)list.scrollTop+=7;const at=insertion(drag.y);drag.index=at.index;drag.line.style.top=at.top+'px';requestAnimationFrame(scrollDrag);}
@@ -740,7 +939,7 @@ function drawDiagnostics(text){
 }
 
 window.receiveState=s=>{state=s;drawAudio();drawExamples(s.examples||[]);chassis.classList.toggle('layers-hidden',!s.layersVisible);if(editing&&!s.layers.some(l=>l.id===editing))closeLayer();drawLayers();if(editing){const layer=s.layers.find(layer=>layer.id===editing);if(layer){syncLayerButtons(layer);const gain=root.querySelector('.sr-layer-gain');if(document.activeElement!==gain){gain.value=layer.gain;updateGainReadout();}}}colors();options(root.querySelector('.sr-device-select'),s.devices,s.device);options(root.querySelector('.sr-format'),s.modes,s.mode);options(root.querySelector('.sr-pixel'),s.pixels.map(p=>({id:p,name:p})),s.pixel);options(root.querySelector('.sr-kind'),s.outputs.map(p=>({id:p,name:p})),s.keying?'Fill + Key':'Fill only');root.querySelector('.sr-device strong').textContent=s.deviceName||'No device detected';root.querySelector('.sr-led').classList.toggle('sr-offline',!s.device);root.querySelector('.sr-format-label').textContent=s.modeName||'Unavailable';root.querySelector('.sr-monitor-kind').textContent=s.keying?'FILL + KEY':'FILL ONLY';root.querySelector('.sr-device-form').hidden=!s.device;root.querySelector('.sr-driver-help').hidden=!!s.device;if(s.openSetup)setSetup(true);drawDiagnostics(s.diagnostics);feedback.textContent=s.message;root.querySelectorAll('.sr-device-form select,.sr-device-form input').forEach(el=>el.disabled=s.output.running&&!el.classList.contains('sr-sync-offset'));if(document.activeElement!==root.querySelector('.sr-browser-size'))root.querySelector('.sr-browser-size').value=s.browserSize;root.querySelector('.sr-custom-size').hidden=s.browserSize!=='custom';if(document.activeElement!==root.querySelector('.sr-custom-width'))root.querySelector('.sr-custom-width').value=s.width;if(document.activeElement!==root.querySelector('.sr-custom-height'))root.querySelector('.sr-custom-height').value=s.height;if(document.activeElement!==root.querySelector('.sr-timing-profile'))root.querySelector('.sr-timing-profile').value=s.timingProfile||'reliable';if(document.activeElement!==root.querySelector('.sr-sync-offset'))root.querySelector('.sr-sync-offset').value=s.syncOffsetMs||0;root.querySelector('.sr-master-mute').checked=s.audioMuted;compositeMeter.setAttribute('aria-pressed',String(!!s.audioMuted));if(s.openLayerId){const layer=s.layers.find(l=>l.id===s.openLayerId);if(layer){editMode=true;signature='';drawLayers();openLayer(layer);colors();list.scrollTop=0;}}report();};
-function report(){const r=root.querySelector('.sr-picture').getBoundingClientRect();send('layout',{x:r.x,y:r.y,width:r.width,height:r.height,show:modal.hidden,heightWindow:root.getBoundingClientRect().height});}
+function report(){const facadeHeight=root.querySelector('.sr-front').getBoundingClientRect().height+'px';if(chassis.style.getPropertyValue('--studio-front-height')!==facadeHeight)chassis.style.setProperty('--studio-front-height',facadeHeight);const r=root.querySelector('.sr-picture').getBoundingClientRect();send('layout',{x:r.x,y:r.y,width:r.width,height:r.height,show:modal.hidden,heightWindow:root.getBoundingClientRect().height});}
 new ResizeObserver(report).observe(root);window.addEventListener('resize',report);root.querySelectorAll('.sr-drawer').forEach(el=>el.addEventListener('transitionend',report));
 // Keep scrolling inside data panes; never pan or rubber-band the chassis.
 document.addEventListener('wheel',e=>{

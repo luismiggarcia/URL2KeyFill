@@ -1,0 +1,13 @@
+{
+  "modules": [
+    "studio-button/styles.generated.js",
+    "gain-slider/gain-slider.js",
+    "audio-level-meter/audio-level-meter.js",
+    "studio-button/studio-button.js"
+  ],
+  "styles": [
+    "studio-button/native.css",
+    "studio-button/graphite.css",
+    "studio-skin.css"
+  ]
+}

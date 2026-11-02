@@ -1,0 +1,22 @@
+/* Approved button material; used by native buttons and studio-button[skin="graphite"]. */
+/* Approved graphite facade, matte keys and asymmetric monitor recess.
+   This stylesheet changes paint only; layout and the native preview rect stay intact. */
+#studio-refined {
+  --sr-key-size:var(--studio-key-size,62px);
+  --studio-face:radial-gradient(ellipse at 35% 0%,#67707925,transparent 75%),linear-gradient(135deg,#434b53,#30373f 55%,#262c33);
+  --studio-edge:#101418;
+  --studio-relief:inset 0 1px 1px #c5d0da3b,inset 1px 0 1px #c5d0da16,inset -2px -3px 4px #05080c88,0 1px 0 #080b0d,1px 3px 3px #000a,-1px -1px 1px #090c10;
+}
+#studio-refined :is(.sr-key,.sr-small-button) {
+  background:var(--studio-face);border-color:var(--studio-edge);box-shadow:var(--studio-relief);color:#c5cdd5;
+}
+#studio-refined .sr-key {border-radius:9px;color:#adb4bb;text-shadow:0 1px 1px #0005}
+#studio-refined .sr-small-button {border-radius:6px}
+#studio-refined .sr-key.sr-amber {color:#ffd077;text-shadow:0 0 2px #ffc15b70,0 0 8px #ffad2230}
+#studio-refined .sr-key.sr-red {color:#ff1427;text-shadow:0 0 2px #ff0b2380,0 0 8px #ff001d33}
+#studio-refined .sr-key.sr-green {color:#88f5a7;text-shadow:0 0 4px #69e78e50}
+#studio-refined .sr-small-button.sr-delete {color:#ff9b8e;text-shadow:0 0 5px #ff66551f}
+#studio-refined .sr-small-button.sr-quit {color:#ff9b8e}
+#studio-refined :is(.sr-key,.sr-small-button):active:not(:disabled) {
+  box-shadow:inset 0 1px 3px #0008,0 1px 1px #0009;
+}

@@ -35,6 +35,18 @@ int main(){try{
   AudioLane muted;muted.outputExpected=true;for(int i=0;i<50;++i)muted.push(data,480,2,1000+i*10);muted.outputExpected=false;for(int i=50;i<110;++i)muted.push(data,480,2,1000+i*10);REQUIRE(muted.unusedExpired>0&&muted.outputOverruns==0);}
  // Local monitoring reads retained audio without consuming the SDI stream.
  {auto lane=std::make_shared<AudioLane>();float l[]={.5f,.5f},r[]={.25f,.25f};const float* channels[]={l,r};lane->push(channels,2,2,1000);AudioMixer mix;mix.inputs({{lane,true,1,false,false,true}});auto monitor=mix.sample(48000,2);REQUIRE(monitor[0]==0&&monitor[1]==.25f);auto output=mix.mix(48000,2);REQUIRE(output[0]==0&&output[1]>0);mix.inputs({{lane,true,1}});mix.gain=.5f;mix.mono=true;monitor=mix.sample(48000,2);REQUIRE(monitor[0]==.1875f&&monitor[1]==.1875f);mix.left=false;monitor=mix.sample(48000,2);REQUIRE(monitor[0]==0&&monitor[1]==.1875f);mix.muted=true;for(auto v:mix.sample(48000,2))REQUIRE(v==0);REQUIRE(mix.sourceLevels(48000,2).rmsRight==.1875f);}
+ // Program PFL bypasses the whole master strip while preserving layer processing.
+ {auto lane=std::make_shared<AudioLane>();float l[]={.5f,.5f},r[]={.25f,.25f};const float* channels[]={l,r};lane->push(channels,2,2,1000);AudioMixer mix;
+  mix.inputs({{lane,true,.5f,false,true,false}});mix.gain=0;mix.muted=true;mix.enabled=false;mix.mono=true;mix.left=false;mix.right=false;
+  auto pfl=mix.samplePreMaster(48000,2);REQUIRE(pfl==std::vector<float>({.25f,0,.25f,0}));for(auto v:mix.sample(48000,2))REQUIRE(v==0);
+  mix.inputs({{lane,true,.5f,true,false,true}});pfl=mix.samplePreMaster(48000,2);REQUIRE(pfl==std::vector<float>({.0625f,.0625f,.0625f,.0625f}));
+  mix.inputs({{lane,false,.5f}});for(auto v:mix.samplePreMaster(48000,2))REQUIRE(v==0);
+  mix.inputs({{lane,true,0}});for(auto v:mix.samplePreMaster(48000,2))REQUIRE(v==0);
+  mix.inputs({{lane,true,.5f}});mix.gain=.5f;mix.muted=false;mix.enabled=true;mix.mono=false;mix.left=true;mix.right=true;
+  auto afl=mix.sample(48000,2);REQUIRE(afl==std::vector<float>({.125f,.0625f,.125f,.0625f}));
+  // Monitor reads leave the SDI consumption diagnostics untouched.
+  REQUIRE(lane->outputReads==0);
+ }
  auto frames=std::make_shared<LatestFrame>();frames->publish(front);Scene scene;scene.configure({{frames,true}},{1,1},{4,2});for(int i=0;i<100&&!scene.frames.get();i++)std::this_thread::sleep_for(std::chrono::milliseconds(2));auto image=scene.frames.get();REQUIRE(image);REQUIRE(image->pixels[3]==0);REQUIRE(image->pixels[7]==128);scene.configure({{frames,false}},{1,1},{4,2});for(int i=0;i<100;i++){auto current=scene.frames.get();if(current&&current->pixels[7]==0)break;std::this_thread::sleep_for(std::chrono::milliseconds(2));}REQUIRE(scene.frames.get()->pixels[7]==0);
  std::cout<<"PASS: composition order, premultiplied alpha, transparent fit, visibility, stereo mixing, gain, limiting, mute, bounded queues\n";return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

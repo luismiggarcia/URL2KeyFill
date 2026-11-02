@@ -11,17 +11,21 @@ export class AudioLevelMeter extends HTMLElement {
     const shadow = this.attachShadow({mode: 'open'});
     shadow.innerHTML = `<style>
       :host { display:inline-block; vertical-align:middle; --audio-led-size:8px; --audio-led-gap:3px; --audio-channel-gap:5px; --audio-meter-padding:7px; --audio-meter-background:#111820; --audio-meter-off:#303840; --audio-meter-green:#6bd78f; --audio-meter-yellow:#edc06b; --audio-meter-red:#ee8d80; }
-      .meter { display:flex; width:max-content; gap:var(--audio-channel-gap); padding:var(--audio-meter-padding); background:var(--audio-meter-background); border-radius:3px; }
+      .meter { display:flex; width:max-content; min-width:calc(2 * var(--audio-led-width, var(--audio-led-size)) + var(--audio-channel-gap)); justify-content:center; gap:var(--audio-channel-gap); padding:var(--audio-meter-padding); background:var(--audio-meter-background); border-radius:3px; }
       .channel { display:flex; flex-direction:column-reverse; gap:var(--audio-led-gap); }
       .led { flex:none; width:var(--audio-led-size); height:var(--audio-led-size); border-radius:1px; background:var(--audio-meter-off); }
       .lit { background:var(--zone); opacity:.82; }
       .peak { background:var(--zone); opacity:1; box-shadow:0 0 3px var(--zone); }
-      :host([orientation="horizontal"]) .meter { flex-direction:column; }
+      :host([orientation="horizontal"]) .meter { flex-direction:column; min-width:0; min-height:calc(2 * var(--audio-led-height, var(--audio-led-size)) + var(--audio-channel-gap)); }
       :host([orientation="horizontal"]) .channel { flex-direction:row; }
       :host([compact]) { --audio-led-size:2px; --audio-led-gap:1px; --audio-channel-gap:2px; --audio-meter-padding:4px; }
-      :host([layer-compact]) { --audio-led-gap:1px; --audio-channel-gap:3px; --audio-meter-padding:2px; }
+      :host([layer-compact]) { --audio-led-gap:1px; --audio-channel-gap:3px; --audio-meter-padding:2px; --audio-led-width:5px; --audio-led-height:2px; }
       :host([layer-compact]) .led { width:5px; height:2px; }
       :host([layer-compact]) .led:nth-child(n+11) { display:none; }
+      /* Keep the stereo layout box; paint only the single visible channel's well. */
+      :host([mono]) .meter { position:relative; isolation:isolate; background:transparent; }
+      :host([mono]) .meter::before { content:''; position:absolute; z-index:-1; top:0; bottom:0; left:50%; transform:translateX(-50%); width:calc(var(--audio-led-width, var(--audio-led-size)) + 2 * var(--audio-meter-padding)); background:var(--audio-meter-background); border-radius:inherit; }
+      :host([mono][orientation="horizontal"]) .meter::before { left:0; right:0; top:50%; bottom:auto; transform:translateY(-50%); width:auto; height:calc(var(--audio-led-height, var(--audio-led-size)) + 2 * var(--audio-meter-padding)); }
       :host([mono]) .channel:nth-child(2) { display:none; }
       :host([muted]) :is(.lit,.peak) { background:#a4adb8; box-shadow:none; }
     </style><div class="meter" role="img"></div>`;

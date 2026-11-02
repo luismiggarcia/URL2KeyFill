@@ -5,13 +5,20 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import argparse
 ROOT=Path(__file__).resolve().parents[1]
 BRIDGE='''<script>
-const fixture={layers:[{id:'a',name:'New layer',url:'u2k://Diagnostics/AV_Test.html',visible:true,gain:1,left:true,right:true,mono:false,muted:false},{id:'b',name:'Lower Thirds',url:'u2k://Lower_Third/Animated_10_sec_cycle.html',visible:true,gain:1,left:true,right:true,mono:false,muted:false},{id:'c',name:'Transparência',url:'u2k://Transparency/Basic_Test.html',visible:true,gain:1,left:true,right:true,mono:false,muted:false}],layersVisible:true,device:'test',deviceName:'UltraStudio HD Mini',devices:[{id:'test',name:'UltraStudio HD Mini'}],mode:0,modeName:'1080p50',modes:[{id:0,name:'1080p50'}],pixel:'BGRA',pixels:['BGRA'],outputs:[{id:'Fill + Key',name:'Fill + Key'}],keying:true,width:1920,height:1080,browserSize:'match',timingProfile:'reliable',syncOffsetMs:0,audioGain:1,audioMono:false,audioMuted:false,audioLeft:true,audioRight:true,monitorOutput:false,monitoredLayers:[],output:{running:false,onAir:false},diagnostics:'UI controls fixture',message:'Isolated test bridge · no devices',examples:[]};
+const fixture={layers:[{id:'a',name:'New layer',url:'u2k://Diagnostics/AV_Test.html',visible:true,gain:1,left:true,right:true,mono:false,muted:false},{id:'b',name:'Lower Thirds',url:'u2k://Lower_Third/Animated_10_sec_cycle.html',visible:true,gain:1,left:true,right:true,mono:false,muted:false},{id:'c',name:'Transparência',url:'u2k://Transparency/Basic_Test.html',visible:true,gain:1,left:true,right:true,mono:false,muted:false}],layersVisible:true,device:'test',deviceName:'UltraStudio HD Mini',devices:[{id:'test',name:'UltraStudio HD Mini'}],mode:0,modeName:'1080p50',modes:[{id:0,name:'1080p50'}],pixel:'BGRA',pixels:['BGRA'],outputs:[{id:'Fill + Key',name:'Fill + Key'}],keying:true,width:1920,height:1080,browserSize:'match',timingProfile:'reliable',syncOffsetMs:0,audioGain:1,audioMono:false,audioMuted:false,audioLeft:true,audioRight:true,monitorOutput:false,monitorOutputPFL:false,monitoredLayers:[],monitoredAFL:[],output:{running:false,onAir:false},diagnostics:'UI controls fixture',message:'Isolated test bridge · no devices',examples:[]};
+if(new URLSearchParams(location.search).has('offline')){fixture.device='';fixture.deviceName='';fixture.devices=[];}
 window.webkit={messageHandlers:{native:{postMessage(message){
  if(message.type==='layout'||message.type==='dragWindow')return;
  const log=document.getElementById('test-events');if(log)log.textContent=JSON.stringify(message);
  if(message.type==='layer'){const layer=fixture.layers.find(l=>l.id===message.id);if(layer)Object.assign(layer,Object.fromEntries(Object.entries(message).filter(([k])=>!['id','type'].includes(k))));}
  if(message.type==='audioGlobal')for(const key of ['gain','mono','muted','left','right'])if(key in message)fixture['audio'+key[0].toUpperCase()+key.slice(1)]=message[key];
  if(message.type==='audioMute')fixture.audioMuted=message.value;
+ if(message.type==='audioMonitor'){
+  const pfl=message.mode==='pfl';
+  if(message.id==='output'){fixture.monitorOutput=!(fixture.monitorOutput&&fixture.monitorOutputPFL===pfl);fixture.monitorOutputPFL=pfl;fixture.monitoredLayers=[];fixture.monitoredAFL=[];}
+  else{fixture.monitorOutput=false;const selected=fixture.monitoredLayers.includes(message.id);const same=selected&&(fixture.monitoredAFL.includes(message.id)!==pfl);fixture.monitoredAFL=fixture.monitoredAFL.filter(id=>id!==message.id);if(same)fixture.monitoredLayers=fixture.monitoredLayers.filter(id=>id!==message.id);else{if(!selected)fixture.monitoredLayers.push(message.id);if(!pfl)fixture.monitoredAFL.push(message.id);}}
+ }
+
  setTimeout(()=>{window.receiveState(fixture);paintFixture();},0);
 }}}};
 function paintFixture(){const amp=db=>10**(db/20)/Math.SQRT2;window.receiveAudioLevels({a:[amp(-18),amp(-9)],b:[0,0],c:[amp(-30),amp(-24)]},[amp(-12),amp(-3)]);}

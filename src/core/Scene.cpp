@@ -103,11 +103,12 @@ std::vector<int32_t> AudioMixer::mixResampled(double start,size_t n,double ratio
  auto input=mixFloat(first,size_t(last-first),active);if(std::all_of(input.begin(),input.end(),[](float v){return v==0;}))return std::vector<int32_t>(n*2,0);std::vector<float> result(n*2);filter.render(input.data(),input.size()/2,start-first,ratio,result.data(),n);return toPCM(result);
 }
 std::pair<float,float> AudioMixer::sourcePeaks(int64_t start,size_t n){const auto levels=sourceLevels(start,n);return {levels.peakLeft,levels.peakRight};}
-std::vector<float> AudioMixer::sample(int64_t start,size_t n,bool respectMute){
+std::vector<float> AudioMixer::sample(int64_t start,size_t n,bool respectMute,bool applyMaster){
  if(n>48000)throw std::invalid_argument("Audio block exceeds one second");
  std::vector<AudioInput> inputs;{std::lock_guard<std::mutex> lock(mutex_);inputs=inputs_;}
- std::vector<float> samples(n*2,0);if(respectMute&&(!enabled||muted))return samples;
+ std::vector<float> samples(n*2,0);if(applyMaster&&respectMute&&(!enabled||muted))return samples;
  for(auto& input:inputs)if(input.enabled&&input.lane)input.lane->sample(start,n,std::clamp(input.gain,0.f,2.f),samples,input.mono,input.left,input.right);
+ if(!applyMaster)return samples;
  for(size_t j=0;j<n;j++){float l=samples[j*2],r=samples[j*2+1];if(mono)l=r=(l+r)*.5f;samples[j*2]=left?l*gain:0;samples[j*2+1]=right?r*gain:0;}
  return samples;
 }

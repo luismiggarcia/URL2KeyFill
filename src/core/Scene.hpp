@@ -58,7 +58,9 @@ public:
     std::atomic<bool> enabled{true},muted{false};
     std::atomic<float> gain{1};
     std::atomic<bool> mono{false},left{true},right{true};
-    std::vector<float> sample(int64_t start,size_t frames,bool respectMute=true);
+    std::vector<float> sample(int64_t start,size_t frames,bool respectMute=true,bool applyMaster=true);
+    // Program PFL: preserve every layer option, bypass all master controls.
+    std::vector<float> samplePreMaster(int64_t start,size_t frames){return sample(start,frames,false,false);}
     std::atomic<uint64_t> clipped{0},nonSilent{0};
     std::atomic<int64_t> lastMixTimestamp{0};
     void inputs(std::vector<AudioInput>);

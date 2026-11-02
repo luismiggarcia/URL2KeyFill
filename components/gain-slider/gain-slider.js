@@ -39,6 +39,20 @@ export class GainSlider extends HTMLElement {
       this.setAttribute('value', this.#input.value);
       this.dispatchEvent(new Event(type,{bubbles:true,composed:true}));
     });
+    this.#input.addEventListener('keydown',event=>{
+      if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key))return;
+      event.preventDefault();
+      if(this.disabled)return;
+      const vertical=this.getAttribute('orientation')==='vertical';
+      const up=vertical?'ArrowUp':'ArrowRight',down=vertical?'ArrowDown':'ArrowLeft';
+      if(event.key!==up&&event.key!==down)return;
+      const direction=event.key===up?1:-1;
+      const db=this.decibels;
+      // Silence has no finite dB value; the first upward step enters at −60 dB.
+      const next=db===-Infinity?(direction>0?-60:-Infinity):Math.round((db+direction*.1)*10)/10;
+      this.decibels=next < -60?-Infinity:Math.min(20*Math.log10(2),next);
+      for(const type of ['input','change'])this.dispatchEvent(new Event(type,{bubbles:true,composed:true}));
+    });
     this.#input.addEventListener('dblclick',()=>{
       if(this.disabled) return;
       this.value=1;

@@ -1,0 +1,26 @@
+/* Shared native button geometry and LED lenses. Application context owns placement. */
+#studio-refined button:disabled{opacity:.45}
+#studio-refined .sr-key>i{font-size:22px;line-height:1}
+#studio-refined .sr-refresh>i{font-size:14px}
+#studio-refined button{font:500 11px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.3px;cursor:default}
+#studio-refined .sr-key{width:var(--sr-key-size);height:var(--sr-key-size);border-radius:5px;border:1px solid #6c747f;box-shadow:var(--sr-relief);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:5px;white-space:nowrap}
+#studio-refined .sr-key:active{transform:translateY(1px)}
+#studio-refined .sr-key svg{width:18px;height:18px}
+#studio-refined .sr-power-icon{display:block;width:22px;height:22px;flex:0 0 22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;color:#88f5a7;filter:drop-shadow(0 0 2px #69e78eaa) drop-shadow(0 0 5px #69e78e66)}
+#studio-refined .sr-small-button{background:linear-gradient(#4e5c6c,#354353);color:#ecf2f9;border:1px solid #7c8ea4;border-radius:4px;min-height:36px;padding:8px 14px;box-shadow:inset 0 1px 0 #ffffff15}
+#studio-refined .sr-key>span{text-align:center;line-height:1.35}
+#studio-refined .sr-refresh{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:0;min-height:22px}
+#studio-refined .sr-refresh svg{width:12px;height:12px}
+#studio-refined .sr-led-button{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:39px;padding:10px 16px;white-space:nowrap}
+/* All round status LEDs use the layer drawer's size, lens and glow. */
+#studio-refined{
+ --sr-led-white:radial-gradient(circle at 35% 30%,#fff,#d9dee4 55%,#939da9);
+ --sr-led-green:radial-gradient(circle at 35% 30%,#dcffe5,#69e78e 55%,#27994b);
+ --sr-led-red:radial-gradient(circle at 35% 30%,#ffd6ce,#f2796c 55%,#b42c28);
+ --sr-led-white-glow:0 0 4px #ffffff35,inset 0 0 1px #fff;
+ --sr-led-green-glow:0 0 5px #69e78e9c;
+ --sr-led-red-glow:0 0 5px #f2796c9c;
+}
+#studio-refined :is(.sr-led,.sr-air-dot,.sr-visibility-light,.sr-status-led){display:inline-block;width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:var(--sr-led-white);box-shadow:var(--sr-led-white-glow)}
+#studio-refined :is(.sr-led:not(.sr-offline),.sr-layer-row:not(.is-off) .sr-visibility-light,.sr-led-button[aria-pressed=true] .sr-status-led){background:var(--sr-led-green);box-shadow:var(--sr-led-green-glow)}
+#studio-refined :is(.sr-air-dot:not(.not-live),:is(.sr-layer-mute,.sr-master-mute-button,.sr-layer-mono,.sr-audio-mute,.sr-audio-mono)[aria-pressed=true] .sr-status-led){background:var(--sr-led-red);box-shadow:var(--sr-led-red-glow)}
