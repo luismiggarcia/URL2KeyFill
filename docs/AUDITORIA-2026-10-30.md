@@ -2252,3 +2252,34 @@ arranque sem desligar a placa e só depois decidir se é necessário corrigir a
 sequência de STOP ou configurar o ambiente de loopback. Não arrancar novo teste
 longo com este incidente por esclarecer. A precisão negativa candidata está
 implementada; a fiabilidade do hardware perante este sintoma permanece pendente.
+
+### 10.16 Continuação autorizada até às 09:00 de 2026-11-02 (Lisboa)
+
+Às 02:44 foi iniciada uma nova sequência, após o utilizador comunicar recuperação
+por desligar/ligar e autorizar testes até às 09:00. Estado inicial: UltraStudio
+livre (`Busy=0`), Mac em alimentação AC. Esta sequência não altera a classificação
+provisória dos ensaios anteriores ao reinício sem hora registada.
+
+O executor `tools/audio-audit/run-until.py` repete sequencialmente oito mudanças
+A/V e arranques/paragens a 25p/50p, seguidos de blocos de 20 minutos a 25p, 50p e
+59,94p com calibração física e capturas periódicas a cada 120 segundos. Cada
+comando e início/fim tem registo horário. Falhas de continuidade, falta de
+telemetria, perda de alimentação AC ou dispositivo ocupado interrompem a sequência.
+Uma reprovação de qualidade A/V com continuidade válida fica registada e não é
+convertida em aprovação; permite continuar a caracterização nas outras taxas.
+
+O limite horário é verificado durante os subprocessos. Só são iniciados ensaios
+que caibam no tempo restante com margem, pelo que a sequência pode terminar antes
+das 09:00 se não couber outro ensaio completo. As asserções de energia são locais
+ao processo; não são alteradas preferências permanentes de energia. São verificadas
+periodicamente a alimentação AC e as asserções que impedem repouso do sistema/ecrã.
+Não se reinicia automaticamente o dispositivo, não se interrompem outras
+aplicações, não se faz publicação e não se inicia um novo ensaio de oito horas.
+
+Registos em curso: `/tmp/u2k-until-0900-20261102/state.json`, `power.jsonl`, logs,
+telemetria e capturas em subdiretórios por ensaio. O acompanhamento automático
+neste chat está configurado para verificar progresso/falhas e consolidar os
+resultados nesta secção depois da conclusão. Este parágrafo descreve o plano e
+o arranque, **não uma aprovação antecipada dos resultados**. O teste de 20 minutos
+usa capturas amostradas; não equivale a medição física contínua nem certifica
+lip sync humano, todas as URLs ou um relógio independente.
