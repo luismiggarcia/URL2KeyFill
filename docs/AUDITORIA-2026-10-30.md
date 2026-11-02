@@ -2536,3 +2536,63 @@ processos de teste próprios. Não se repetiu o teste de oito horas.
 Evidência deste passo: `tools/audio-audit/data/recovery-diagnostics-2026-11-02/`.
 A candidata local é `/tmp/u2k-recovery-diagnostic/URL2KeyFill.app`; o seu executável
 é identificado nos manifestos por ensaio. Não houve publicação de versão.
+
+### 10.18 Dois ensaios finais com limite explícito (2026-11-02, noite)
+
+O utilizador autorizou dois ensaios, com critério de saída: (1) um ensaio dirigido
+até 20 minutos para captar a falha com a instrumentação completa; (2) uma validação
+até 30 minutos, após uma correção sustentada pelos dados. Se o primeiro não
+permitir diagnosticar a causa, não se abre outra ronda automaticamente. O ensaio
+de oito horas fica fora deste passo.
+
+Às 21:28 a placa estava livre (`Busy=0`) e o Mac em alimentação AC. O primeiro
+ensaio usa a candidata instrumentada já preparada, com a interface de referência,
+a 59,94p e perfil Reliable. Configuraram-se 1155 s de medição nominal mais 45 s de
+preparação no executor, limitando o PLAY programado a 1200 s (20 minutos), com
+capturas periódicas a cada 120 s e watchdog de continuidade. Não foram alteradas
+reservas, firmware, driver ou configuração persistente do dispositivo.
+Registos: `/tmp/u2k-two-tests-20261102/test1-directed` e
+`/tmp/u2k-two-tests-test1-20261102.runner.log`. Este é o registo de arranque, não
+uma aprovação antecipada. A segunda validação depende do resultado e não foi
+iniciada neste momento.
+
+**Resultado e encerramento da ronda limitada, 21:50:** o primeiro ensaio completou
+1199,701 s de atividade (20 minutos programados, incluindo preparação) e
+1168,820 s após calibração. A continuidade passou: zero recuperações áudio,
+frames atrasadas/descartadas, amostras em falta, erros API, resets e falhas de
+histórico/conversão. Foram verificadas 79 capturas de estado de alimentação e
+asserções de repouso, todas válidas. A falha de descarte anterior **não se
+reproduziu**, pelo que não surgiu evidência que fundamente uma correção causal.
+
+A qualidade A/V voltou a reprovar no critério existente. Medianas inicial/final:
++2,521/−6,417 ms (diferença −8,938 ms). O analisador periódico reportou envolvente
+−30,229 a +138,063 ms, amplitude 168,292 ms. Porém, os eventos de +138,063 e
++75,500 ms aparecem em capturas com flashes sem correspondência, sem IDs de
+conteúdo que confirmem a associação. São resultados brutos do emparelhamento,
+**não excursões de lip sync independentemente certificadas**. Não foram removidos
+para obter aprovação. Mesmo a janela com mediana −21,938 ms já ultrapassa o
+limite absoluto de uma frame mais 1 ms a 59,94p. A análise do PCM aceite contra
+vídeo selecionado também variou: −33,917 a +13,833 ms em 1193 pares periódicos,
+sem constituir medição da emissão física ou prova de causa.
+
+O trace não contém recuperações nem notificações de atraso/descarte. As janelas
+finais, sem incidente, guardaram 512 callbacks/agendamentos: máximos de intervalo
+áudio 22,000 ms, consulta 0,104 ms, duração áudio 0,333 ms, duração de agendamento
+1,188 ms e espera do worker 0,208 ms; margem estimada mínima 32,021 ms. Estas
+janelas saudáveis não esclarecem o descarte ocorrido noutra sessão.
+
+**Decisão conforme o critério acordado:** foi executado **1 dos até 2 ensaios**.
+O segundo, de 30 minutos, estava condicionado a uma correção sustentada pelos
+dados do primeiro. Essa condição não foi satisfeita: não se aplicou uma alteração
+especulativa, não se iniciou o segundo e não se abriu outra ronda. A candidata
+permanece sem aprovação geral de estabilidade A/V/fiabilidade a 59,94p. Este
+encerramento não transforma os episódios anteriores em aprovados nem promete
+que um ensaio mais longo resolveria a investigação.
+
+Os resultados estão preservados em
+`tools/audio-audit/data/two-final-tests-2026-11-02/`, incluindo orçamento fechado,
+manifestos, hashes, telemetria, capturas, qualificação das associações periódicas
+e diagnóstico. A verificação final confirmou placa livre (`Busy=0`) e ausência
+de processos de teste próprios. O acompanhamento automático é eliminado com o
+encerramento. Não foi alterado o percurso de saída, publicada uma versão nem
+iniciado o ensaio de oito horas.

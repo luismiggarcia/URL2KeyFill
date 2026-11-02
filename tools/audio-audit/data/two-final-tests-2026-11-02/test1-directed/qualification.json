@@ -1,0 +1,17 @@
+{
+  "physical_tests_executed": 1,
+  "maximum_authorized": 2,
+  "test1_continuity_passed": true,
+  "test1_quality_passed": false,
+  "drop_reproduced": false,
+  "root_cause_identified": false,
+  "test2_started": false,
+  "stop_reason": "No reproduced drop/recovery and no evidence-supported correction; conditional final validation not started. No further round.",
+  "power_snapshots_verified": 79,
+  "quality_pairing_caveat": "Periodic analyser reports +138.0625 and +75.5 ms events in captures with unmatched flashes; no independently identified match or certified lip-sync excursion is asserted. Original results remain rejected without removing points.",
+  "scheduled_pcm_vs_video_range_ms": [
+    -33.916666666666664,
+    13.833333333333334
+  ],
+  "scheduled_limits": "Accepted output PCM against selected video, periodic nearest pairing; not physical emission or causal diagnosis."
+}

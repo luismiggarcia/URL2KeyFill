@@ -1,0 +1,490 @@
+[
+  {
+    "path": "budget.json",
+    "sha256": "f5dd00dc33e4d4c871ae7415762a7667e644e967361346024f5aacfc04761ed9"
+  },
+  {
+    "path": "test1-directed/application.csv.gz",
+    "sha256": "9e28b3ea2730b3c28e4d0aad68cce2a171ac3efb0630f344a5fe9b1d492c215c"
+  },
+  {
+    "path": "test1-directed/calibration.json",
+    "sha256": "60a226912f5bca7c54ab6e5f606534c22a6b7c0627a5053728bd96d282950424"
+  },
+  {
+    "path": "test1-directed/capture-calibration.csv.gz",
+    "sha256": "ae7cb2e87921d3b7d086d7a7beacf0fe8f93ab9707a4223af7443f0dc5ddf758"
+  },
+  {
+    "path": "test1-directed/capture-calibration.log.gz",
+    "sha256": "0f1bd1f09a420d1294a0703e06cc73146766757da970f70c72fc803d7fa3e3c6"
+  },
+  {
+    "path": "test1-directed/capture-end.csv.gz",
+    "sha256": "902bc5a283de6ee7f1db15a2d596a5ba76c98dac9fa7b79f9cf1ac76dc768cb6"
+  },
+  {
+    "path": "test1-directed/capture-end.json",
+    "sha256": "213fe9d1baaa536d44cb8646d9344b5feccbe68d4d0fa0b2a4d6db58666630f2"
+  },
+  {
+    "path": "test1-directed/capture-end.log.gz",
+    "sha256": "f7bf5365a7595dbc701ecc4092631d9f327115d82d6d7b19343e54fc53320d92"
+  },
+  {
+    "path": "test1-directed/capture-sample-000.csv.gz",
+    "sha256": "d8423557251b566072b9ee1b9d5f4969734dc1c4caa6cb248d4ac24cd714a3a0"
+  },
+  {
+    "path": "test1-directed/capture-sample-000.json",
+    "sha256": "7b9be23eb915fa2b5a809f45a678f29fe7772f41c0af169253df4bb83322cc63"
+  },
+  {
+    "path": "test1-directed/capture-sample-000.log.gz",
+    "sha256": "777d1c48d8e19b5d18483f57d4dbc729d03181ed49136d175a516293a36bc644"
+  },
+  {
+    "path": "test1-directed/capture-sample-001.csv.gz",
+    "sha256": "e74b5625061ffce35ec879907295cf4fca8dd919be86311fe518b704a8271d81"
+  },
+  {
+    "path": "test1-directed/capture-sample-001.json",
+    "sha256": "c410c4a0f99d0acfc9a713c64e65016e0de21d6eb72369ff79dc39427d1f8f19"
+  },
+  {
+    "path": "test1-directed/capture-sample-001.log.gz",
+    "sha256": "777d1c48d8e19b5d18483f57d4dbc729d03181ed49136d175a516293a36bc644"
+  },
+  {
+    "path": "test1-directed/capture-sample-002.csv.gz",
+    "sha256": "b3802bac8d537909b580e36a7ae845503be731551839941cf209b6d6fc50c7c6"
+  },
+  {
+    "path": "test1-directed/capture-sample-002.json",
+    "sha256": "910bfd23e681c935d6bf6c2b8c3a22c7a37d258401adb50be0b7ef1b0bf6e6b9"
+  },
+  {
+    "path": "test1-directed/capture-sample-002.log.gz",
+    "sha256": "a4d76991321c410fa749d0d8f75b2a4f107b49a89b926ea4be448f5b695d4242"
+  },
+  {
+    "path": "test1-directed/capture-sample-003.csv.gz",
+    "sha256": "0b948b8004c9a9cefcd9d055a5553f35aa3f355b9c787fcdf20230d7d2141ff0"
+  },
+  {
+    "path": "test1-directed/capture-sample-003.json",
+    "sha256": "b407d7005a9c2cdf01446a932183ea97bf579061fdf74141c872e90f292d61f3"
+  },
+  {
+    "path": "test1-directed/capture-sample-003.log.gz",
+    "sha256": "9d154aa7c305da81389c38a9f3069e6640a4b6cb68fe40ee044fc5051385a1cd"
+  },
+  {
+    "path": "test1-directed/capture-sample-004.csv.gz",
+    "sha256": "b8150d7658b7a1ab7aaf00c05fb0297e3cc9ec45a0835589eb6deb8953f87f71"
+  },
+  {
+    "path": "test1-directed/capture-sample-004.json",
+    "sha256": "6330f9ed4dea6f2a9f37062069a6e71d5c4a214c2ebc784939b1541daba212ad"
+  },
+  {
+    "path": "test1-directed/capture-sample-004.log.gz",
+    "sha256": "9d154aa7c305da81389c38a9f3069e6640a4b6cb68fe40ee044fc5051385a1cd"
+  },
+  {
+    "path": "test1-directed/capture-sample-005.csv.gz",
+    "sha256": "1f203b86f63548c49155d0dc2552df7c214d8341bfb321a8fe2b04d44c696773"
+  },
+  {
+    "path": "test1-directed/capture-sample-005.json",
+    "sha256": "af8e5480168c9e7f6e9f593162c2266566fbd069a462b40c391e34a876447e3d"
+  },
+  {
+    "path": "test1-directed/capture-sample-005.log.gz",
+    "sha256": "777d1c48d8e19b5d18483f57d4dbc729d03181ed49136d175a516293a36bc644"
+  },
+  {
+    "path": "test1-directed/capture-sample-006.csv.gz",
+    "sha256": "db70b8a986a903141688fbbe8e0bfe045db9611ce2b55a85872179883e383b58"
+  },
+  {
+    "path": "test1-directed/capture-sample-006.json",
+    "sha256": "6a0ba1a53de885809cf8471603d0fee4e3b32a8614f303e66cefe9cb8b051371"
+  },
+  {
+    "path": "test1-directed/capture-sample-006.log.gz",
+    "sha256": "777d1c48d8e19b5d18483f57d4dbc729d03181ed49136d175a516293a36bc644"
+  },
+  {
+    "path": "test1-directed/capture-sample-007.csv.gz",
+    "sha256": "1b85f13c54a620e5e34ddbb00bbe32926f881b5783e0e3cfbf19e74d54a0dba0"
+  },
+  {
+    "path": "test1-directed/capture-sample-007.json",
+    "sha256": "4f8d8285f4664259fa7f3cee4ecd4b6cb82dd8677cfe32d1f55520306b8c2b75"
+  },
+  {
+    "path": "test1-directed/capture-sample-007.log.gz",
+    "sha256": "22421ecddd880b913168667e81359910cbee075e129391152d298a04a2a460f9"
+  },
+  {
+    "path": "test1-directed/capture-start.csv.gz",
+    "sha256": "58bc1636bdfc8132b01050b8a3a8aed6ea1ae15cdcb2bdea470392de3129b900"
+  },
+  {
+    "path": "test1-directed/capture-start.json",
+    "sha256": "b7a3aebee30a7253b909d084e8b4fe5b89dc95c161644b6abacd8e0cab7d94c2"
+  },
+  {
+    "path": "test1-directed/capture-start.log.gz",
+    "sha256": "462c33ee629e194d49c0f76e1423083ce0115d1a18705395a71d3fac4c6fe612"
+  },
+  {
+    "path": "test1-directed/manifest.json",
+    "sha256": "2de163d4e7a7d04bdb6c8ebc4595c0850f06be7350cce071b3b85127ddbc0cac"
+  },
+  {
+    "path": "test1-directed/playback.log.gz",
+    "sha256": "e4a8cf7b9a383209dee1d96e3387ba9c04f7ecf3b602e3d70ad079038d0c651e"
+  },
+  {
+    "path": "test1-directed/power-0000.txt.gz",
+    "sha256": "e2d9e9ad9d613c618a5b0ae09e920190be3ecded0f5a37250474824d4f22bd28"
+  },
+  {
+    "path": "test1-directed/power-0001.txt.gz",
+    "sha256": "7356927ed06f66e82d3a87774793dc866e856bb066b1843057e35fb5e023846d"
+  },
+  {
+    "path": "test1-directed/power-0002.txt.gz",
+    "sha256": "d921d575a29923a756b063f4631fc8491cb9d7b4b869dd62924a512fd2996e3c"
+  },
+  {
+    "path": "test1-directed/power-0003.txt.gz",
+    "sha256": "3d031e6b7d115dd485009b49be0bcd25708e5754abf9182da636f7eab9ee6f92"
+  },
+  {
+    "path": "test1-directed/power-0004.txt.gz",
+    "sha256": "b13bc591d6233077a314d27b1d6a237ada9290bd7fa4935ed96c96a73b516a8d"
+  },
+  {
+    "path": "test1-directed/power-0005.txt.gz",
+    "sha256": "da0b9f484b4a804b1884258863d3d90a98a482907d13eaa3b6d4963900606f48"
+  },
+  {
+    "path": "test1-directed/power-0006.txt.gz",
+    "sha256": "45faecb9114b76e6dad4515749900facf8c8f0bc73e3255fadea20a058ee6290"
+  },
+  {
+    "path": "test1-directed/power-0007.txt.gz",
+    "sha256": "97b6a92a660e4aa2d0d5586ef1e723a14cdbf982f639c9245459cbdac0884a0b"
+  },
+  {
+    "path": "test1-directed/power-0008.txt.gz",
+    "sha256": "910ba19ecd78101c82523ad2876edff015e474d1bdf5a54890d57e2503191013"
+  },
+  {
+    "path": "test1-directed/power-0009.txt.gz",
+    "sha256": "709ab0723d012ac61efa7242a1703ef06fcf696f2a13215c065201968b900d86"
+  },
+  {
+    "path": "test1-directed/power-0010.txt.gz",
+    "sha256": "69bbd4c5b8e64f8df55df77ff8a1bb7ca019e595595716cfd067f68af4f84609"
+  },
+  {
+    "path": "test1-directed/power-0011.txt.gz",
+    "sha256": "4d2163798370dec392252fa6c99842c3b3c8a183d73c158c8049a9289c4c8a40"
+  },
+  {
+    "path": "test1-directed/power-0012.txt.gz",
+    "sha256": "330815747cd0140ea4cfd678891d24976add01b55576dd2f785d0db8ae655078"
+  },
+  {
+    "path": "test1-directed/power-0013.txt.gz",
+    "sha256": "b2d06a1aadc317bcdb3709270226da46108ae42dc701b86c982a3803a5a0d4dd"
+  },
+  {
+    "path": "test1-directed/power-0014.txt.gz",
+    "sha256": "253e30c6a2b31d817a395f04eb23b51c81e430d07e38990ba11d022179059fd1"
+  },
+  {
+    "path": "test1-directed/power-0015.txt.gz",
+    "sha256": "61c2ea2df605c13aedaf419179e029c676322c46c0cef5843a50b43188cde1b1"
+  },
+  {
+    "path": "test1-directed/power-0016.txt.gz",
+    "sha256": "2461f14386101a77a0fdb0a3d750e8ecba968b8625a5f90ab8563cf9de4abb32"
+  },
+  {
+    "path": "test1-directed/power-0017.txt.gz",
+    "sha256": "773eae1a7068441be3063f4b733a03f444e2ba892460296951dc0965492fd962"
+  },
+  {
+    "path": "test1-directed/power-0018.txt.gz",
+    "sha256": "4f047a30ce5e80d1b181afb797219479f52c418e57615083f3c7857970c68470"
+  },
+  {
+    "path": "test1-directed/power-0019.txt.gz",
+    "sha256": "156ae158fdb9e0c7f10afd4493ae392b2e6b0867a294cb4001e9ea4df5a21b2d"
+  },
+  {
+    "path": "test1-directed/power-0020.txt.gz",
+    "sha256": "3e617b171eaa4fdfefc7300be15adcd57bec50ec8925edf2cab4dc2ce6099bb3"
+  },
+  {
+    "path": "test1-directed/power-0021.txt.gz",
+    "sha256": "5770174efc99b4377d834b63ac953601d06dbd7cb9739a49c6ac4f2bf46cf8bb"
+  },
+  {
+    "path": "test1-directed/power-0022.txt.gz",
+    "sha256": "a77a7f2f016ea0940d922ffaabb812ab32a3ec43e4fd9456fa637186e6da33f2"
+  },
+  {
+    "path": "test1-directed/power-0023.txt.gz",
+    "sha256": "7b28019df39b7913382a78380a63edc92821680c56d8a277c99c7d27c75e7364"
+  },
+  {
+    "path": "test1-directed/power-0024.txt.gz",
+    "sha256": "a19e9b8a2f5d94b6a0d0dbcb3dac387025f4fb1c046889c0c4735e31a2026740"
+  },
+  {
+    "path": "test1-directed/power-0025.txt.gz",
+    "sha256": "fe8ee711b67cf43054f70aaea7f5f5590b4e4560a3bcf4d0305f0c78afcc511b"
+  },
+  {
+    "path": "test1-directed/power-0026.txt.gz",
+    "sha256": "f9121360be80f2f901635b1bdc24bfcdf324735b48d409ece266601558eaa420"
+  },
+  {
+    "path": "test1-directed/power-0027.txt.gz",
+    "sha256": "a440bb6ec300bc209ffdf72dcbc6700a9fb6ec369e88596978d7e789e889353a"
+  },
+  {
+    "path": "test1-directed/power-0028.txt.gz",
+    "sha256": "14cb7e4d4c96404000b877c24930da1a386cf9b2d109b3eb35d9ec53ebe70ece"
+  },
+  {
+    "path": "test1-directed/power-0029.txt.gz",
+    "sha256": "0f47ea60836e84cb75680b6e7eb4227a8689002320c8ec818e4748f66b2a2633"
+  },
+  {
+    "path": "test1-directed/power-0030.txt.gz",
+    "sha256": "29580df12b384e6835a75701563f39045171f0a5284f14ebbb13bf97dfc575bf"
+  },
+  {
+    "path": "test1-directed/power-0031.txt.gz",
+    "sha256": "541042351e89202442e083513421b580d5068d9991d5bc1def4b232f84c8f6f4"
+  },
+  {
+    "path": "test1-directed/power-0032.txt.gz",
+    "sha256": "bff73fcab727abaadcc5c5a901257f3f796e8910551ea2c708b17076970ac4f0"
+  },
+  {
+    "path": "test1-directed/power-0033.txt.gz",
+    "sha256": "0a8292d3ea57d04cefd4942c27832c93bccdf1dc78438816b610754492885204"
+  },
+  {
+    "path": "test1-directed/power-0034.txt.gz",
+    "sha256": "80ca6c4eff60a97c8f2f651e93b67c921a80d99cc8397c35db38e4d9819c6a26"
+  },
+  {
+    "path": "test1-directed/power-0035.txt.gz",
+    "sha256": "eb907074b4f5b80f88126e6eda3694b9e021d1e04e2a2e368b583ab0feedc277"
+  },
+  {
+    "path": "test1-directed/power-0036.txt.gz",
+    "sha256": "e72223df5e5862ff7cc8b0b8384032070df978d509809d9a7f8dc29ab4c73049"
+  },
+  {
+    "path": "test1-directed/power-0037.txt.gz",
+    "sha256": "15a1f0941a634eb3e2b704a5746bc9671ac0d6a9d28f974711605119a241feb7"
+  },
+  {
+    "path": "test1-directed/power-0038.txt.gz",
+    "sha256": "202e8a54c4d05240e7b68c69d6609caf4f5c5743ce5c8ee0dbbadb28f409d6d9"
+  },
+  {
+    "path": "test1-directed/power-0039.txt.gz",
+    "sha256": "4cd9886f4a4d5d643c7ff80b254194ab3eaa389830dd420b0ce1b9a547165d85"
+  },
+  {
+    "path": "test1-directed/power-0040.txt.gz",
+    "sha256": "da13a098728cdf862948b9e3107a7b79bbb1002ff7865ded68bd27bd1b2ea6e9"
+  },
+  {
+    "path": "test1-directed/power-0041.txt.gz",
+    "sha256": "75ab7d311432b76455ae41d64e49721c808523c38e01accde21bcd29442559d0"
+  },
+  {
+    "path": "test1-directed/power-0042.txt.gz",
+    "sha256": "211f0dfcecf399603a2398204f57714c4d41339a7f625541fb6624bd1be391f1"
+  },
+  {
+    "path": "test1-directed/power-0043.txt.gz",
+    "sha256": "20b09963da87adabe3f7c7fc7f5283294fc4931244cbe19772c6014c2b2eda42"
+  },
+  {
+    "path": "test1-directed/power-0044.txt.gz",
+    "sha256": "da7192a79d27e9023401c199293bb9dbd53d12dcb11a9a6d062ca41b5928789f"
+  },
+  {
+    "path": "test1-directed/power-0045.txt.gz",
+    "sha256": "a6a1d816613b5d1e4232e4bc1fe8bfb2072302a05ad472d745ffb9ffad4b8823"
+  },
+  {
+    "path": "test1-directed/power-0046.txt.gz",
+    "sha256": "9d3413da90f1b7c170975787e611cf42800403b732c5f77ba7221fb0a55b515d"
+  },
+  {
+    "path": "test1-directed/power-0047.txt.gz",
+    "sha256": "b26f904d6fc00ff427cf6ad11df4e14959ccd5c23710889dc3ae25e30369b164"
+  },
+  {
+    "path": "test1-directed/power-0048.txt.gz",
+    "sha256": "948ea7767d13f852ea47b2f388b6180f043210e8f1e1f5ab77c1c080b525c76e"
+  },
+  {
+    "path": "test1-directed/power-0049.txt.gz",
+    "sha256": "410048fb6ad61c617c088c9b1a0409ca322296eaf6afb4c2481767b5306ad03f"
+  },
+  {
+    "path": "test1-directed/power-0050.txt.gz",
+    "sha256": "060a2caf03d12081cf5b92c3165843b61594a31adf7147a7cc4a07f52d119db0"
+  },
+  {
+    "path": "test1-directed/power-0051.txt.gz",
+    "sha256": "71816400f5a33efa0b33f33d1334b5bbca1b9b33c270babed3925580d821a23c"
+  },
+  {
+    "path": "test1-directed/power-0052.txt.gz",
+    "sha256": "97c8efea25f9302b20ee94e4f19c1a2176d654fce3db23c8e60f4438465ef00d"
+  },
+  {
+    "path": "test1-directed/power-0053.txt.gz",
+    "sha256": "f976abcd5c85df0b1aeae23817bcf7f21c91d56efd3ebbf3ab991a6a3f745ac8"
+  },
+  {
+    "path": "test1-directed/power-0054.txt.gz",
+    "sha256": "1cccdb3dbefbf855cc1a5149213ccf0f158c4f1c252cc7672d8b9d2d386e6b8c"
+  },
+  {
+    "path": "test1-directed/power-0055.txt.gz",
+    "sha256": "d29d5535f58d17118cdb894f981da5ff6fd8be738451d1640b9da7d9213ca85d"
+  },
+  {
+    "path": "test1-directed/power-0056.txt.gz",
+    "sha256": "e4e599f093ae53c6973ef8df84231be4349e53c6a85343fee66785c8e77e4878"
+  },
+  {
+    "path": "test1-directed/power-0057.txt.gz",
+    "sha256": "6862393426d9b673406fabf4fda7c267e85eb8c4b71d47165845ada08135243d"
+  },
+  {
+    "path": "test1-directed/power-0058.txt.gz",
+    "sha256": "6d7d78432354d0c3ed08b2f3fc602a9e1aa96e93a122aa468164040dc8bb5736"
+  },
+  {
+    "path": "test1-directed/power-0059.txt.gz",
+    "sha256": "3a23dba8a93385a09ab4756a0fe926cba97de371af389f70d4072b6a19f3d661"
+  },
+  {
+    "path": "test1-directed/power-0060.txt.gz",
+    "sha256": "2305391a0d39b27174f37f92abfdebc9d82457e17368f3afc00a40335d7f1b5f"
+  },
+  {
+    "path": "test1-directed/power-0061.txt.gz",
+    "sha256": "db7a5068b8b02c29c9de59c602ff0fc63970815e595f2133faa423bcabb4c5ff"
+  },
+  {
+    "path": "test1-directed/power-0062.txt.gz",
+    "sha256": "69de11190edaa0fe98755f713036e105820e791a2e3ee54d69f4ae0af7db7c99"
+  },
+  {
+    "path": "test1-directed/power-0063.txt.gz",
+    "sha256": "7e320ac09356266e2ea7786f7bf06d737bbbad7f1da37fd2c7e248eef87d7431"
+  },
+  {
+    "path": "test1-directed/power-0064.txt.gz",
+    "sha256": "81dd842a6fc0047d38b2f905d5ee55afefff561445f24bdbfc00337c3e015ef9"
+  },
+  {
+    "path": "test1-directed/power-0065.txt.gz",
+    "sha256": "199c8c3d210fc098858788dc06511eebbbadd064d6ee5adff8e01e8c3decca60"
+  },
+  {
+    "path": "test1-directed/power-0066.txt.gz",
+    "sha256": "fdf7d661abc671e8fb546c855919ce493d8c0453ee622adb63795054eabd05b5"
+  },
+  {
+    "path": "test1-directed/power-0067.txt.gz",
+    "sha256": "ae0041e2398abe176c13630d82dcbd4bacc3133585160ffb34a64ee73189b1b7"
+  },
+  {
+    "path": "test1-directed/power-0068.txt.gz",
+    "sha256": "7c9c0e44880f000b9a5b1ed44b7e91e4b91d4090b2cca74589f096d06e5676ea"
+  },
+  {
+    "path": "test1-directed/power-0069.txt.gz",
+    "sha256": "e33d6d2682ac09d251a7b8e88e15e2fb1f983c72ce1b654d46a6d6598cd5db14"
+  },
+  {
+    "path": "test1-directed/power-0070.txt.gz",
+    "sha256": "9b0bc4ceb42a43999d8a0ed4a79d96c5ec5209132fabfa96754420f977503595"
+  },
+  {
+    "path": "test1-directed/power-0071.txt.gz",
+    "sha256": "72b0c9a1ce91c2bd7da4e0105774d11029263a4f7210d51ca062e3f0b3b754eb"
+  },
+  {
+    "path": "test1-directed/power-0072.txt.gz",
+    "sha256": "10724c3cb6298bf2fac7df4b0491c0a9d4fee85d5d3227a857ca4ff2174d82ad"
+  },
+  {
+    "path": "test1-directed/power-0073.txt.gz",
+    "sha256": "2c526fcbd26a9bc0bd46aaa9111c0c88eac0c8f884852584a4ff13fd36a189b3"
+  },
+  {
+    "path": "test1-directed/power-0074.txt.gz",
+    "sha256": "8ed44329b27a92955193521e1f128472b2506af814b67884c86f5c726fd25d1e"
+  },
+  {
+    "path": "test1-directed/power-0075.txt.gz",
+    "sha256": "39cb9df6ead42a4d369b7fa88a55f9fd31706e0e5e61eb385fe6f7e4ede35f17"
+  },
+  {
+    "path": "test1-directed/power-0076.txt.gz",
+    "sha256": "5f1f0a413e1b134c46a0c8e10ec0b8df35e11139d3ebb34f94620a257dc66284"
+  },
+  {
+    "path": "test1-directed/power-0077.txt.gz",
+    "sha256": "927d69c700f569bf4abf81c2fbc3c323d1dcdb80036891283ffe964d045090ca"
+  },
+  {
+    "path": "test1-directed/power-0078.txt.gz",
+    "sha256": "08f742d5cf27bf8350da00558e7f26e1e981beb6b6548fd0d274b50aac55c48f"
+  },
+  {
+    "path": "test1-directed/qualification.json",
+    "sha256": "a466630086692d70776f28e5e3830033ec02002d46297c9cfb81b57fec7693ee"
+  },
+  {
+    "path": "test1-directed/recovery-analysis.json",
+    "sha256": "caa59fd3c3baac1f9cf8c7429784bd65e50abdb97fa3727a4b7617672bef6943"
+  },
+  {
+    "path": "test1-directed/result.json",
+    "sha256": "398b6321f7b4ab134ad71f50576be7276ca87e5618ad210d4d974391b17e5aee"
+  },
+  {
+    "path": "test1-directed/scheduled-events.json",
+    "sha256": "0bad7e35eaf2235846e54641d7979c3e09bb14de7d832f37d4017c38d3781417"
+  },
+  {
+    "path": "test1-directed/sync-calibration.txt.gz",
+    "sha256": "22f0484feb0f75b425ffa5e4936318ff54bdd6c57662cdfb5c831b2794fc5e4b"
+  },
+  {
+    "path": "test1-runner.log.gz",
+    "sha256": "de822fd33b15ccf2158027911e019a524b0729a2d6477657a0d033dc3a867a2f"
+  }
+]

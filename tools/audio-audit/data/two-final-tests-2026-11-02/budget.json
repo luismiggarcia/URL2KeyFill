@@ -1,0 +1,22 @@
+{
+  "maximum_physical_tests": 2,
+  "test1": {
+    "directory": "/tmp/u2k-two-tests-20261102/test1-directed",
+    "planned_active_seconds": 1200,
+    "started": true,
+    "finished": true,
+    "continuity_passed": true,
+    "quality_passed": false
+  },
+  "test2": {
+    "directory": "/tmp/u2k-two-tests-20261102/test2-final",
+    "planned_active_seconds": 1800,
+    "started": false,
+    "condition": "Only after a correction supported by test1 evidence; otherwise stop and report.",
+    "status": "not_started_condition_not_met"
+  },
+  "no_third_test": true,
+  "created_at": "2026-11-02T21:32:55.572518+00:00",
+  "closed": true,
+  "closed_at": "2026-11-02T21:51:34.197085+00:00"
+}
