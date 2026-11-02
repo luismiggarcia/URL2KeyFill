@@ -2596,3 +2596,186 @@ e diagnóstico. A verificação final confirmou placa livre (`Busy=0`) e ausênc
 de processos de teste próprios. O acompanhamento automático é eliminado com o
 encerramento. Não foi alterado o percurso de saída, publicada uma versão nem
 iniciado o ensaio de oito horas.
+
+### 10.19 Revisão da arquitetura A/V — sem novos ensaios físicos (2026-11-02)
+
+**Resposta à questão de fundo:** o percurso normal consegue ordenar áudio e
+imagens numa escala de tempo da máquina, mas não dispõe de informação suficiente
+para garantir que ambos representam o mesmo instante do conteúdo de uma página
+arbitrária. O timestamp de chegada da imagem inclui atrasos de renderização,
+captura e entrega. O servo da saída corrige relógios/consumo; não recupera a
+identidade temporal que a captura não forneceu. Esta é uma limitação verificável
+da arquitetura atual, não uma atribuição da causa dos descartes de frames.
+
+A revisão consultou o código da aplicação e os headers da versão CEF incluída
+no repositório (`cef_binary_156.0.14+g4fa4ab5+chromium-156.0.8078.48`). Não houve
+execução da aplicação, acesso de teste ao UltraStudio, nova campanha de medição
+ou alteração do percurso de saída.
+
+#### Caso 1 — o áudio e a imagem usam timestamps equivalentes?
+
+**Parcialmente: partilham uma escala, mas a semântica é diferente.**
+`Browser::OnAudioStreamPacket` (`src/browser/Browser.hpp:41`) passa o `pts` ao
+`AudioLane::push`, que o converte de milissegundos para amostras (`Scene.cpp:13`).
+A aplicação preserva esse timestamp, com tratamento de contiguidade, sobreposição
+e gerações; não substitui normalmente o PTS pela chegada do callback áudio.
+
+Já `Browser::OnPaint` (`src/browser/Browser.cpp:29–39`) recebe BGRA, dimensões e
+retângulos alterados, **sem parâmetro de timestamp**. A aplicação atribui
+`paintTime=mediaSampleTime()` à entrada do callback. Portanto, esse valor identifica
+a receção da pintura, sem certificar o instante de apresentação ou descodificação
+do conteúdo que está nos píxeis. Mudar o nome dessa hora para PTS, ou subtrair-lhe
+uma constante, não cria a informação em falta.
+
+**Cuidado de contrato:** o comentário de `cef_audio_handler.h:77–90` descreve o
+PTS áudio como milissegundos desde Unix Epoch. A aplicação usa uptime com base
+nas observações anteriores desta build, explicitadas em `Browser.hpp:39` e na
+auditoria. Não se deve trocar agora para Epoch apenas por esse comentário, nem
+assumir uptime para qualquer atualização CEF. A implementação seguinte deve
+validar o domínio de relógio por origem/geração e rejeitar uma incompatibilidade
+explicita, sem estimar silenciosamente uma nova origem por chegada dos pacotes.
+
+#### Caso 2 — um ajuste fixo ou uma reserva maior resolve essa diferença?
+
+**Não oferece uma garantia de sincronismo variável.** Exemplo de impossibilidade:
+duas imagens dos mesmos tipos de evento podem chegar com 10 e 45 ms de atraso
+sobre o conteúdo; corrigir ambas por uma constante mantém 35 ms de diferença.
+É um exemplo lógico, não outra medição do equipamento. Uma reserva maior pode
+ajudar a suportar uma interrupção de execução, mas acrescenta latência e não
+reconstrói o instante de conteúdo. A correção negativa já implementada continua
+válida para aplicar um ajuste escolhido; não deteta automaticamente esse ajuste.
+
+A seleção SDI (`src/output/DeckLink.cpp`, `DeckLink::schedule`) usa um alvo derivado
+do mapeamento áudio e procura uma frame no histórico da cena. Esse histórico é
+normalmente indexado por chegada de pintura. Assim, a seleção é coerente com o
+índice disponível, mas essa coerência não prova uma associação de conteúdo A/V.
+Os descartes SDK continuam um problema separado de continuidade/agendamento.
+
+#### Caso 3 — a composição conserva a associação por camada?
+
+**No caso simples preserva metadados; no caso misto não existe um PTS comum
+certificado.** O atalho de uma única camada à resolução final devolve a própria
+frame (`Scene.cpp:115–118`), e o redimensionamento preserva `paintTime/contentTime`
+(`Core.cpp:91`). Estas otimizações já existem; não há aqui outra composição/cópia
+a remover sob a mesma promessa.
+
+Com várias camadas, `Scene::run` obtém a imagem mais recente de cada uma por
+`LatestFrame::get()` (`Scene.cpp:131`), em vez de as selecionar por um instante de
+conteúdo comum. `composite` atribui ao resultado o maior `paintTime` e deixa
+`contentTime` indefinido (`Scene.cpp:119`). Os testes existentes
+`SceneEventsTests.cpp:33–36` verificam esse comportamento. Deixar o PTS indefinido
+é preferível a inventar um PTS de conteúdo comum; copiar o maior `contentTime`
+para o resultado **não seria uma correção**. Falta um contrato por origem para
+saber qual é a camada A/V de referência e em que instante cada camada contribuiu.
+
+#### Caso 4 — porque funcionaram os ajustes da referência identificada?
+
+O percurso de diagnóstico tem informação adicional: descodifica o ID da imagem,
+obtém a origem temporal a partir dos marcadores PCM e constrói
+`contentTime=origin+id*960` (`Browser.cpp:33–35`). A opção que o ativa é restrita ao
+ensaio de referência (`Main.mm`, validação de `--sdi-av-content-pts`). Não é um
+serviço disponível para o conteúdo de qualquer URL. Os bons resultados desses
+ajustes demonstram o mecanismo sob esse contrato conhecido, não a sincronização
+geral de todas as páginas. Mensagens JavaScript com `mediaTime` ou um callback
+de vídeo, sem associação inequívoca à pintura recebida, não substituem esse
+contrato. A troca de mensagens assíncronas pode voltar a misturar frames.
+
+As páginas de diagnóstico também têm limitações próprias: o flash é desenhado
+por `requestAnimationFrame` a partir da observação de `AudioContext.currentTime`,
+enquanto o impulso PCM é gerado/agendado separadamente (por exemplo,
+`assets/Diagnostics/05_Audio_Esquerdo.html:35,50,81–83,104`). Usar o relógio áudio
+na página não faz o flash chegar ao callback nativo exatamente com esse impulso.
+Isto limita a interpretação dos ensaios, sem justificar remover as reprovações.
+
+#### Caso 5 — GPU ou cadência externa resolvem a arquitetura?
+
+**São possibilidades de desempenho/pacing, não uma correção já demonstrada.**
+`OnAcceleratedPaint` disponibiliza IOSurface e metadados; no header incluído,
+`cef_types_osr.h:48–59`, `extra.timestamp` é descrito em microssegundos desde o
+início da captura. É informação temporal melhor que uma mera chegada, mas o
+contrato local não estabelece, por si só, a origem absoluta comum com o PCM nem
+que esse valor seja o PTS de descodificação de um elemento da página. Não se
+conclui que seja inútil ou incapaz de resolver a captura; seria preciso estabelecer
+esse mapeamento de apresentação/captura antes de o usar como garantia A/V.
+
+O percurso CPU atual não implementa esse callback. Migrar para IOSurface requer
+copiar/reter um recurso próprio durante o callback, como exige o header CEF;
+não é seguro guardar o handle emprestado depois do retorno. Essa migração pode
+reduzir transferências, mas não deve ser vendida como sincronismo resolvido.
+`SendExternalBeginFrame` pode controlar pedidos de renderização; não acrescenta
+um timestamp ao `OnPaint` atual nem associa automaticamente o PCM a uma pintura.
+
+Há ainda conversão de cadência: `Browser::frameRate` arredonda 59,94 para 60
+(`Browser.cpp:15–17`). Isso exige seleção/repetição ao sair a 60000/1001, mesmo
+com uma fonte regular. Não prova a causa dos descartes SDK nem toda a envolvente
+medida. Alterar para 59 fps também não reproduziria a cadência racional correta.
+25p não corrige o contrato de conteúdo: foi apenas a configuração provisória
+mais favorável nos ensaios curtos já efetuados, sem certificação geral de lip sync.
+
+#### Alteração concreta recomendada — separar três contratos de origem
+
+1. **Gráficos declarados sem áudio:** acrescentar um modo explícito por cena em
+   que nenhuma origem contribui áudio para a saída. O SDI usa a imagem mais
+   recente, mantendo o atalho de fonte única e evitando a seleção atrasada pelo
+   histórico/margem de alinhamento áudio. A temporização/preroll do dispositivo
+   continua válida; pode emitir PCM zero se o arranque SDK o exigir. Não se
+   remove a gestão do dispositivo apenas por deixar de haver mistura/SRC.
+   O atalho deve obter a última frame **já preparada** para o formato SDI
+   (por exemplo, um snapshot imutável `{frame, preparedSDR}` ou acesso à última
+   entrada preparada), em vez de converter a imagem dentro do callback/worker
+   a cada apresentação. O cache/conversão SDR por publicação mantém-se; elimina-se
+   a procura temporal e pode reduzir-se a retenção da cena, sem trocar atraso
+   por cópias/conversões repetidas no caminho de saída.
+   Isto ataca diretamente a latência do caso comum de grafismo silencioso.
+   Não deve ser ativado por detetar alguns pacotes silenciosos nem por um mute
+   transitório: esses casos podem voltar a ter conteúdo A/V. A mudança de contrato
+   deve ser feita com a saída parada, para evitar um salto temporal em PLAY.
+   A margem de fonte de 60 ms atualmente configurada deixa de ser uma razão para
+   reter vídeo neste modo; a redução efetiva de latência não foi medida nesta
+   revisão e não é prometida uma percentagem de melhoria.
+
+2. **Origem A/V com timeline verificável:** definir uma interface de origem que
+   entregue áudio e vídeo com timestamps de apresentação de semântica conhecida,
+   origem, escala, velocidade e geração comuns. São vias possíveis um leitor
+   nativo para ficheiros/streams compatíveis que preserve os PTS das duas pistas,
+   ou uma integração de captura CEF que exponha e mapeie a mesma timeline de
+   apresentação. PTS de descodificação não são a única solução possível; uma
+   captura com timestamps de apresentação comuns e comprovados também serve.
+   Um timestamp relativo sem origem conhecida ou uma mensagem JS sem identidade
+   da frame não satisfazem o contrato. A via nativa deve ser tratada como um novo
+   tipo de origem, não como solução para todas as páginas HTML da aplicação.
+
+3. **Página HTML genérica:** manter compatibilidade com o percurso atual e
+   explicitar que a relação A/V é estimada por captura/chegada. Não atribuir a
+   esse percurso uma garantia de conteúdo que a interface não fornece. Deve
+   continuar disponível para grafismo e páginas que o utilizador conhece, sem
+   converter resultados de uma referência identificada numa certificação geral.
+
+**Contrato interno proposto para implementação:** metadados por frame/pacote com
+`sourceId`, `generation`, `timebase`, timestamp original, instante de captura/
+apresentação quando disponível, instante de chegada e proveniência
+(`arrival_only`, `capture_presentation`, `content_pts_verified`). Normalizar para
+a timeline da cena apenas depois de validar a origem. Não promover uma hora de
+chegada a PTS certificado; não misturar dados de gerações diferentes após seek,
+reload ou troca de origem. O compositor deve selecionar a camada A/V de referência
+para o instante pedido e conservar a proveniência das contribuições. Overlays
+estáticos/silenciosos podem usar a sua imagem atual; várias origens A/V exigem
+mapeamentos explícitos por origem, sem inventar um PTS global pelo máximo.
+
+**Critérios de conclusão do trabalho de implementação:** perfil silencioso usa
+latest-frame e não altera cadência/preroll SDK; perfil A/V rejeita domínios
+incompatíveis e conserva a associação em resize/composição; seek/reload cria uma
+geração nova sem reutilizar áudio/vídeo antigos; HTML sem contrato continua
+identificado como estimado; nada altera automaticamente o ajuste para esconder
+uma falha. Estes contratos podem ser verificados com dados sintéticos em testes
+locais antes de qualquer nova decisão sobre hardware. Esta revisão não iniciou
+esses testes nem aprova antecipadamente a implementação.
+
+**Decisão recomendada:** implementar primeiro o perfil explícito de gráficos sem
+áudio e os metadados de proveniência. Para prometer lip sync em vídeo com som,
+escolher depois uma origem A/V com timeline comprovada; um leitor nativo é uma
+opção concreta para media suportada, e uma extensão CEF é a opção que preserva o
+objetivo de páginas genéricas, caso consiga fornecer esse contrato. Não voltar
+a calibrar buffers indefinidamente sobre timestamps de chegada à procura de uma
+garantia que a arquitetura atual não define. Nenhuma destas propostas está
+implementada por este texto e nenhuma garante resolver o descarte SDK já visto.
