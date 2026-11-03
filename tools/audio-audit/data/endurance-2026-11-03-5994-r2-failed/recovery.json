@@ -1,0 +1,35 @@
+{
+  "callbacks_stored": 512,
+  "recoveries": [],
+  "video_notifications": [
+    {
+      "host_samples": 17055718894,
+      "frame": 36748,
+      "result": 2,
+      "matching_schedules": [
+        {
+          "frame": 36748,
+          "duration_ms": 0.7708333333333334,
+          "worker_wait_ms": 0.0625,
+          "estimated_lead_ms": 9.916666666666666
+        }
+      ]
+    }
+  ],
+  "diagnostic_stop_acknowledged": true,
+  "callback_window_triggered": true,
+  "limits": "Bounded diagnostic window; callbacks freeze after the first incident and its tail. Completion host times describe SDK notifications, not wire emission or causality. No incident in a short run does not prove reliability.",
+  "callback_window_max_ms": {
+    "entry_gap": 48.875,
+    "query_span": 0.3333333333333333,
+    "duration": 0.5416666666666666
+  },
+  "schedule_window": {
+    "stored": 512,
+    "triggered": true,
+    "maximum_duration_ms": 11.916666666666666,
+    "maximum_worker_wait_ms": 0.3958333333333333,
+    "minimum_estimated_lead_ms": 9.916666666666666,
+    "limits": "Lead extrapolates the existing SDK stream observation at nominal 1x speed to submission; it is not an independent hardware deadline measurement."
+  }
+}

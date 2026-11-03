@@ -3178,5 +3178,22 @@ teoria, a reserva atrasa áudio e vídeo por igual e não muda o A/V.
     com ~12 ms de margem.
   - o que resolve a oscilação é o protótipo de BeginFrame, que depende do CEF#4317.
 
-**Segundo ensaio de 8 h**, iniciado a 2026-11-03 depois da correção, nas mesmas condições.
-O resultado será acrescentado aqui.
+**Segundo ensaio de 8 h (`fda7a49`).**
+- **Áudio:** aguentou uma pausa de 48,9 ms do driver, o que confirma a correção do áudio.
+- **Vídeo:** falhou aos 614 s com **1 frame descartada** (frame 36748). A mesma pausa
+  atrasa a notificação que liberta o próximo dos únicos 3 slots de vídeo (50 ms a
+  59,94p); a antecedência de agendamento caiu para 9,9 ms.
+- **Evidência:** `endurance-2026-11-03-5994-r2-failed/`.
+
+**Correção do vídeo (`4512533`).**
+- **Regra:** o Reliable agenda `max(3 frames, 100 ms)` de vídeo em voo, com um máximo de 8:
+  25p 3, 50p 5, 59,94p 6. O Low latency não muda.
+- **Seleção:** continua no passado (100 ms de antecedência contra 160 ms de alvo de áudio
+  mais idade da fonte).
+- **Verificação** (`video-floor-2026-11-03/`):
+  - smoke de hardware PLAY/PAUSE/STOP a 59,94p;
+  - loopback a 59,94p e a 50p com preroll de vídeo de 6 e 5 frames, A/V de +8,8 e
+    +20,4 ms, sem falhas.
+
+**Terceiro ensaio de 8 h**, iniciado a 2026-11-03 com `4512533`, nas mesmas condições. O
+resultado será acrescentado aqui.

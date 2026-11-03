@@ -1,0 +1,10 @@
+{
+  "application.csv.gz": "e572f4e014caa63772a32187d5e38965267f4844f12cdd31893432abf6825eff",
+  "capture-start.csv.gz": "416a79e287b1423e62aa6a9ab55a98b4da0f1654bbf1b374a95c094be552de19",
+  "capture-start.log.gz": "95fc066ca9b61320db9e19a2ee6535e56a35cd09f0cf9c47bb489ef56abb57b6",
+  "diagnostic-stop.request": "a11c3d917a2149a4b548217038bc8f2dd2130a1966e0c7af5c4225d81f25a8c3",
+  "manifest.json": "fe97fa96a628b07bcd099dbaed561c271b82feeba735effe242fcd22bc8f987d",
+  "playback.log.gz": "a4fbd3047a577cd3757697f2ce25d6c3c90e20a4ad266b77cef024794d3b3e76",
+  "power-checks.tar.gz": "781229b298ad59a0d49ace64eceb77d4370c8008f37f9e4176deec1306edd82c",
+  "recovery.json": "4d5b73a71fc3f3c7a5dd11c35f0d33a2185db78ee38511b8d0b751dcea06f274"
+}
