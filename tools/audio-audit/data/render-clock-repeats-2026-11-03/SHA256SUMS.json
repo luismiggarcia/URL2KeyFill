@@ -1,5 +1,9 @@
 {
-  "README.md": "670a94669c3bf3af599e631e361a757082ea9deb6f0e3b7539fd68abae0494ce",
+  "README.md": "f41671e94954d43004c94498dca755787d6c2453117fde506914a1e75492077e",
+  "probe-accelerated-paint/analysis.json": "2ecb124e16b616bdef08dd304c8f8a71d0df56420d63799f208419e8656664ff",
+  "probe-accelerated-paint/application.csv.gz": "7935c8f51136daa6811e2cfd90512846dc532799a71e3908941a20c8ca455629",
+  "probe-accelerated-paint/capture-timestamp.json": "5f3ba2463900c542aadc9d4cd290ada5cca92d86deb737be9d0f07c77d5bf278",
+  "probe-accelerated-paint/playback.log.gz": "5721826f01af6d62808ff966b2133aad1699a5a09c214db4024426467bd07908",
   "probe-all-stages/analysis.json": "e8a9fd78baf50c4afb16ef5c82eb0fb348c694ce15d83a9e5ed962179ba320b2",
   "probe-all-stages/application.csv.gz": "d5e947454a8a6c976649dcf9116a2d5ace3ed1899fbd10e1ae71ec80bdee2cb1",
   "probe-all-stages/playback.log.gz": "111bd8399cd1be52af202e60a98ae63073a20137477de55a3c862186d857a56e",

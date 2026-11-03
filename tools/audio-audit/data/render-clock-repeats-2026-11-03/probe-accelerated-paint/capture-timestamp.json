@@ -1,0 +1,39 @@
+{
+  "paints": 5414,
+  "counter_steps": {
+    "1": 5413
+  },
+  "capture_minus_content_ms": {
+    "p1": -16.66899999999987,
+    "p50": -0.028000000002793967,
+    "p99": 4.252000000001862
+  },
+  "arrival_minus_content_ms": {
+    "p1": -16.45833330154419,
+    "p50": 0.05833334922790527,
+    "p99": 5.8375
+  },
+  "regime_switch": [
+    {
+      "t_s": 3.814,
+      "capture_dev_ms": -16.647000000000116,
+      "arrival_dev_ms": -13.4625
+    },
+    {
+      "t_s": 3.828,
+      "capture_dev_ms": -16.70199999999968,
+      "arrival_dev_ms": -16.433333301544188
+    },
+    {
+      "t_s": 3.861,
+      "capture_dev_ms": -0.037000000000261934,
+      "arrival_dev_ms": -0.075
+    },
+    {
+      "t_s": 3.878,
+      "capture_dev_ms": -0.31100000000005823,
+      "arrival_dev_ms": -0.3
+    }
+  ],
+  "conclusion": "capture timestamp follows capture/arrival (jumps one frame with the pipeline regime), not content; counter counts paints"
+}

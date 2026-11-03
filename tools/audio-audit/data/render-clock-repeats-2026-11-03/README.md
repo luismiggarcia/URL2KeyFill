@@ -11,3 +11,8 @@
 
 `analysis.json` is `analyze_begin_frame_probe.py` output. Lag 0 = the paint holds the
 latest BeginFrame (the prototype's stamp); lag 1 = the BeginFrame before.
+- `probe-accelerated-paint`: same probe with a temporary `--accelerated-paint` build
+  (`shared_texture_enabled`, IOSurface copy in `OnAcceleratedPaint`, removed afterwards).
+  `capture-timestamp.json` shows `extra.timestamp` jumps one frame with the pipeline
+  regime like arrival time, and `capture_counter` counts paints: neither identifies the
+  producing BeginFrame.

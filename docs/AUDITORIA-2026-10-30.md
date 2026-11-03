@@ -2969,6 +2969,35 @@ houve ensaio SDI físico nesta revisão.
        um pequeno dither conhecido nos envios para tornar o padrão inequívoco;
      - validar com o probe, cujo critério é 100 % de associações certas, antes de qualquer
        novo ensaio A/V.
+   **Migração para `OnAcceleratedPaint` testada e revertida (2026-11-03):**
+   - **Como foi testada:** build temporária com `shared_texture_enabled` e cópia do
+     IOSurface dentro do callback.
+   - **O que funcionou:** as pinturas chegaram pelo caminho acelerado, com `timestamp` e
+     `capture_counter`, e o smoke com CEF real passou.
+   - **O que o probe a 59,94p mostrou** (5 414 pinturas, mesmo método):
+     - o `timestamp` salta 16,7 ms na mudança de regime aos 3,83 s, exatamente como a hora
+       de chegada (−16,7 → 0,0 ms): é a hora de **captura**, não a do conteúdo;
+     - o `capture_counter` só conta pinturas (passo sempre 1).
+   - **Conclusão:** no CEF 156 **nenhum** dos dois caminhos de pintura identifica o
+     BeginFrame que gerou a frame. O código foi revertido; a evidência está em
+     `probe-accelerated-paint/`.
+   - **Estado do protótipo:**
+     - mantém o ganho de cadência: sem oscilações entre frames vizinhas;
+     - a data atribuída a cada imagem equivale, a menos de uma constante, à hora de
+       chegada. O atraso de pipeline do Chromium (0 ou 1 frame, mudando com a carga)
+       continua invisível para a app, tal como na versão atual;
+     - não piora a semântica A/V, mas também não a certifica.
+   - **Para um A/V certificado restam duas vias:**
+     - o contrato de origem do §10.19, em que o conteúdo declara a sua hora, como o probe
+       faz;
+     - um CEF modificado que passe ao `OnPaint` a identificação do BeginFrame
+       (`BeginFrameAck`).
+
+     Ambas são decisões de arquitetura, não afinações.
+   - **Antes de ativar o protótipo apenas pela cadência faltam:**
+     - várias camadas;
+     - regressão a 25p e 50p;
+     - repetir a comparação do descarte a 59,94.
 4. **[Média] O domínio do PTS CEF não é validado.** O header do CEF descreve Epoch; o
    código assume uptime. Se uma atualização do CEF trocar o domínio, `push` aceita os
    pacotes e o servo entra em salto de fase, reset e, ao terceiro, `fail()` (ver 2).
