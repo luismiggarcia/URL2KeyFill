@@ -3195,5 +3195,17 @@ teoria, a reserva atrasa áudio e vídeo por igual e não muda o A/V.
   - loopback a 59,94p e a 50p com preroll de vídeo de 6 e 5 frames, A/V de +8,8 e
     +20,4 ms, sem falhas.
 
-**Terceiro ensaio de 8 h**, iniciado a 2026-11-03 com `4512533`, nas mesmas condições. O
-resultado será acrescentado aqui.
+**Terceiro ensaio de 8 h (`4512533`).**
+- **Saída da app:** impecável durante 1 833 s (30,5 min), sem recuperações, frames
+  atrasadas ou descartadas, nem amostras em falta.
+- **Paragem:** o runner parou porque a 2.ª captura intermédia falhou. A **entrada** SDI
+  entregou rajadas de pacotes de áudio vazios (0 amostras, PTS 0, a cada ~40 µs), e em
+  1,4 s isso encheu a tabela da captura. É uma falha de medição, não da saída.
+- **Ferramentas corrigidas (`34e21aa`):**
+  - a captura conta os pacotes vazios em vez de os registar;
+  - uma captura intermédia falhada fica registada como lacuna;
+  - as capturas inicial e final e a telemetria continuam a decidir a aceitação.
+- **Evidência:** `endurance-2026-11-03-5994-r3-capture-failed/`.
+
+**Quarto ensaio de 8 h**, iniciado a 2026-11-03 com a app `4512533` e as ferramentas
+corrigidas. O resultado será acrescentado aqui.
