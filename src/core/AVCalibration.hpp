@@ -11,9 +11,10 @@ inline int64_t cefRateMultiplier(const Rate& rate){int64_t k=1;while(rate.scale*
 // smallest margin between the target window and the p1/p99 A/V of 9-11 SDI loopback starts
 // per cadence (bundled A/V page and <video> known-PTS reference, net of input path): EBU R37
 // (-40/+60) at 25p, where start-to-start browser phase (~73 ms) exceeds the ATSC window, and
-// ATSC IS-191 (-15/+45) at 50p and 59.94p (margins 13.7, 7.0 and 0.6 ms; audit §11). Valid
-// with the CEF rate rule above. Unmeasured cadences have no default; operators add a manual
-// adjustment on top.
+// ATSC IS-191 (-15/+45) at 50p and 59.94p (margins 13.7, 7.0 and 0.6 ms; audit §11.4). Later
+// 59.94p starts left that 0.6 ms behind (neighbour-frame oscillation), so 59.94p guarantees
+// EBU R37 only (audit §11.5). Valid with the CEF rate rule above. Unmeasured cadences have no
+// default; operators add a manual adjustment on top.
 inline std::optional<int32_t> calibratedSyncMs(const Rate& rate){
  struct Entry {int64_t duration,scale;int32_t ms;};
  static constexpr Entry table[]={{1000,25000,17},{1000,50000,14},{1001,60000,-2}};
