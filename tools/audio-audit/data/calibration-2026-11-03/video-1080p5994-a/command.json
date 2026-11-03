@@ -1,0 +1,20 @@
+[
+  "/opt/homebrew/opt/python@3.14/bin/python3.14",
+  "/Users/luisgarcia/Library/CloudStorage/OneDrive-RumosConsulting/Rumos Documents/Desenvolvimento/LG-Systems/URL2KeyFill/tools/audio-audit/run-loopback.py",
+  "--app",
+  "build/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+  "--capture",
+  "/private/tmp/claude-501/-Users-luisgarcia-Library-CloudStorage-OneDrive-RumosConsulting-Rumos-Documents-Desenvolvimento-LG-Systems-URL2KeyFill/32c966bb-dc0a-4168-99aa-504102f51472/scratchpad/decklink-capture",
+  "--mode",
+  "1080p5994",
+  "--seconds",
+  "45",
+  "--directory",
+  "/Users/luisgarcia/Library/CloudStorage/OneDrive-RumosConsulting/Rumos Documents/Desenvolvimento/LG-Systems/URL2KeyFill/tools/audio-audit/data/calibration-2026-11-03/video-1080p5994-a/loopback",
+  "--source-url",
+  "http://127.0.0.1:58119/",
+  "--timing-profile",
+  "reliable",
+  "--sync-offset-ms",
+  "0"
+]
