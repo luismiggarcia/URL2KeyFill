@@ -3315,7 +3315,7 @@ calibração de fábrica −2 ms, sem gancho de teste; 10:45–18:45, captura a 
     capturada não diz qual;
   - só é visível quando calha num flash (~4 % das frames). Noutras frames, o mesmo erro
     passaria por uma frame repetida ou adiantada no movimento.
-- **Diagnóstico das frames isoladas (em curso):**
+- **Diagnóstico das frames isoladas:**
   - **A app agenda o conteúdo certo.** A telemetria conta os inícios de flash na pintura
     do browser (`source_flash_count`) e nas frames escolhidas para cada posição SDI
     (`scheduled_flash_count`). Nas 28 801 s houve exatamente 28 801 em cada um: nem o
@@ -3335,10 +3335,31 @@ calibração de fábrica −2 ms, sem gancho de teste; 10:45–18:45, captura a 
   - O desvio vai de 2 a 47 frames, sem valor fixo: não acompanha a profundidade da fila
     nem o ciclo dos buffers. As capturas com identificador por frame (25p e 50p, ~70 000
     frames, 31/10–02/11) não têm nenhuma frame fora de ordem.
-  - **Hipótese de trabalho:** o defeito está depois do agendamento, no caminho do
-    dispositivo a 59,94p (saída ou entrada do UltraStudio). Falta o teste que decide: a
-    referência do SDK (`decklink_clock --av-reference 1`, sem a app) e a referência
-    identificada da app, ambas a 59,94p.
-  - Às 21:15 a entrada SDI deixou de sincronizar, também com a referência do SDK sem a
-    app, depois de o Mac ter estado a dormir. Os testes ficam à espera da entrada.
+  - **Estado do driver.** Às 21:15 a entrada SDI deixou de sincronizar. Depois de
+    reiniciar o UltraStudio, nem a saída do SDK avançava, e havia dois processos
+    `BlackmagicIO.DExt`: um de 02/11 às 21:27 e outro do novo arranque. Depois de
+    reiniciar o Mac ficou um só, e a entrada e a saída voltaram.
+  - **Teste decisivo, depois do reinício** (`stray-frames-2026-11-03/`), tudo a 59,94p:
+
+    | Ensaio | Duração | Flashes | Frames isoladas | Esperadas à taxa anterior (1,5 %) |
+    |---|---|---|---|---|
+    | Referência do SDK, sem a app | 3 × 240 s | 699 | 0 | ~10 |
+    | App, página A/V (o mesmo binário do 5.º ensaio) | 3 × 240 s | 702 | 0 | ~10 |
+    | App, referência identificada | 3 × 45 s | 117 (6 992 IDs) | 0, e nenhum ID fora de ordem | — |
+
+  - **Conclusão:** a mesma app, com a mesma página, no mesmo modo, tinha 15 frames
+    isoladas em 1 007 flashes no 5.º ensaio e tem 0 em 702 depois do reinício. A
+    diferença está no estado do dispositivo e do driver, não no código.
+  - **Coincide com o arranque do driver de 02/11 às 21:27.** As capturas a 59,94p
+    anteriores (31/10 e 02/11 de manhã: 452 flashes) não têm nenhuma frame isolada.
+    Todas as séries desde os dois ensaios de 02/11 à noite (§10.18, a partir das 21:28)
+    têm. A causa desse arranque do driver não ficou identificada no registo do sistema.
+  - **Consequências:**
+    - os +120 e +159 ms do 5.º ensaio e as frames isoladas do 4.º não contam contra a
+      app. Sem esses dois impulsos, o 5.º ensaio fica todo dentro da EBU R37;
+    - as medições a 59,94p entre 02/11 às 21:28 e 03/11 às 21:29 (calibração, reserva,
+      pausas e os ensaios longos) foram feitas nesse estado. As medianas quase não são
+      afetadas (1,5 % dos flashes), mas a calibração de 59,94p merece nova medição;
+    - **nota operacional:** se a saída mostrar frames fora de sítio depois de o
+      dispositivo ser religado ou de o Mac acordar, reiniciar o Mac antes do serviço.
 - **Evidência:** `endurance-2026-11-03-5994-r5/`.

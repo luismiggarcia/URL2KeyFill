@@ -1,0 +1,31 @@
+{
+  "mode": "1080p5994",
+  "seconds": 240,
+  "settle_seconds": 4,
+  "source": "scheduled SDK reference",
+  "playback_sha256": "9971b3061faf7b45738d115221c08c07f7ad4020c03c1940dd1d44797effaec8",
+  "capture_sha256": "91319cc3aee74199a0c68cc307e3ba7764234208ad1397555663de0da3d3f1a0",
+  "capture_command": [
+    "/private/tmp/claude-501/-Users-luisgarcia-Library-CloudStorage-OneDrive-RumosConsulting-Rumos-Documents-Desenvolvimento-LG-Systems-URL2KeyFill/32c966bb-dc0a-4168-99aa-504102f51472/scratchpad/decklink-capture",
+    "--seconds",
+    "250",
+    "--mode",
+    "1080p5994",
+    "--csv",
+    "/private/tmp/claude-501/-Users-luisgarcia-Library-CloudStorage-OneDrive-RumosConsulting-Rumos-Documents-Desenvolvimento-LG-Systems-URL2KeyFill/32c966bb-dc0a-4168-99aa-504102f51472/scratchpad/stray-sdk-5994-c/capture.csv"
+  ],
+  "playback_command": [
+    "/private/tmp/claude-501/-Users-luisgarcia-Library-CloudStorage-OneDrive-RumosConsulting-Rumos-Documents-Desenvolvimento-LG-Systems-URL2KeyFill/32c966bb-dc0a-4168-99aa-504102f51472/scratchpad/decklink-clock-av",
+    "--av-reference",
+    "1",
+    "--mode",
+    "1080p5994",
+    "--seconds",
+    "240",
+    "--csv",
+    "/private/tmp/claude-501/-Users-luisgarcia-Library-CloudStorage-OneDrive-RumosConsulting-Rumos-Documents-Desenvolvimento-LG-Systems-URL2KeyFill/32c966bb-dc0a-4168-99aa-504102f51472/scratchpad/stray-sdk-5994-c/clock.csv"
+  ],
+  "input_recording_limit_s": 233.90714441600005,
+  "playback_exit": 0,
+  "capture_exit": 0
+}

@@ -1,0 +1,32 @@
+{
+  "mode": "1080p5994",
+  "seconds": 240,
+  "settle_seconds": 4,
+  "source": "application",
+  "playback_sha256": "a832cf9c770f3f27a8f869b98797ad7284912f28667ed491946b03990cf2af82",
+  "capture_sha256": "91319cc3aee74199a0c68cc307e3ba7764234208ad1397555663de0da3d3f1a0",
+  "capture_command": [
+    "/private/tmp/claude-501/-Users-luisgarcia-Library-CloudStorage-OneDrive-RumosConsulting-Rumos-Documents-Desenvolvimento-LG-Systems-URL2KeyFill/32c966bb-dc0a-4168-99aa-504102f51472/scratchpad/decklink-capture",
+    "--seconds",
+    "250",
+    "--mode",
+    "1080p5994",
+    "--csv",
+    "/private/tmp/claude-501/-Users-luisgarcia-Library-CloudStorage-OneDrive-RumosConsulting-Rumos-Documents-Desenvolvimento-LG-Systems-URL2KeyFill/32c966bb-dc0a-4168-99aa-504102f51472/scratchpad/stray-app-5994-c/capture.csv"
+  ],
+  "playback_command": [
+    "/Users/luisgarcia/Library/CloudStorage/OneDrive-RumosConsulting/Rumos Documents/Desenvolvimento/LG-Systems/URL2KeyFill/build/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+    "--sdi-av-test",
+    "--hardware-test-mode",
+    "1080p5994",
+    "--audio-baseline-seconds",
+    "240",
+    "--timing-profile",
+    "reliable",
+    "--sync-offset-ms",
+    "0"
+  ],
+  "input_recording_limit_s": 233.90172479199987,
+  "playback_exit": 0,
+  "capture_exit": 0
+}

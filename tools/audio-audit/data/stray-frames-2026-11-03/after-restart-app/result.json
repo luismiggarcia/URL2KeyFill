@@ -1,0 +1,147 @@
+{
+  "sign": "positive = audio later than video",
+  "measurement": "output plus input relative A/V; uncalibrated input",
+  "video_frame_ms": 16.666666666666668,
+  "valid_video_frames": 820,
+  "video_timestamp_gaps": 0,
+  "video_timestamp_gaps_within_matched_range": 0,
+  "flashes_after_warmup": 11,
+  "channels": {
+    "audio_L": {
+      "pairs": 11,
+      "unmatched_flashes": 0,
+      "median_ms": 5.875,
+      "min_ms": -4.8125,
+      "max_ms": 10.875,
+      "stdev_ms": 4.224193954604322,
+      "events": [
+        {
+          "video_pts_48k": 170570,
+          "audio_pts_48k": 170339,
+          "audio_minus_video_ms": -4.8125
+        },
+        {
+          "video_pts_48k": 217817,
+          "audio_pts_48k": 218339,
+          "audio_minus_video_ms": 10.875
+        },
+        {
+          "video_pts_48k": 265865,
+          "audio_pts_48k": 266339,
+          "audio_minus_video_ms": 9.875
+        },
+        {
+          "video_pts_48k": 313913,
+          "audio_pts_48k": 314339,
+          "audio_minus_video_ms": 8.875
+        },
+        {
+          "video_pts_48k": 361961,
+          "audio_pts_48k": 362339,
+          "audio_minus_video_ms": 7.875
+        },
+        {
+          "video_pts_48k": 410009,
+          "audio_pts_48k": 410339,
+          "audio_minus_video_ms": 6.875
+        },
+        {
+          "video_pts_48k": 458057,
+          "audio_pts_48k": 458339,
+          "audio_minus_video_ms": 5.875
+        },
+        {
+          "video_pts_48k": 506105,
+          "audio_pts_48k": 506339,
+          "audio_minus_video_ms": 4.875
+        },
+        {
+          "video_pts_48k": 554153,
+          "audio_pts_48k": 554339,
+          "audio_minus_video_ms": 3.875
+        },
+        {
+          "video_pts_48k": 602201,
+          "audio_pts_48k": 602339,
+          "audio_minus_video_ms": 2.875
+        },
+        {
+          "video_pts_48k": 650249,
+          "audio_pts_48k": 650339,
+          "audio_minus_video_ms": 1.875
+        }
+      ]
+    },
+    "audio_R": {
+      "pairs": 11,
+      "unmatched_flashes": 0,
+      "median_ms": 5.875,
+      "min_ms": -4.8125,
+      "max_ms": 10.875,
+      "stdev_ms": 4.224193954604322,
+      "events": [
+        {
+          "video_pts_48k": 170570,
+          "audio_pts_48k": 170339,
+          "audio_minus_video_ms": -4.8125
+        },
+        {
+          "video_pts_48k": 217817,
+          "audio_pts_48k": 218339,
+          "audio_minus_video_ms": 10.875
+        },
+        {
+          "video_pts_48k": 265865,
+          "audio_pts_48k": 266339,
+          "audio_minus_video_ms": 9.875
+        },
+        {
+          "video_pts_48k": 313913,
+          "audio_pts_48k": 314339,
+          "audio_minus_video_ms": 8.875
+        },
+        {
+          "video_pts_48k": 361961,
+          "audio_pts_48k": 362339,
+          "audio_minus_video_ms": 7.875
+        },
+        {
+          "video_pts_48k": 410009,
+          "audio_pts_48k": 410339,
+          "audio_minus_video_ms": 6.875
+        },
+        {
+          "video_pts_48k": 458057,
+          "audio_pts_48k": 458339,
+          "audio_minus_video_ms": 5.875
+        },
+        {
+          "video_pts_48k": 506105,
+          "audio_pts_48k": 506339,
+          "audio_minus_video_ms": 4.875
+        },
+        {
+          "video_pts_48k": 554153,
+          "audio_pts_48k": 554339,
+          "audio_minus_video_ms": 3.875
+        },
+        {
+          "video_pts_48k": 602201,
+          "audio_pts_48k": 602339,
+          "audio_minus_video_ms": 2.875
+        },
+        {
+          "video_pts_48k": 650249,
+          "audio_pts_48k": 650339,
+          "audio_minus_video_ms": 1.875
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Periodic 1 Hz pattern: nearest pairing assumes offset within 400 ms; larger offsets are ambiguous.",
+    "Browser visual onset is frame-quantised; this does not establish sub-frame source synchrony.",
+    "Input A/V offset requires a known scheduled reference; no input correction applied.",
+    "Shared-device loopback does not test drift between independent devices."
+  ]
+}
