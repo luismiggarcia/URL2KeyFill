@@ -15,6 +15,8 @@ constexpr bool cefPtsInUptimeDomain(int64_t ptsMilliseconds,int64_t nowSamples){
 struct HostClockSnapshot {int64_t uptimeNs=0,continuousNs=0,uncertaintyNs=0;};
 HostClockSnapshot hostClockSnapshot();
 int64_t mediaSampleTime();
+// Block the calling thread until mediaSampleTime() reaches `samples` (no-op if past).
+void waitUntilSampleTime(int64_t samples);
 
 // Detect changes in sleep-inclusive versus sleep-exclusive clock offset. A slow
 // observation is discarded rather than mistaken for a suspend event.

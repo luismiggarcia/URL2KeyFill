@@ -176,6 +176,8 @@ class DeckLink final:public Output {
     std::atomic<uint64_t> historyMisses_{0},historyReads_{0},historyStartupMisses_{0},preparedReads_{0},conversionFallbacks_{0};std::atomic<int64_t> selectedAge_{INT64_MIN};
     // Selection cadence: a repeat reuses (or rewinds to) a history entry, a skip passes over one.
     std::atomic<uint64_t> videoRepeats_{0},videoSkips_{0};int64_t lastSelectedTime_=INT64_MIN;
+    // Selection grid for an external render clock; written by the worker, read lock-free.
+    PublishedAudioMapping cadenceMapping_;std::atomic<double> cadenceDelay_{0};std::atomic<int64_t> cadenceDuration_{1},cadenceScale_{1};std::atomic<bool> cadenceActive_{false};
     uint32_t reserve_=3;std::shared_ptr<std::atomic<int32_t>> syncOffset_=std::make_shared<std::atomic<int32_t>>(0);AudioMapping videoMapping_;mutable AudioMapping statusMapping_;
     uint32_t sourceAge_=2880; // Provisional 60 ms on raw PTS; independent of the SDI reserve.
     bool videoEnabled_=false,audioEnabled_=false,videoCallbackSet_=false,audioCallbackSet_=false,keyerEnabled_=false,playbackStarted_=false;
@@ -191,6 +193,7 @@ class DeckLink final:public Output {
             if(audioCallback_){
                 const auto streamPosition=mode_.rate.timestamp(next_+CompletionState::startupLeadFrames)*48000/mode_.rate.scale;
                 if(auto mapping=audioCallback_->timeline.read())videoMapping_=*mapping;
+                cadenceMapping_.publish(videoMapping_);cadenceDelay_=frameDelay.streamSamples;cadenceActive_=true;
                 const auto target=int64_t(std::llround(frameDelay.videoSource(videoMapping_,streamPosition)));
                 auto selected=source_->history.at(target,mode_.rate.duration*48000/(2*mode_.rate.scale));if(selected.frame&&selected.frame->size!=mode_.size)selected={};image=selected.frame;prepared=selected.prepared;selectionTime=selected.time;++historyReads_;
                 if(!image){if(audioCallback_->clockCalibrated)++historyMisses_;else ++historyStartupMisses_;selectedAge_=INT64_MIN;}
@@ -322,7 +325,7 @@ public:
             // SignalGenerator startup order; enabling audio may initialise transport.
             check(output_->EnableAudioOutput(bmdAudioSampleRate48kHz,bmdAudioSampleType32bitInteger,2,bmdAudioOutputStreamTimestamped),"Enable 48 kHz stereo SDI audio");
             audioEnabled_=true;
-            frameTiming_=AVTiming(mode_.rate);source_=&source;source_->history.prepareOutput(mode_.pixelFormat==bmdFormat8BitARGB,384*1024*1024);next_=0;quit_=false;air_=true;state_=std::make_shared<CompletionState>();if(syncDiagnostic_)state_->incidents=std::make_unique<SyncEventBuffer<SyncCompletionEvent>>();callback_=Com<Callback>(new Callback(state_));
+            frameTiming_=AVTiming(mode_.rate);cadenceDuration_=mode_.rate.duration;cadenceScale_=mode_.rate.scale;source_=&source;source_->history.prepareOutput(mode_.pixelFormat==bmdFormat8BitARGB,384*1024*1024);next_=0;quit_=false;air_=true;state_=std::make_shared<CompletionState>();if(syncDiagnostic_)state_->incidents=std::make_unique<SyncEventBuffer<SyncCompletionEvent>>();callback_=Com<Callback>(new Callback(state_));
             check(output_->SetScheduledFrameCompletionCallback(callback_.get()),"Register video callback");
             videoCallbackSet_=true;
             int32_t stride=0;check(output_->RowBytesForPixelFormat(BMDPixelFormat(mode_.pixelFormat),mode_.size.width,&stride),"Get video stride");
@@ -362,11 +365,15 @@ public:
     void timing(uint32_t reserve,int32_t offset)override{if(running_)throw std::runtime_error("Stop output before changing timing.");if(reserve<2||reserve>3||std::abs(int64_t(offset))>9600)throw std::invalid_argument("Invalid output timing");reserve_=reserve;*syncOffset_=offset;}
     void referenceDiagnostic(bool enabled)override{if(running_)throw std::runtime_error("Stop output before changing reference diagnostics.");referenceDiagnostic_=enabled;}
     void syncDiagnostic(bool enabled)override{if(running_)throw std::runtime_error("Stop output before changing diagnostics.");syncDiagnostic_=enabled;}
+    std::optional<int64_t> videoSelectionAfter(int64_t host)const override{
+        if(!cadenceActive_)return {};const auto m=cadenceMapping_.read();if(!m)return {};
+        return nextVideoSelectionTime(*m,cadenceDuration_,cadenceScale_,cadenceDelay_,host);
+    }
     void onAir(bool value)override{air_=value;if(audioCallback_)audioCallback_->programActive=value;}
     void audio(std::shared_ptr<AudioMixer> mixer)override{if(running_)throw std::runtime_error("Stop output before changing the audio mixer.");mixer_=std::move(mixer);}
     void audioSourceAge(uint32_t samples)override{if(running_)throw std::runtime_error("Stop output before changing source age.");if(samples<480||samples>9600)throw std::invalid_argument("Source age must be 10–200 ms");sourceAge_=samples;}
     void stop()override{
-        quit_=true;state_->accepting=false;state_->cv.notify_all();if(worker_.joinable())worker_.join();
+        cadenceActive_=false;quit_=true;state_->accepting=false;state_->cv.notify_all();if(worker_.joinable())worker_.join();
         if(audioCallback_){audioCallback_->stop();playbackStarted_=playbackStarted_||audioCallback_->playbackStarted.load();}
         // A failed Enable on an occupied device must not disable another owner's output.
         if(output_){if(audioCallbackSet_)output_->SetAudioCallback(nullptr);if(audioEnabled_)output_->DisableAudioOutput();if(playbackStarted_)output_->StopScheduledPlayback(0,nullptr,mode_.rate.scale);if(videoCallbackSet_)output_->SetScheduledFrameCompletionCallback(nullptr);if(keyer_&&keyerEnabled_)keyer_->Disable();if(videoEnabled_)output_->DisableVideoOutput();}

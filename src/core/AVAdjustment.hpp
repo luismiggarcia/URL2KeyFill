@@ -1,6 +1,8 @@
 #pragma once
 #include "AudioClock.hpp"
 #include "Core.hpp"
+#include <cmath>
+#include <optional>
 namespace u2k {
 struct AVDelay {
  int32_t signedSamples=0;uint32_t videoFrames=0;double streamSamples=0;
@@ -9,6 +11,20 @@ struct AVDelay {
  double videoSource(const AudioMapping& m,int64_t position)const{return videoFrames?m.source+(double(position-m.stream)-streamSamples)*m.ratio:m.at(position);}
  double audioSource(const AudioMapping& m,int64_t position)const{return videoSource(m,position)-signedSamples;}
 };
+// Host time at which SDI stream frame `frame` selects its video source, exactly as
+// DeckLink::schedule computes it (stream position, mapping, common video delay).
+inline double videoSelectionTime(const AudioMapping& m,int64_t duration,int64_t scale,uint64_t frame,double delay){
+ const auto stream=int64_t(frame)*duration*48000/scale;return m.source+(double(stream-m.stream)-delay)*m.ratio;
+}
+// First stream-frame selection time at or after `host`: the render clock for a source
+// that should paint exactly on the output's selection grid.
+inline std::optional<int64_t> nextVideoSelectionTime(const AudioMapping& m,int64_t duration,int64_t scale,double delay,int64_t host){
+ if(!(m.ratio>0)||duration<=0||scale<=0)return {};
+ const double stream=(double(host)-m.source)/m.ratio+double(m.stream)+delay;
+ auto frame=std::max<int64_t>(0,int64_t(std::floor(stream*double(scale)/(48000.*double(duration))))-1);
+ for(int k=0;k<4;++k,++frame){const auto t=videoSelectionTime(m,duration,scale,uint64_t(frame),delay);if(t>=double(host))return int64_t(std::ceil(t));}
+ return {};
+}
 // Validate rational geometry once outside the callback. Runtime plans allocate
 // nothing and preserve zero/positive adjustment without a common frame delay.
 class AVTiming {

@@ -18,6 +18,8 @@ public:
     virtual void timing(uint32_t,int32_t){}
     virtual void syncDiagnostic(bool){}
     virtual void referenceDiagnostic(bool){}
+    // Next host time at which a running output selects a video frame; none when idle.
+    virtual std::optional<int64_t> videoSelectionAfter(int64_t)const{return {};}
     virtual void stop()=0;
     virtual OutputStatus status() const=0;
 };

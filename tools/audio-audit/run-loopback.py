@@ -31,6 +31,7 @@ def main():
     p.add_argument('--content-pts', action='store_true', help='Select by identified content PTS; requires --reference-ids')
     p.add_argument('--source-url', help='Diagnostic source override, only with --app')
     p.add_argument('--mode', choices=['1080p25', '1080p50', '1080p5994'], default='1080p25')
+    p.add_argument('--external-begin-frame', action='store_true', help='Prototype: paint CEF on the SDI selection grid; only with --app')
     p.add_argument('--seconds', type=int, default=30)
     p.add_argument('--settle-seconds', type=float, default=4, help='Start playback first and settle 1..10 seconds before locked capture')
     p.add_argument('--directory', required=True, help='New output directory; never overwritten')
@@ -56,6 +57,9 @@ def main():
         play_cmd += ['--sdi-av-reference-ids']
     if args.content_pts:
         play_cmd += ['--sdi-av-content-pts']
+    if args.external_begin_frame:
+        if not args.app:p.error('--external-begin-frame requires --app')
+        play_cmd += ['--external-begin-frame']
     if args.app:
         play_cmd += ['--timing-profile', args.timing_profile, '--sync-offset-ms', str(args.sync_offset_ms)]
     if args.sync_change_ms is not None:

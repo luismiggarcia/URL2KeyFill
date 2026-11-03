@@ -21,10 +21,15 @@ class Browser final: public CefClient, public CefRenderHandler, public CefLifeSp
     std::string pendingUrl_;
     Size size_;
     int frameRate_=60;
+    int64_t beginFrameStamp_=INT64_MIN; // UI thread only.
     CefRefPtr<CefBrowser> browser_;
     uint64_t sequence_=0;bool syncWhite_=false;
     bool failed_=false, closing_=false;
 public:
+    // Prototype: Chromium paints only on beginFrame(); a paint is stamped with the send time
+    // of the latest BeginFrame (its animation time) instead of its arrival.
+    bool externalBeginFrame=false;std::atomic<uint64_t> beginFrames{0},paintsLate{0};std::atomic<int64_t> paintDelayMax{0};
+    void beginFrame(int64_t stamp);
     bool referenceDiagnostic=false,referenceUsePts=false;int lastReferenceId=-1;
     // Packets rejected because their PTS is not host uptime; mismatch is the current stream state.
     std::atomic<uint64_t> audioClockRejected{0};std::atomic<bool> audioClockMismatch{false};

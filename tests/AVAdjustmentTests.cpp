@@ -44,6 +44,16 @@ int main(){try{
    REQUIRE(retained*size_t(1920)*1080*8<=384u*1024*1024);
   }
  }
+ // Render clock grid: every SDI selection time is returned once, in order, at 59.94p, under
+ // rate correction and a common video delay; times between frames map to the next frame.
+ for(double ratio:{1.,1.0002,.9998})for(double delay:{0.,2402.4}){
+  const AudioMapping m{6'000'000'000.5,ratio,123'456};const int64_t duration=1001,scale=60000;int64_t host=6'000'100'000;
+  for(int k=0;k<600;++k){const auto next=nextVideoSelectionTime(m,duration,scale,delay,host);REQUIRE(next&&*next>=host);
+   const double frame=((double(*next)-m.source)/m.ratio+double(m.stream)+delay)*double(scale)/(48000.*double(duration));
+   const auto exact=videoSelectionTime(m,duration,scale,uint64_t(std::llround(frame)),delay);REQUIRE(std::abs(double(*next)-exact)<1.);
+   const auto again=nextVideoSelectionTime(m,duration,scale,delay,*next+1);REQUIRE(again&&*again-*next>=799&&*again-*next<=803);host=*next+400;}
+ }
+ REQUIRE(!nextVideoSelectionTime({0,0,0},1001,60000,0,1000));
  std::cout<<"PASS plans="<<plans<<" physical-grid onset comparisons="<<onsets<<" including zero/positive unchanged and +/-200 ppm\n";
  return 0;
 }catch(const std::exception& e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}}

@@ -8,7 +8,7 @@
 namespace u2k {
 void Browser::create(const std::string& url){
     if(!allowedUrl(url))throw std::invalid_argument("Unsupported URL.");
-    CefWindowInfo wi;wi.SetAsWindowless(0);CefBrowserSettings s;
+    CefWindowInfo wi;wi.SetAsWindowless(0);wi.external_begin_frame_enabled=externalBeginFrame;CefBrowserSettings s;
     s.background_color=CefColorSetARGB(0,0,0,0);s.windowless_frame_rate=frameRate_;
     if(!CefBrowserHost::CreateBrowser(wi,this,url,s,nullptr,nullptr))throw std::runtime_error("Unable to create the Chromium browser.");
 }
@@ -22,13 +22,15 @@ void Browser::load(const std::string& url,Size size){
     size_=size;failed_=false;frames_.clear();audio_->clear();browser_->GetHost()->WasResized();
     if(browser_->GetMainFrame()->GetURL()==url)browser_->ReloadIgnoreCache();else browser_->GetMainFrame()->LoadURL(url);
 }
+void Browser::beginFrame(int64_t stamp){if(!externalBeginFrame||!browser_)return;beginFrameStamp_=stamp;++beginFrames;browser_->GetHost()->SendExternalBeginFrame();}
 void Browser::close(){closing_=true;if(browser_)browser_->GetHost()->CloseBrowser(true);}
 bool Browser::OnConsoleMessage(CefRefPtr<CefBrowser>,cef_log_severity_t,const CefString& text,const CefString&,int){
     const auto s=text.ToString();if(syncDiagnostic&&s.starts_with("U2K_REFERENCE "))std::cerr<<"REFERENCE host_samples="<<mediaSampleTime()<<' '<<s<<std::endl;return false;
 }
 void Browser::OnPaint(CefRefPtr<CefBrowser>,PaintElementType type,const RectList&,const void* p,int w,int h){
     if(type!=PET_VIEW||failed_||w!=size_.width||h!=size_.height)return;
-    const auto paintTime=mediaSampleTime();int64_t contentTime=INT64_MIN;
+    const auto arrival=mediaSampleTime();auto paintTime=arrival;int64_t contentTime=INT64_MIN;
+    if(externalBeginFrame&&beginFrameStamp_!=INT64_MIN){paintTime=beginFrameStamp_;const auto delay=arrival-paintTime;if(delay>paintDelayMax)paintDelayMax=delay;if(delay>48000/frameRate_)++paintsLate;}
     if(referenceDiagnostic){
         const auto id=referenceFrameId(static_cast<const uint8_t*>(p),w,h,size_t(w)*4);const auto origin=audio_->referenceClock.origin.load();
         if(id){if(origin!=INT64_MIN&&referenceUsePts)contentTime=origin+int64_t(*id)*960;
