@@ -365,9 +365,9 @@ public:
     void timing(uint32_t reserve,int32_t offset)override{if(running_)throw std::runtime_error("Stop output before changing timing.");if(reserve<2||reserve>3||std::abs(int64_t(offset))>9600)throw std::invalid_argument("Invalid output timing");reserve_=reserve;*syncOffset_=offset;}
     void referenceDiagnostic(bool enabled)override{if(running_)throw std::runtime_error("Stop output before changing reference diagnostics.");referenceDiagnostic_=enabled;}
     void syncDiagnostic(bool enabled)override{if(running_)throw std::runtime_error("Stop output before changing diagnostics.");syncDiagnostic_=enabled;}
-    std::optional<int64_t> videoSelectionAfter(int64_t host)const override{
+    std::optional<int64_t> videoSelectionAfter(int64_t host,int64_t subdivisions)const override{
         if(!cadenceActive_)return {};const auto m=cadenceMapping_.read();if(!m)return {};
-        return nextVideoSelectionTime(*m,cadenceDuration_,cadenceScale_,cadenceDelay_,host);
+        return nextVideoSelectionTime(*m,cadenceDuration_,cadenceScale_*std::max<int64_t>(1,subdivisions),cadenceDelay_,host);
     }
     void onAir(bool value)override{air_=value;if(audioCallback_)audioCallback_->programActive=value;}
     void audio(std::shared_ptr<AudioMixer> mixer)override{if(running_)throw std::runtime_error("Stop output before changing the audio mixer.");mixer_=std::move(mixer);}

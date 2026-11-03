@@ -27,7 +27,7 @@ static int64_t cefRateOverride=0; // Experiment: force N x the SDI cadence for C
 static bool externalBeginFrame=false,beginFrameProbe=false;
 // Prototype render clock (audit §11.2 item 3). Chromium paints once per BeginFrame, sent at the
 // host instant each SDI frame selects its source, or at the nominal mode rate while SDI is idle.
-struct RenderClock {std::atomic<bool> quit{false};std::atomic<double> period{800.8};std::thread thread;std::atomic<uint64_t> sent{0},locked{0},lateDispatch{0};std::atomic<int64_t> maxDispatch{INT64_MIN},minDispatch{INT64_MAX},sumDispatch{0};
+struct RenderClock {std::atomic<bool> quit{false};std::atomic<double> period{800.8};std::atomic<int64_t> subdivisions{1};std::thread thread;std::atomic<uint64_t> sent{0},locked{0},lateDispatch{0};std::atomic<int64_t> maxDispatch{INT64_MIN},minDispatch{INT64_MAX},sumDispatch{0};
  // Main-queue latency is measured and fired ahead of, so the BeginFrame stamp lands on the grid.
  std::atomic<int64_t> lead{48};double latency=48;};
 static NSString* avLayerId; // The A/V source layer the loopback test watches.
@@ -148,7 +148,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  std::vector<ImageInput> images;
  for(NSDictionary* layer in layers){auto it=runtimes.find([layer[@"id"] UTF8String]);if(it==runtimes.end())continue;images.push_back({it->second->frame,[layer[@"visible"] boolValue]});}
  if(auto m=[self selectedMode])for(auto& entry:runtimes)entry.second->browser->frameRate(Rate{m->rate.duration,m->rate.scale*(cefRateOverride?cefRateOverride:cefRateMultiplier(m->rate))});
- if(renderClock)if(auto m=[self selectedMode])renderClock->period=48000.*double(m->rate.duration)/double(m->rate.scale);
+ if(renderClock)if(auto m=[self selectedMode]){const auto k=cefRateOverride?cefRateOverride:cefRateMultiplier(m->rate);renderClock->subdivisions=k;renderClock->period=48000.*double(m->rate.duration)/double(m->rate.scale*k);}
  scene->configure(std::move(images),size,target);if(auto m=[self selectedMode])scene->frames.history.retainFrames(AVTiming(m->rate).recommendedHistoryFrames(explicitSourceAge?sourceAgeSamples:2880));[self configureAudio];
 }
 -(void)configureAudio{
@@ -191,7 +191,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  scene=std::make_unique<Scene>();mixer=std::make_shared<AudioMixer>();output=makeOutput();output->syncDiagnostic(avLoopbackTest);output->referenceDiagnostic(referenceIds);output->audio(mixer);output->audioSourceAge(sourceAgeSamples);
  if(externalBeginFrame){renderClock=std::make_unique<RenderClock>();RenderClock* clock=renderClock.get();Output* out=output.get();__weak AppDelegate* owner=self;
   clock->thread=std::thread([clock,out,owner]{int64_t last=mediaSampleTime();
-   while(!clock->quit){const double period=clock->period;const auto selection=out->videoSelectionAfter(last+int64_t(period/2));
+   while(!clock->quit){const double period=clock->period;const auto selection=out->videoSelectionAfter(last+int64_t(period/2),clock->subdivisions);
     int64_t target=selection?*selection:last+int64_t(std::llround(period));const auto now=mediaSampleTime();if(target<now-int64_t(period))target=now; // Idle start or stall: restart the grid.
     const auto fire=target-clock->lead.load();waitUntilSampleTime(fire);last=target;if(clock->quit)break;
     const BOOL locked=selection.has_value();dispatch_async(dispatch_get_main_queue(),^{AppDelegate* o=owner;if(o)[o beginFrame:target fired:fire locked:locked];});}});}
