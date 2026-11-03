@@ -36,7 +36,11 @@ public:
   const auto frames=uint32_t((-int64_t(samples)*scale_+numerator_-1)/numerator_);
   return {samples,frames,double(frames)*double(numerator_)/double(scale_)};
  }
- uint32_t audioTarget(uint32_t reserve)const noexcept{return uint32_t(std::clamp<int64_t>((reserve*numerator_+scale_-1)/scale_,1440,12000));}
+ // The Reliable profile (3+ frames) keeps at least 100 ms of audio queued. DeckLink audio
+ // callbacks arrive every ~20 ms and were seen to pause ~52 ms at 59.94p, which emptied a
+ // 3-frame (50 ms) queue; 25p's 120 ms never underran in 8 hours (audit §11.5).
+ static constexpr uint32_t reliableAudioFloor=4800;
+ uint32_t audioTarget(uint32_t reserve)const noexcept{const auto frames=(reserve*numerator_+scale_-1)/scale_;return uint32_t(std::clamp<int64_t>(reserve>=3?std::max<int64_t>(frames,reliableAudioFloor):frames,1440,12000));}
  // Include preroll, source age and half-frame lookahead. One additional frame
  // is retained by recommendedHistoryFrames for scheduling/paint jitter.
  size_t minimumHistoryFrames(int32_t samples,uint32_t reserve,uint32_t age)const noexcept{
