@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><title>BeginFrame probe</title>
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}</style>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+// Each frame encodes its requestAnimationFrame timestamp (the BeginFrame time) in the
+// reference barcode the app decodes (Core: referenceFrameId): id = 0.1 ms units mod 3000.
+const g=document.getElementById('c').getContext('2d');
+function draw(t){
+ const id=Math.floor(t*10)%3000,word=(0xa65cn<<24n)|(BigInt(id)<<12n)|BigInt((id^0xb6d)&4095);
+ g.fillStyle='#000';g.fillRect(0,0,1920,1080);
+ for(let b=0;b<40;b++){g.fillStyle=(word>>BigInt(39-b))&1n?'#fff':'#000';g.fillRect(114+b*36,60,36,36);}
+ requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+// The SDI test waits for captured audio; a quiet tone satisfies it.
+const a=new AudioContext(),o=a.createOscillator(),v=a.createGain();v.gain.value=.02;o.connect(v).connect(a.destination);o.start();
+</script>

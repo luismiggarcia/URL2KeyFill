@@ -22,7 +22,9 @@ void Browser::load(const std::string& url,Size size){
     size_=size;failed_=false;frames_.clear();audio_->clear();browser_->GetHost()->WasResized();
     if(browser_->GetMainFrame()->GetURL()==url)browser_->ReloadIgnoreCache();else browser_->GetMainFrame()->LoadURL(url);
 }
-void Browser::beginFrame(int64_t stamp){if(!externalBeginFrame||!browser_)return;beginFrameStamp_=stamp;++beginFrames;browser_->GetHost()->SendExternalBeginFrame();}
+void Browser::beginFrame(int64_t stamp){if(!externalBeginFrame||!browser_)return;
+    if(beginFrameStamp_!=INT64_MIN){if(!paintedSinceBeginFrame_){++unpaintedBeginFrames;if(beginFrameGap_<3*48000/(4*frameRate_))++unpaintedAfterShortGap;}const auto gap=stamp-beginFrameStamp_;beginFrameGap_=gap;if(gap<minBeginFrameGap)minBeginFrameGap=gap;}
+    paintedSinceBeginFrame_=false;previousBeginFrame_=beginFrameStamp_;beginFrameStamp_=stamp;++beginFrames;browser_->GetHost()->SendExternalBeginFrame();}
 void Browser::close(){closing_=true;if(browser_)browser_->GetHost()->CloseBrowser(true);}
 bool Browser::OnConsoleMessage(CefRefPtr<CefBrowser>,cef_log_severity_t,const CefString& text,const CefString&,int){
     const auto s=text.ToString();if(syncDiagnostic&&s.starts_with("U2K_REFERENCE "))std::cerr<<"REFERENCE host_samples="<<mediaSampleTime()<<' '<<s<<std::endl;return false;
@@ -30,7 +32,8 @@ bool Browser::OnConsoleMessage(CefRefPtr<CefBrowser>,cef_log_severity_t,const Ce
 void Browser::OnPaint(CefRefPtr<CefBrowser>,PaintElementType type,const RectList&,const void* p,int w,int h){
     if(type!=PET_VIEW||failed_||w!=size_.width||h!=size_.height)return;
     const auto arrival=mediaSampleTime();auto paintTime=arrival;int64_t contentTime=INT64_MIN;
-    if(externalBeginFrame&&beginFrameStamp_!=INT64_MIN){paintTime=beginFrameStamp_;const auto delay=arrival-paintTime;if(delay>paintDelayMax)paintDelayMax=delay;if(delay>48000/frameRate_)++paintsLate;}
+    if(externalBeginFrame&&beginFrameStamp_!=INT64_MIN){paintTime=beginFrameStamp_;const auto delay=arrival-paintTime;if(delay>paintDelayMax)paintDelayMax=delay;if(delay>48000/frameRate_)++paintsLate;if(paintedSinceBeginFrame_)++extraPaints;paintedSinceBeginFrame_=true;
+        if(beginFrameProbe){const auto id=referenceFrameId(static_cast<const uint8_t*>(p),w,h,size_t(w)*4);std::cerr<<"BEGINFRAME_PAINT arrival="<<arrival<<" latest="<<beginFrameStamp_<<" previous="<<previousBeginFrame_<<" id="<<(id?int(*id):-1)<<'\n';}}
     if(referenceDiagnostic){
         const auto id=referenceFrameId(static_cast<const uint8_t*>(p),w,h,size_t(w)*4);const auto origin=audio_->referenceClock.origin.load();
         if(id){if(origin!=INT64_MIN&&referenceUsePts)contentTime=origin+int64_t(*id)*960;

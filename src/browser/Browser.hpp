@@ -21,7 +21,7 @@ class Browser final: public CefClient, public CefRenderHandler, public CefLifeSp
     std::string pendingUrl_;
     Size size_;
     int frameRate_=60;
-    int64_t beginFrameStamp_=INT64_MIN; // UI thread only.
+    int64_t beginFrameStamp_=INT64_MIN,previousBeginFrame_=INT64_MIN,beginFrameGap_=0;bool paintedSinceBeginFrame_=true; // UI thread only.
     CefRefPtr<CefBrowser> browser_;
     uint64_t sequence_=0;bool syncWhite_=false;
     bool failed_=false, closing_=false;
@@ -29,7 +29,12 @@ public:
     // Prototype: Chromium paints only on beginFrame(); a paint is stamped with the send time
     // of the latest BeginFrame (its animation time) instead of its arrival.
     bool externalBeginFrame=false;std::atomic<uint64_t> beginFrames{0},paintsLate{0};std::atomic<int64_t> paintDelayMax{0};
+    // Attribution of selection repeats: BeginFrames that produced no paint (and how many of
+    // those followed a short gap), and paints that arrived after another for one BeginFrame.
+    std::atomic<uint64_t> unpaintedBeginFrames{0},unpaintedAfterShortGap{0},extraPaints{0};std::atomic<int64_t> minBeginFrameGap{INT64_MAX};
     void beginFrame(int64_t stamp);
+    // Diagnostic: log each paint with its decoded reference id and the last two BeginFrames.
+    bool beginFrameProbe=false;
     bool referenceDiagnostic=false,referenceUsePts=false;int lastReferenceId=-1;
     // Packets rejected because their PTS is not host uptime; mismatch is the current stream state.
     std::atomic<uint64_t> audioClockRejected{0};std::atomic<bool> audioClockMismatch{false};
