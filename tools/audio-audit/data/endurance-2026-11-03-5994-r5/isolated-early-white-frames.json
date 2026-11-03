@@ -1,0 +1,69 @@
+{
+ "description": "Single white SDI frames shown 4-29 frames before a 2-4 frame flash of the A/V page (threshold 136 on the captured luma). Seen before the stream-clock change too; audit 11.5.",
+ "captures": {
+  "capture-sample-000": [
+   {
+    "video_pts_48k": 170570,
+    "frames_before_next_flash": 12
+   }
+  ],
+  "capture-sample-008": [
+   {
+    "video_pts_48k": 915314,
+    "frames_before_next_flash": 21
+   }
+  ],
+  "capture-sample-009": [
+   {
+    "video_pts_48k": 297096,
+    "frames_before_next_flash": 13
+   },
+   {
+    "video_pts_48k": 974573,
+    "frames_before_next_flash": 6
+   }
+  ],
+  "capture-sample-012": [
+   {
+    "video_pts_48k": 1081080,
+    "frames_before_next_flash": 26
+   }
+  ],
+  "capture-sample-016": [
+   {
+    "video_pts_48k": 964964,
+    "frames_before_next_flash": 25
+   }
+  ],
+  "capture-sample-017": [
+   {
+    "video_pts_48k": 303503,
+    "frames_before_next_flash": 4
+   }
+  ],
+  "capture-sample-020": [
+   {
+    "video_pts_48k": 1025824,
+    "frames_before_next_flash": 28
+   }
+  ],
+  "capture-sample-022": [
+   {
+    "video_pts_48k": 774373,
+    "frames_before_next_flash": 18
+   }
+  ],
+  "capture-sample-028": [
+   {
+    "video_pts_48k": 1183582,
+    "frames_before_next_flash": 6
+   }
+  ],
+  "capture-sample-029": [
+   {
+    "video_pts_48k": 988187,
+    "frames_before_next_flash": 8
+   }
+  ]
+ }
+}

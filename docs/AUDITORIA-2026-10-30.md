@@ -3215,7 +3215,8 @@ teoria, a reserva atrasa áudio e vídeo por igual e não muda o A/V.
   - As medianas alternam entre ~0–7 ms e ~24–29 ms, a oscilação entre frames vizinhas já
     descrita.
   - Duas capturas têm um único flash detetado exatamente 15 frames (250 ms) antes da
-    grelha de 1 s; as medianas não são afetadas. Fica como curiosidade da deteção.
+    grelha de 1 s; as medianas não são afetadas. Não é um erro da deteção: é uma frame
+    branca isolada real na saída (ver o quinto ensaio, abaixo).
   - A captura 19 recebeu só pacotes de áudio vazios (a mesma rajada da entrada do
     terceiro ensaio). Ficou registada como lacuna e o ensaio continuou, como previsto.
 - **Paragem:** o DeckLink marcou **1 frame como exibida atrasada** (frame 1321708,
@@ -3275,3 +3276,44 @@ o que falta é saber que os slots ficaram livres.
 
 **Nota operacional:** numa máquina de emissão, desligar as atualizações automáticas
 (OneDrive incluído) durante o serviço; esta correção dá margem, não a substitui.
+
+**Quinto ensaio de 8 h (com a correção, commit `72531df`).** 1080p59,94, Reliable,
+calibração de fábrica −2 ms, sem gancho de teste; 10:45–18:45, captura a cada 15 min.
+- **Continuidade: passou.** 28 800 s sem frames atrasadas nem descartadas, sem
+  recuperações, sem amostras de áudio em falta, sem erros da API e sem reinícios de
+  relógio. Folga mínima da fonte de áudio: 26,7 ms.
+- **Pausas reais absorvidas:** o maior intervalo entre conclusões foi 64,4 ms (às
+  ~6 h 49 min) e o pico de frames no dispositivo foi 9, acima da profundidade de 6. Os
+  slots de reserva foram usados. Esta pausa sozinha não basta para provar que a versão
+  antiga falharia (a falha do quarto ensaio teve 90 ms).
+- **A/V** (33 capturas, 891 impulsos, positivo = áudio depois):
+
+  | Medida | Valor | ATSC (−15/+45) | EBU R37 (−40/+60) |
+  |---|---|---|---|
+  | Medianas por captura | −1,0 a +26,7 ms | todas dentro | todas dentro |
+  | Impulsos, p1–p99 | −10,0 a +35,4 ms | dentro | dentro |
+  | Impulso mínimo | −22,7 ms (captura 30) | fora por 7,7 ms | dentro |
+  | Dois impulsos com frame isolada | +120,0 e +159,1 ms | fora | fora |
+  | Início → fim | +19,2 → +17,0 ms | sem deriva | sem deriva |
+
+  - O critério interno do script (todo o envelope dentro de 1 frame + 1 ms) não é
+    cumprido; por isso `accepted=false`. Pelo critério acordado em §11.4, o ensaio
+    confirma o que já estava escrito para 59,94p: **EBU R37 garantida, ATSC só nas
+    medianas**.
+  - Os −22,7 ms são a oscilação entre frames vizinhas: na captura 30 os impulsos
+    alternam entre ~−5 e ~+12 ms.
+- **Frames brancas isoladas antes do flash** (`isolated-early-white-frames.json`):
+  - em 10 das 33 capturas, a saída mostra **uma única frame branca** 4 a 28 frames
+    antes de um flash normal de 2 a 4 frames. Nas capturas 28 e 29 o emparelhamento
+    usou essa frame, daí os +120 e +159 ms;
+  - **não vem da correção:** o mesmo padrão aparece em capturas anteriores
+    (`two-final-tests-2026-11-02/test1-directed`, `render-clock-2026-11-03/base-a` e
+    `base-b`) e nas validações de pausa de hoje;
+  - a página de teste só acende o flash enquanto `ctx.currentTime` estiver nos primeiros
+    40 ms de cada segundo. Uma frame de fora dessa janela não pode ser branca, a não ser
+    que a app mostre uma frame de outro instante (anterior ou posterior). A luminância
+    capturada não diz qual;
+  - só é visível quando calha num flash (~4 % das frames). Noutras frames, o mesmo erro
+    passaria por uma frame repetida ou adiantada no movimento. **Por diagnosticar**, com
+    conteúdo que identifique cada frame (como a referência de `identified-pts`).
+- **Evidência:** `endurance-2026-11-03-5994-r5/`.
