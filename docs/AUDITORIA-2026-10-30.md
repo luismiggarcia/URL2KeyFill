@@ -2884,6 +2884,52 @@ houve ensaio SDI físico nesta revisão.
    do §10.19; antes de o adotar, confirmar no CEF 156 que cada BeginFrame produz no
    máximo um `OnPaint` associável. Discordo do §10.19 apenas por tratar esta via como
    irrelevante: não dá PTS de conteúdo, mas resolve a cadência.
+   **Protótipo e ensaio curto (2026-11-03, `3660d19` e `d553c8d`, desligado por defeito):**
+   - **Contadores novos:** a seleção SDI conta repetições (reutiliza ou recua uma frame
+     do histórico) e saltos (passa por cima de uma). Estão na telemetria e nos diagnósticos.
+   - **Protótipo (`--external-begin-frame`):**
+     - o CEF é criado com `external_begin_frame_enabled`;
+     - uma thread envia um BeginFrame por frame de saída, no instante do relógio do Mac em
+       que `DeckLink::schedule` seleciona essa frame, ou à cadência nominal com o SDI parado;
+     - cada pintura recebe a hora de envio do BeginFrame (a hora de animação do Chromium)
+       em vez da hora de chegada;
+     - o atraso da fila principal é medido e compensado: média de 0,05 ms nos ensaios.
+   - **Ensaio:**
+     - 1080p59,94, perfil Reliable, loopback SDI no HD Mini, página
+       `10_Sincronismo_AV`, uma camada;
+     - 4 × 240 s alternados (base-a, proto-a, base-b, proto-b), 231 pares por ensaio;
+     - dados em `tools/audio-audit/data/render-clock-2026-11-03/`.
+
+   | Ensaio | Saltos | Repetições | A/V mediana | A/V p5–p95 | Desvio-padrão | Descartes |
+   |---|---:|---:|---:|---:|---:|---:|
+   | base-a | 386 | 377 | +6,46 ms | 27,04 ms | 8,62 ms | 1 |
+   | proto-a | 2 | 214 | +11,17 ms | 19,48 ms | 6,30 ms | 0 |
+   | base-b | 526 | 515 | +7,60 ms | 26,48 ms | 8,12 ms | 0 |
+   | proto-b | 2 | 120 | +12,10 ms | 16,29 ms | 5,18 ms | 0 |
+
+   - **Leitura:**
+     - na base, saltos e repetições aparecem aos pares, ~2 por segundo: a seleção oscila
+       entre frames vizinhas, muito mais do que o salto teórico a cada 16,7 s. O protótipo
+       elimina essa oscilação; os 2 saltos ocorrem no arranque;
+     - a dispersão A/V cai cerca de 30–40 % e aproxima-se do limite da própria página
+       (o flash é quantizado a 1 frame, ≈16,7 ms entre p5 e p95);
+     - a mediana sobe ≈4,5 ms, porque a imagem passa a ser datada no pedido e não na
+       chegada. É uma constante calibrável;
+     - os pares a mais de 50 ms da mediana (um em três dos quatro ensaios, nas duas
+       variantes) são artefactos de emparelhamento: ficam listados em `summary.json` e
+       excluídos da dispersão;
+     - não houve recuperações nem amostras em falta.
+   - **Pendente antes de ativar por defeito:**
+     - repetições isoladas (0,8–1,5 % das frames) sem salto correspondente: BeginFrames
+       sem pintura, provavelmente pedidos demasiado próximos quando a fila principal oscila
+       (envio mínimo a −7,8 ms);
+     - várias camadas;
+     - regressão a 25p e 50p;
+     - validar que o único descarte da base (a falha conhecida a 59,94) não é apenas sorte
+       nos dois ensaios do protótipo.
+
+     São 4 ensaios curtos, não uma certificação: a campanha longa só deve vir depois
+     destes pontos.
 4. **[Média] O domínio do PTS CEF não é validado.** O header do CEF descreve Epoch; o
    código assume uptime. Se uma atualização do CEF trocar o domínio, `push` aceita os
    pacotes e o servo entra em salto de fase, reset e, ao terceiro, `fail()` (ver 2).

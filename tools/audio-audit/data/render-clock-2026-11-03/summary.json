@@ -1,0 +1,85 @@
+{
+  "date": "2026-11-03",
+  "mode": "1080p59.94",
+  "profile": "Reliable",
+  "seconds_per_run": 240,
+  "order": [
+    "base-a",
+    "proto-a",
+    "base-b",
+    "proto-b"
+  ],
+  "source": "u2k://Diagnostics/10_Sincronismo_AV.html (single layer), SDI OUT -> SDI IN same UltraStudio HD Mini",
+  "build": "fix/audit-review-11 at d553c8d; proto = --external-begin-frame",
+  "spread_method": "audio_L pairs; outliers more than 50 ms from the median excluded and listed (pairing artefacts, present in both modes)",
+  "runs": {
+    "base-a": {
+      "pairs": 231,
+      "median_ms": 6.458,
+      "outliers_ms": [],
+      "p5_ms": -6.375,
+      "p95_ms": 20.667,
+      "p5_p95_ms": 27.042,
+      "stdev_ms": 8.617,
+      "video_repeats": 377,
+      "video_skips": 386,
+      "late": 0,
+      "dropped": 1,
+      "audio_recoveries": 1,
+      "missing_source_frames": 0
+    },
+    "proto-a": {
+      "pairs": 231,
+      "median_ms": 11.167,
+      "outliers_ms": [
+        283.771
+      ],
+      "p5_ms": 0.604,
+      "p95_ms": 20.083,
+      "p5_p95_ms": 19.479,
+      "stdev_ms": 6.297,
+      "video_repeats": 214,
+      "video_skips": 2,
+      "late": 0,
+      "dropped": 0,
+      "audio_recoveries": 0,
+      "missing_source_frames": 0,
+      "render_clock": "sent=14450 lead_ms=4.458333333 sdi_locked=14388 dispatch_mean_ms=0.052518743 dispatch_min_ms=-7.833333333 dispatch_max_ms=142.875000000 dispatch_beyond_half_frame=15 layer=8B96F198-AFA5-458D-BE25-2482C89B3AC4 begin_frames=14450 paint_delay_max_ms=13.291666667 paints_beyond_one_frame=0 video_repeats=214 video_skips=2"
+    },
+    "base-b": {
+      "pairs": 231,
+      "median_ms": 7.604,
+      "outliers_ms": [
+        294.396
+      ],
+      "p5_ms": -7.104,
+      "p95_ms": 19.375,
+      "p5_p95_ms": 26.479,
+      "stdev_ms": 8.115,
+      "video_repeats": 515,
+      "video_skips": 526,
+      "late": 0,
+      "dropped": 0,
+      "audio_recoveries": 0,
+      "missing_source_frames": 0
+    },
+    "proto-b": {
+      "pairs": 231,
+      "median_ms": 12.104,
+      "outliers_ms": [
+        164.146
+      ],
+      "p5_ms": 4.062,
+      "p95_ms": 20.354,
+      "p5_p95_ms": 16.292,
+      "stdev_ms": 5.181,
+      "video_repeats": 120,
+      "video_skips": 2,
+      "late": 0,
+      "dropped": 0,
+      "audio_recoveries": 0,
+      "missing_source_frames": 0,
+      "render_clock": "sent=14456 lead_ms=5.000000000 sdi_locked=14391 dispatch_mean_ms=0.054946908 dispatch_min_ms=-7.625000000 dispatch_max_ms=143.145833333 dispatch_beyond_half_frame=15 layer=0C1478F6-0F2A-4E2D-BAEC-E37C35C08453 begin_frames=14456 paint_delay_max_ms=13.625000000 paints_beyond_one_frame=0 video_repeats=120 video_skips=2"
+    }
+  }
+}

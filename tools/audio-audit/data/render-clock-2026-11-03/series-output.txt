@@ -1,0 +1,22 @@
+== base-a 00:24:03
+audio_L: audio - video = 6.458 ms, 231 pairs
+audio_R: audio - video = 6.458 ms, 231 pairs
+repeats=377 skips=386 late=0 dropped=1 recoveries=0 missing_total=0
+== proto-a 00:28:10
+audio_L: audio - video = 11.167 ms, 231 pairs
+audio_R: audio - video = 11.167 ms, 231 pairs
+RENDER_CLOCK sent=14450 lead_ms=4.458333333 sdi_locked=14388 dispatch_mean_ms=0.052518743 dispatch_min_ms=-7.833333333 dispatch_max_ms=142.875000000 dispatch_beyond_half_frame=15 layer=8B96F198-AFA5-458D-BE25-2482C89B3AC4 begin_frames=14450 paint_delay_max_ms=13.291666667 paints_beyond_one_frame=0 v
+repeats=214 skips=2 late=0 dropped=0 recoveries=0 missing_total=0
+== base-b 00:32:17
+audio_L: audio - video = 7.604 ms, 231 pairs
+audio_R: audio - video = 7.604 ms, 231 pairs
+repeats=515 skips=526 late=0 dropped=0 recoveries=0 missing_total=0
+== proto-b 00:36:24
+audio_L: audio - video = 12.104 ms, 231 pairs
+audio_R: audio - video = 12.104 ms, 231 pairs
+RENDER_CLOCK sent=14456 lead_ms=5.000000000 sdi_locked=14391 dispatch_mean_ms=0.054946908 dispatch_min_ms=-7.625000000 dispatch_max_ms=143.145833333 dispatch_beyond_half_frame=15 layer=0C1478F6-0F2A-4E2D-BAEC-E37C35C08453 begin_frames=14456 paint_delay_max_ms=13.625000000 paints_beyond_one_frame=0 v
+repeats=120 skips=2 late=0 dropped=0 recoveries=0 missing_total=0
+device=0 key=62757379 result=0 value=0
+DONE 00:40:31
+
+[exited with code 0]
