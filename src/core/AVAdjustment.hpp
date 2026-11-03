@@ -27,6 +27,8 @@ inline std::optional<int64_t> nextVideoSelectionTime(const AudioMapping& m,int64
 }
 // Validate rational geometry once outside the callback. Runtime plans allocate
 // nothing and preserve zero/positive adjustment without a common frame delay.
+// Frames queued past the one on air when the next frame to schedule has stream index next.
+constexpr int64_t videoFramesAhead(int64_t next,int64_t streamTime,int64_t duration){return next-streamTime/duration;}
 class AVTiming {
  int64_t numerator_=0,scale_=0;
 public:
@@ -42,8 +44,13 @@ public:
  static constexpr uint32_t reliableAudioFloor=4800;
  // Video frames in flight follow the same floor: the 52 ms pause also delays the completion
  // that frees the next slot, and 3 frames at 59.94p left ~10 ms of lead (one drop, §11.5).
- static constexpr uint32_t maxVideoFrames=8;
- uint32_t videoFrames(uint32_t reserve)const noexcept{if(reserve<3)return reserve;const auto floor=(int64_t(reliableAudioFloor)*scale_+numerator_-1)/numerator_;return uint32_t(std::clamp<int64_t>(std::max<int64_t>(reserve,floor),3,maxVideoFrames));}
+ static constexpr uint32_t maxQueuedVideoFrames=8;
+ uint32_t videoFrames(uint32_t reserve)const noexcept{if(reserve<3)return reserve;const auto floor=(int64_t(reliableAudioFloor)*scale_+numerator_-1)/numerator_;return uint32_t(std::clamp<int64_t>(std::max<int64_t>(reserve,floor),3,maxQueuedVideoFrames));}
+ // Spare slots ride out paused completion callbacks without adding latency: DeckLink kept
+ // displaying while its completions paused 90 ms at 59.94p (one late frame, §11.5), so the
+ // queue is topped up by stream time and only the slot count covers the pause.
+ static constexpr uint32_t completionPauseSamples=9600,maxVideoFrames=24;
+ uint32_t videoPool(uint32_t reserve)const noexcept{const auto spare=(int64_t(completionPauseSamples)*scale_+numerator_-1)/numerator_;return uint32_t(std::min<int64_t>(videoFrames(reserve)+spare,maxVideoFrames));}
  uint32_t audioTarget(uint32_t reserve)const noexcept{const auto frames=(reserve*numerator_+scale_-1)/scale_;return uint32_t(std::clamp<int64_t>(reserve>=3?std::max<int64_t>(frames,reliableAudioFloor):frames,1440,12000));}
  // Include preroll, source age and half-frame lookahead. One additional frame
  // is retained by recommendedHistoryFrames for scheduling/paint jitter.

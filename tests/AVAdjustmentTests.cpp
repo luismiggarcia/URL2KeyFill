@@ -40,6 +40,13 @@ int main(){try{
  REQUIRE(AVTiming(Rate{1001,60000}).recommendedHistoryFrames(2880)==24);
  // Reliable keeps >= 100 ms of audio at every cadence; Low latency stays frame based.
  REQUIRE(AVTiming(Rate{1,25}).videoFrames(3)==3);REQUIRE(AVTiming(Rate{1,50}).videoFrames(3)==5);REQUIRE(AVTiming(Rate{1001,60000}).videoFrames(3)==6);REQUIRE(AVTiming(Rate{1,60}).videoFrames(3)==6);REQUIRE(AVTiming(Rate{1001,60000}).videoFrames(2)==2);
+ // Spare slots cover a 200 ms completion pause at every cadence and profile.
+ REQUIRE(AVTiming(Rate{1,25}).videoPool(3)==8);REQUIRE(AVTiming(Rate{1,50}).videoPool(3)==15);REQUIRE(AVTiming(Rate{1001,60000}).videoPool(3)==18);REQUIRE(AVTiming(Rate{1001,60000}).videoPool(2)==14);REQUIRE(AVTiming(Rate{1,60}).videoPool(3)==18);
+ for(Rate rate:{Rate{1,25},Rate{1,50},Rate{1001,60000},Rate{1,60}})for(uint32_t reserve:{2u,3u}){AVTiming t(rate);REQUIRE(t.videoPool(reserve)<=AVTiming::maxVideoFrames);REQUIRE((t.videoPool(reserve)-t.videoFrames(reserve))*rate.duration*48000>=AVTiming::completionPauseSamples*uint64_t(rate.scale));}
+ // Topping up: after preroll nothing is due; a completion at a frame boundary leaves one
+ // frame due; a 90 ms pause at 59.94p leaves six due, which only spare slots can supply.
+ REQUIRE(videoFramesAhead(7,0,1001)==7);REQUIRE(videoFramesAhead(7,1001,1001)==6);REQUIRE(videoFramesAhead(7,1000,1001)==7);
+ REQUIRE(videoFramesAhead(12,7*1001+3,1001)==5);REQUIRE(6-videoFramesAhead(12,(7+5)*1001+400,1001)==6);
  REQUIRE(AVTiming(Rate{1,25}).audioTarget(3)==5760);REQUIRE(AVTiming(Rate{1,50}).audioTarget(3)==4800);REQUIRE(AVTiming(Rate{1001,60000}).audioTarget(3)==4800);REQUIRE(AVTiming(Rate{1001,60000}).audioTarget(2)==1602);
  for(Rate rate:{Rate{1,25},Rate{1,50},Rate{1001,60000}}){
   AVTiming t(rate);const auto retained=t.recommendedHistoryFrames(2880);

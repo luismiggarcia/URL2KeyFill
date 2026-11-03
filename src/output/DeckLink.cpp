@@ -12,6 +12,7 @@
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
+#include <cstdlib>
 #include <cstring>
 #include <deque>
 #include <mutex>
@@ -37,7 +38,9 @@ std::string str(CFStringRef s){if(!s)return {};char buffer[2048]={};CFStringGetC
 std::string identity(IDeckLink* d){Com<IDeckLinkProfileAttributes> a;int64_t id=0;if(d->QueryInterface(IID_IDeckLinkProfileAttributes,reinterpret_cast<void**>(a.put()))==S_OK&&a->GetInt(BMDDeckLinkPersistentID,&id)==S_OK)return std::to_string(id);return {};}
 struct CompletionState {
     std::mutex mutex;std::condition_variable cv;
-    std::deque<IDeckLinkVideoFrame*> free;
+    std::deque<IDeckLinkVideoFrame*> free;uint64_t returned=0;
+    // Longest interval between completions; the test hook pauses one callback in every 600.
+    std::atomic<int64_t> lastCompletion{0},completionGapMax{0};uint32_t testPauseMs=0;
     std::atomic<uint64_t> completed{0},late{0},dropped{0};
     std::atomic<bool> accepting{false},workerQos{false};
     std::unique_ptr<SyncEventBuffer<SyncCompletionEvent>> incidents;bool incidentsDumped=false;std::atomic<int64_t> firstVideoIncident{0};std::array<std::atomic<int64_t>,AVTiming::maxVideoFrames> completionHosts{};
@@ -57,12 +60,14 @@ public:
     ULONG AddRef()override{return ++refs_;}
     ULONG Release()override{auto n=--refs_;if(!n)delete this;return n;}
     HRESULT ScheduledFrameCompleted(IDeckLinkVideoFrame* f,BMDOutputFrameCompletionResult r)override{
+        if(state_->testPauseMs&&r!=bmdOutputFrameFlushed&&state_->completed%600==599)std::this_thread::sleep_for(std::chrono::milliseconds(state_->testPauseMs));
+        if(r!=bmdOutputFrameFlushed){const auto host=mediaSampleTime(),last=state_->lastCompletion.exchange(host);if(last&&host-last>state_->completionGapMax)state_->completionGapMax=host-last;}
         if(state_->incidents){const auto host=mediaSampleTime();for(size_t i=0;i<state_->slots.size();++i)if(state_->slots[i]==f)state_->completionHosts[i]=host;if(r==bmdOutputFrameDisplayedLate||r==bmdOutputFrameDropped){int64_t unset=0;state_->firstVideoIncident.compare_exchange_strong(unset,host);}}
         if(state_->incidents&&(r==bmdOutputFrameDisplayedLate||r==bmdOutputFrameDropped)){int64_t index=-1;for(size_t i=0;i<state_->slots.size();++i)if(state_->slots[i]==f)index=state_->scheduled[i];std::lock_guard<std::mutex> l(state_->mutex);state_->incidents->append({mediaSampleTime(),index,int(r)});}
         if(r==bmdOutputFrameDisplayedLate)++state_->late;
         if(r==bmdOutputFrameDropped){++state_->dropped;for(size_t i=0;i<state_->slots.size();++i)if(state_->slots[i]==f){int64_t expected=-1;state_->firstDroppedFrame.compare_exchange_strong(expected,state_->scheduled[i].load());}}
         if(r!=bmdOutputFrameFlushed)++state_->completed;
-        if(state_->accepting&&r!=bmdOutputFrameFlushed){std::lock_guard<std::mutex> l(state_->mutex);if(state_->free.size()<state_->slots.size())state_->free.push_back(f);state_->cv.notify_one();}return S_OK;
+        if(state_->accepting&&r!=bmdOutputFrameFlushed){std::lock_guard<std::mutex> l(state_->mutex);if(state_->free.size()<state_->slots.size()){state_->free.push_back(f);++state_->returned;}state_->cv.notify_one();}return S_OK;
     }
     HRESULT ScheduledPlaybackHasStopped()override{state_->cv.notify_all();return S_OK;}
 };
@@ -175,7 +180,7 @@ class DeckLink final:public Output {
     bool syncDiagnostic_=false,syncWhite_=false;std::atomic<int64_t> scheduledFlashPts_{INT64_MIN};std::atomic<uint64_t> scheduledFlashCount_{0};
     std::atomic<uint64_t> historyMisses_{0},historyReads_{0},historyStartupMisses_{0},preparedReads_{0},conversionFallbacks_{0};std::atomic<int64_t> selectedAge_{INT64_MIN};
     // Selection cadence: a repeat reuses (or rewinds to) a history entry, a skip passes over one.
-    std::atomic<uint64_t> videoRepeats_{0},videoSkips_{0};int64_t lastSelectedTime_=INT64_MIN;
+    std::atomic<uint64_t> videoRepeats_{0},videoSkips_{0};int64_t lastSelectedTime_=INT64_MIN;std::atomic<uint32_t> videoFramesPeak_{0};
     // Selection grid for an external render clock; written by the worker, read lock-free.
     PublishedAudioMapping cadenceMapping_;std::atomic<double> cadenceDelay_{0};std::atomic<int64_t> cadenceDuration_{1},cadenceScale_{1};std::atomic<bool> cadenceActive_{false};
     uint32_t reserve_=3;std::shared_ptr<std::atomic<int32_t>> syncOffset_=std::make_shared<std::atomic<int32_t>>(0);AudioMapping videoMapping_;mutable AudioMapping statusMapping_;
@@ -240,20 +245,36 @@ class DeckLink final:public Output {
     }
     void work(){
         state_->workerQos=pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE,0)==0;
+        // Completions return slots, but the queue is topped up against the device stream clock:
+        // when completion callbacks pause, spare slots keep the device fed (audit §11.5). The
+        // worker wakes just after each stream frame boundary, so a pause costs no lead.
+        const auto frame=std::chrono::microseconds(mode_.rate.duration*1000000/mode_.rate.scale);const auto depth=int64_t(frameTiming_.videoFrames(reserve_));auto wake=frame;
+        auto lastReturn=std::chrono::steady_clock::now();uint64_t seen=0;
         try{while(!quit_){
             std::unique_lock<std::mutex> l(state_->mutex);
-            if(!state_->cv.wait_for(l,std::chrono::seconds(2),[this]{return quit_||!state_->free.empty();})){
-                if(audioCallback_&&!audioCallback_->playbackStarted&&!audioCallback_->failed)continue;
+            const bool returned=state_->cv.wait_for(l,wake,[&]{return quit_||state_->returned!=seen;});
+            if(quit_)break;
+            const auto now=std::chrono::steady_clock::now();
+            if(returned){seen=state_->returned;lastReturn=now;}
+            else if(now-lastReturn>std::chrono::seconds(2)){
+                if(audioCallback_&&!audioCallback_->playbackStarted&&!audioCallback_->failed){lastReturn=now;continue;}
                 throw std::runtime_error("No SDI callbacks for 2 seconds: device disconnected, profile changed or playback interrupted.");
             }
-            if(quit_)break;auto f=state_->free.front();state_->free.pop_front();l.unlock();
-            // After a late/drop completion, recover the scheduling cursor without accumulating latency.
-            BMDTimeValue time=0;double speed=0;
-            const bool haveStream=output_->GetScheduledStreamTime(mode_.rate.scale,&time,&speed)==S_OK;
-            if(scheduleTrace_){workStreamHost_=mediaSampleTime();workStream_=haveStream?time*48000/mode_.rate.scale:INT64_MIN;}
-            if(haveStream&&time>=mode_.rate.timestamp(next_+CompletionState::startupLeadFrames))next_=uint64_t(time/mode_.rate.duration)+1-CompletionState::startupLeadFrames;
-            if(audioCallback_&&audioCallback_->failed)throw std::runtime_error("SDI audio output failed. Stop and reconnect the device.");
-            schedule(f);
+            l.unlock();
+            for(bool first=true;!quit_;first=false){
+                // After a late/drop completion, recover the scheduling cursor without accumulating latency.
+                BMDTimeValue time=0;double speed=0;
+                const bool haveStream=output_->GetScheduledStreamTime(mode_.rate.scale,&time,&speed)==S_OK;
+                if(scheduleTrace_){workStreamHost_=mediaSampleTime();workStream_=haveStream?time*48000/mode_.rate.scale:INT64_MIN;}
+                wake=haveStream&&time>=0?std::chrono::microseconds((mode_.rate.duration-time%mode_.rate.duration)*1000000/mode_.rate.scale+250):frame;
+                if(haveStream&&time>=mode_.rate.timestamp(next_+CompletionState::startupLeadFrames))next_=uint64_t(time/mode_.rate.duration)+1-CompletionState::startupLeadFrames;
+                if(audioCallback_&&audioCallback_->failed)throw std::runtime_error("SDI audio output failed. Stop and reconnect the device.");
+                // Without a stream clock, keep one frame per returned slot.
+                if(haveStream?videoFramesAhead(int64_t(next_+CompletionState::startupLeadFrames),time,mode_.rate.duration)>=depth:!(returned&&first))break;
+                l.lock();if(state_->free.empty())break;auto f=state_->free.front();state_->free.pop_front();const auto inDevice=uint32_t(pool_.size()-state_->free.size());l.unlock();
+                if(inDevice>videoFramesPeak_)videoFramesPeak_=inDevice;
+                schedule(f);
+            }
         }}catch(const std::exception& e){message(e.what());running_=false;air_=false;}
     }
 public:
@@ -325,11 +346,11 @@ public:
             // SignalGenerator startup order; enabling audio may initialise transport.
             check(output_->EnableAudioOutput(bmdAudioSampleRate48kHz,bmdAudioSampleType32bitInteger,2,bmdAudioOutputStreamTimestamped),"Enable 48 kHz stereo SDI audio");
             audioEnabled_=true;
-            frameTiming_=AVTiming(mode_.rate);cadenceDuration_=mode_.rate.duration;cadenceScale_=mode_.rate.scale;source_=&source;source_->history.prepareOutput(mode_.pixelFormat==bmdFormat8BitARGB,384*1024*1024);next_=0;quit_=false;air_=true;state_=std::make_shared<CompletionState>();if(syncDiagnostic_)state_->incidents=std::make_unique<SyncEventBuffer<SyncCompletionEvent>>();callback_=Com<Callback>(new Callback(state_));
+            frameTiming_=AVTiming(mode_.rate);cadenceDuration_=mode_.rate.duration;cadenceScale_=mode_.rate.scale;source_=&source;source_->history.prepareOutput(mode_.pixelFormat==bmdFormat8BitARGB,384*1024*1024);next_=0;quit_=false;air_=true;state_=std::make_shared<CompletionState>();if(syncDiagnostic_)state_->incidents=std::make_unique<SyncEventBuffer<SyncCompletionEvent>>();if(const char* pause=std::getenv("U2K_TEST_COMPLETION_PAUSE_MS"))state_->testPauseMs=uint32_t(std::clamp(std::atoi(pause),0,1000));callback_=Com<Callback>(new Callback(state_));
             check(output_->SetScheduledFrameCompletionCallback(callback_.get()),"Register video callback");
             videoCallbackSet_=true;
             int32_t stride=0;check(output_->RowBytesForPixelFormat(BMDPixelFormat(mode_.pixelFormat),mode_.size.width,&stride),"Get video stride");
-            for(uint32_t n=0;n<frameTiming_.videoFrames(reserve_);n++){
+            for(uint32_t n=0;n<frameTiming_.videoPool(reserve_);n++){
                 Com<IDeckLinkMutableVideoFrame> f;check(output_->CreateVideoFrame(mode_.size.width,mode_.size.height,stride,BMDPixelFormat(mode_.pixelFormat),bmdFrameFlagDefault,f.put()),"Create video frame");
                 Com<IDeckLinkVideoFrameMutableMetadataExtensions> metadata;
                 check(f->QueryInterface(IID_IDeckLinkVideoFrameMutableMetadataExtensions,reinterpret_cast<void**>(metadata.put())),"Get SDR metadata");
@@ -350,7 +371,9 @@ public:
             if(auto mapping=audioCallback_->timeline.read())videoMapping_=*mapping;
             referenceSchedule_.clear();if(referenceDiagnostic_)referenceSchedule_.reserve(4096);
             historyMisses_=0;historyStartupMisses_=0;videoRepeats_=0;videoSkips_=0;lastSelectedTime_=INT64_MIN;preparedReads_=0;conversionFallbacks_=0;historyReads_=0;selectedAge_=INT64_MIN;syncWhite_=false;scheduledFlashPts_=INT64_MIN;scheduledFlashCount_=0;
-            for(auto& f:pool_)schedule(f.get());
+            videoFramesPeak_=uint32_t(frameTiming_.videoFrames(reserve_));
+            // Preroll the queue depth; the other slots wait as spares for paused completions.
+            for(size_t n=0;n<pool_.size();++n)if(n<frameTiming_.videoFrames(reserve_))schedule(pool_[n].get());else state_->free.push_back(pool_[n].get());
             check(output_->SetAudioCallback(audioCallback_.get()),"Register SDI audio callback");
             audioCallbackSet_=true;
             // Have the video worker waiting before the first hardware completion.
@@ -385,7 +408,7 @@ public:
         if(syncTrace_){for(const auto& e:syncTrace_->events)std::cerr<<std::fixed<<std::setprecision(9)<<"SYNC_VIDEO stream_samples="<<e.stream<<" host_samples="<<e.host<<" paint_samples="<<e.paint<<" content_time="<<e.content<<" selection_samples="<<e.historyTime<<" max_ahead="<<e.maxAhead<<" id="<<e.identity<<" sequence="<<e.sequence<<" source_target="<<e.target<<" mapping_source="<<e.mapping.source<<" mapping_stream="<<e.mapping.stream<<" ratio="<<e.mapping.ratio<<" adjustment="<<e.adjustment<<" common_frames="<<e.commonFrames<<" common_stream_samples="<<e.commonStreamSamples<<" video_delay_source="<<e.commonStreamSamples*e.mapping.ratio<<'\n';std::cerr<<"SYNC_TRACE kind=video stored="<<syncTrace_->events.size()<<" omitted="<<syncTrace_->omitted<<'\n';syncTrace_.reset();}
         running_=false;air_=true;mixer_->enabled=true;audioCallback_=Com<AudioCallback>();if(source_)source_->history.prepareOutput(std::nullopt,192*1024*1024);source_=nullptr;cachedSource_.reset();converted_.clear();pool_.clear();callback_=Com<Callback>();keyer_=Com<IDeckLinkKeyer>();output_=Com<IDeckLinkOutput>();device_=Com<IDeckLink>();
     }
-    OutputStatus status()const override{std::lock_guard<std::mutex> l(messageMutex_);if(audioCallback_){if(auto m=audioCallback_->timeline.read())statusMapping_=*m;}else statusMapping_={};return {running_,air_,state_->completed,state_->late,state_->dropped,message_,audioCallback_?audioCallback_->frames.load():0,audioCallback_?audioCallback_->errors.load():0,audioCallback_?audioCallback_->recoveries.load():0,audioCallback_?audioCallback_->bufferedFrames.load():0,audioCallback_?audioCallback_->targetFrames():0,sourceAge_,audioCallback_?audioCallback_->readAge.load():INT64_MIN,audioCallback_?audioCallback_->clockCalibrated.load():false,audioCallback_?audioCallback_->startupShift.load():0,audioCallback_?audioCallback_->streamQueuePhase.load():0,audioCallback_?audioCallback_->prerollAudio.load():0,audioCallback_?audioCallback_->prerollVideo.load():0,state_->firstDroppedFrame.load(),state_->warmupFrames.load(),state_->warmupSamples.load(),CompletionState::startupLeadFrames,audioCallback_?audioCallback_->startupPaddingWritten.load():0,historyReads_.load(),historyMisses_.load(),selectedAge_.load(),source_?source_->history.bytes():0,audioCallback_?audioCallback_->sourceOrigin.load():0,scheduledFlashPts_.load(),scheduledFlashCount_.load(),historyStartupMisses_.load(),preparedReads_.load(),conversionFallbacks_.load(),state_->workerQos.load(),audioCallback_?audioCallback_->ratePpm.load():0,audioCallback_?audioCallback_->estimatedRatePpm.load():0,audioCallback_?audioCallback_->phaseError.load():0,audioCallback_?audioCallback_->rateUncertaintyPpm.load():0,audioCallback_?audioCallback_->driftReady.load():false,audioCallback_?audioCallback_->driftRejected.load():0,statusMapping_,reserve_,syncOffset_->load(),videoRepeats_.load(),videoSkips_.load()};}
+    OutputStatus status()const override{std::lock_guard<std::mutex> l(messageMutex_);if(audioCallback_){if(auto m=audioCallback_->timeline.read())statusMapping_=*m;}else statusMapping_={};return {running_,air_,state_->completed,state_->late,state_->dropped,message_,audioCallback_?audioCallback_->frames.load():0,audioCallback_?audioCallback_->errors.load():0,audioCallback_?audioCallback_->recoveries.load():0,audioCallback_?audioCallback_->bufferedFrames.load():0,audioCallback_?audioCallback_->targetFrames():0,sourceAge_,audioCallback_?audioCallback_->readAge.load():INT64_MIN,audioCallback_?audioCallback_->clockCalibrated.load():false,audioCallback_?audioCallback_->startupShift.load():0,audioCallback_?audioCallback_->streamQueuePhase.load():0,audioCallback_?audioCallback_->prerollAudio.load():0,audioCallback_?audioCallback_->prerollVideo.load():0,state_->firstDroppedFrame.load(),state_->warmupFrames.load(),state_->warmupSamples.load(),CompletionState::startupLeadFrames,audioCallback_?audioCallback_->startupPaddingWritten.load():0,historyReads_.load(),historyMisses_.load(),selectedAge_.load(),source_?source_->history.bytes():0,audioCallback_?audioCallback_->sourceOrigin.load():0,scheduledFlashPts_.load(),scheduledFlashCount_.load(),historyStartupMisses_.load(),preparedReads_.load(),conversionFallbacks_.load(),state_->workerQos.load(),audioCallback_?audioCallback_->ratePpm.load():0,audioCallback_?audioCallback_->estimatedRatePpm.load():0,audioCallback_?audioCallback_->phaseError.load():0,audioCallback_?audioCallback_->rateUncertaintyPpm.load():0,audioCallback_?audioCallback_->driftReady.load():false,audioCallback_?audioCallback_->driftRejected.load():0,statusMapping_,reserve_,syncOffset_->load(),videoRepeats_.load(),videoSkips_.load(),state_->completionGapMax.load(),videoFramesPeak_.load()};}
 };
 std::unique_ptr<Output> makeOutput(){return std::make_unique<DeckLink>();}
 }

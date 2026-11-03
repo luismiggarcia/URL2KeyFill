@@ -1,0 +1,39 @@
+{
+ "pause": "U2K_TEST_COMPLETION_PAUSE_MS pauses one video completion callback in every 600",
+ "worker": {
+  "half_frame_tick": [
+   "none",
+   "p90",
+   "p150",
+   "p400",
+   "r25",
+   "r50",
+   "low90"
+  ],
+  "stream_boundary_wake (committed)": [
+   "low0",
+   "low90b",
+   "rel150b",
+   "rel0b",
+   "r25b",
+   "r50b",
+   "r25p150"
+  ]
+ },
+ "runs": {
+  "none": "1080p59.94 Reliable, no pause",
+  "p90": "1080p59.94 Reliable, 90 ms pause",
+  "p150": "1080p59.94 Reliable, 150 ms pause",
+  "p400": "1080p59.94 Reliable, 400 ms pause (control beyond depth plus spares)",
+  "r25": "1080p25 Reliable, no pause",
+  "r50": "1080p50 Reliable, no pause",
+  "low90": "1080p59.94 Low latency, 90 ms pause",
+  "low0": "1080p59.94 Low latency, no pause",
+  "low90b": "1080p59.94 Low latency, 90 ms pause",
+  "rel150b": "1080p59.94 Reliable, 150 ms pause",
+  "rel0b": "1080p59.94 Reliable, no pause",
+  "r25b": "1080p25 Reliable, no pause",
+  "r50b": "1080p50 Reliable, no pause",
+  "r25p150": "1080p25 Reliable, 150 ms pause"
+ }
+}
