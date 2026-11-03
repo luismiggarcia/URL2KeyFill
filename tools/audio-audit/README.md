@@ -72,7 +72,7 @@ treat sleep/wake as a discontinuity.
 | Device +20 ppm, margin 3 ms | losses start once drift exceeds margin − lateness (≈1.6 ms, ~80 s); 4.5 % missing at 5 min, 41 % at 10 min, 87 % at 15 min |
 | Device −20 ppm, margin 3 ms | headroom (latency) grows 72 ms/h; losses from ~7 h, near silence at 8 h |
 
-The ±20 ppm scenarios are stress cases. The measured HD Mini is far closer to the Mac:
+The ±20 ppm scenarios are stress cases of the audited path **without** the drift servo added later (0.5.0); `drift_sim` does not model the servo, which is tested in `tests/AudioClockTests.cpp`. The measured HD Mini is far closer to the Mac:
 
 | `decklink_clock` run (REF IN state not recorded) | Stream clock | Hardware clock | Audio consumption | Video frames late / dropped |
 |---|---|---|---|---|

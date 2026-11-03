@@ -1,6 +1,8 @@
 // Deterministic model of the SDI audio path: CEF packets arrive on the Mac clock and the
 // DeckLink AudioCallback (src/output/DeckLink.cpp) consumes them on the device clock.
-// The callback arithmetic is reproduced exactly; mixing uses the real AudioLane/AudioMixer.
+// It shares AudioSchedule and the real AudioLane/AudioMixer, but has no AudioDriftServo
+// or resampler: --ppm runs show the uncompensated (pre-servo) path. The servo is
+// covered by tests/AudioClockTests.cpp.
 //
 // drift_sim [--ppm P] [--margin MS] [--seconds S] [--callback-ms MS] [--fps F] [--trace FILE] [--reports N]
 //   --ppm       device clock error against the Mac clock (positive = device faster)
