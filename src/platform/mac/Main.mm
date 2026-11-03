@@ -51,10 +51,21 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
 @interface RackWindow:NSWindow
 @end
 @implementation RackWindow
+// There is no Edit menu and no Close item: ⌘W quits like ⌘Q, and the text-editing
+// shortcuts still reach the focused field (layer name, URL, custom size).
+-(BOOL)performKeyEquivalent:(NSEvent*)event{
+ const NSEventModifierFlags mods=event.modifierFlags&NSEventModifierFlagDeviceIndependentFlagsMask&~(NSEventModifierFlagCapsLock|NSEventModifierFlagNumericPad|NSEventModifierFlagFunction);
+ if(mods==NSEventModifierFlagCommand){NSString* key=event.charactersIgnoringModifiers.lowercaseString;
+  if([key isEqual:@"w"]){[NSApp terminate:nil];return YES;}
+  NSDictionary* edit=@{@"x":@"cut:",@"c":@"copy:",@"v":@"paste:",@"a":@"selectAll:",@"z":@"undo:"};
+  if(NSString* action=edit[key])if([NSApp sendAction:NSSelectorFromString(action) to:nil from:self])return YES;}
+ if(mods==(NSEventModifierFlagCommand|NSEventModifierFlagShift)&&[event.charactersIgnoringModifiers.lowercaseString isEqual:@"z"]&&[NSApp sendAction:@selector(redo:) to:nil from:self])return YES;
+ return [super performKeyEquivalent:event];
+}
 -(BOOL)canBecomeKeyWindow{return YES;}
 -(BOOL)canBecomeMainWindow{return YES;}
 @end
-@interface AppDelegate:NSObject<NSApplicationDelegate,NSWindowDelegate,WKScriptMessageHandler,WKNavigationDelegate,WKUIDelegate>{
+@interface AppDelegate:NSObject<NSApplicationDelegate,NSWindowDelegate,NSMenuDelegate,WKScriptMessageHandler,WKNavigationDelegate,WKUIDelegate>{
  RackWindow* window;WKWebView* web;Preview* preview;NSTimer* timer;NSTimer* saveTimer;NSMutableDictionary* prefs;NSMutableArray<NSMutableDictionary*>* layers;NSArray<NSDictionary*>* examples;
  AVAudioEngine* audioEngine;AVAudioSourceNode* audioSource;id audioConfigurationObserver,audioWakeObserver;NSMutableSet<NSString*>* monitoredLayers;NSMutableSet<NSString*>* monitoredAFL;BOOL monitorOutput,monitorOutputPFL;std::shared_ptr<AudioMixer> monitorMixer;std::shared_ptr<std::atomic<bool>> monitorMaster,monitorProgram,monitorMasterPFL;
  std::ofstream audioTrace;std::chrono::steady_clock::time_point traceStarted;std::unordered_map<std::string,AudioReadWindow> reportedAudio;
@@ -193,15 +204,19 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  const double scale=[prefs[@"uiScale"] doubleValue];window=[[RackWindow alloc]initWithContentRect:NSMakeRect(0,0,std::round(1280*scale),std::round(460*scale)) styleMask:NSWindowStyleMaskBorderless|NSWindowStyleMaskResizable backing:NSBackingStoreBuffered defer:NO];window.title=@"URL2KeyFill";window.delegate=self;window.minSize=NSMakeSize(std::round(1050*scale),std::round(390*scale));window.opaque=NO;window.backgroundColor=NSColor.clearColor;window.contentView.wantsLayer=YES;window.contentView.layer.cornerRadius=13;window.contentView.layer.masksToBounds=YES;[window center];fullFrame=window.frame;
  WKWebViewConfiguration* configuration=[[WKWebViewConfiguration alloc]init];configuration.websiteDataStore=WKWebsiteDataStore.nonPersistentDataStore;[configuration.userContentController addScriptMessageHandler:self name:@"native"];web=[[WKWebView alloc]initWithFrame:window.contentView.bounds configuration:configuration];web.autoresizingMask=NSViewWidthSizable|NSViewHeightSizable;web.navigationDelegate=self;web.UIDelegate=self;[web setValue:@NO forKey:@"drawsBackground"];[window.contentView addSubview:web];
  preview=[[Preview alloc]initWithFrame:NSZeroRect];[window.contentView addSubview:preview];
- NSMenu* menu=[[NSMenu alloc]init];NSMenuItem* appItem=[[NSMenuItem alloc]init];NSMenu* appMenu=[[NSMenu alloc]init];[appMenu addItemWithTitle:@"About URL2KeyFill" action:@selector(showAbout:) keyEquivalent:@""].target=self;[appMenu addItem:NSMenuItem.separatorItem];[appMenu addItemWithTitle:@"Quit URL2KeyFill" action:@selector(terminate:) keyEquivalent:@"q"];[appMenu addItemWithTitle:@"Close URL2KeyFill" action:@selector(terminate:) keyEquivalent:@"w"];appItem.submenu=appMenu;[menu addItem:appItem];NSMenuItem* editItem=[[NSMenuItem alloc]init];NSMenu* edit=[[NSMenu alloc]initWithTitle:@"Edit"];for(NSArray* e in @[@[@"Cut",@"cut:",@"x"],@[@"Copy",@"copy:",@"c"],@[@"Paste",@"paste:",@"v"],@[@"Select All",@"selectAll:",@"a"]])[edit addItemWithTitle:e[0] action:NSSelectorFromString(e[1]) keyEquivalent:e[2]];editItem.submenu=edit;[menu addItem:editItem];
+ // No "Enter Full Screen" or tab items: the borderless rack has neither.
+ [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"NSFullScreenMenuItemEverywhere"];NSWindow.allowsAutomaticWindowTabbing=NO;
+ NSMenu* menu=[[NSMenu alloc]init];NSMenuItem* appItem=[[NSMenuItem alloc]init];NSMenu* appMenu=[[NSMenu alloc]init];[appMenu addItemWithTitle:@"About URL2KeyFill" action:@selector(showAbout:) keyEquivalent:@""].target=self;[appMenu addItem:NSMenuItem.separatorItem];[appMenu addItemWithTitle:@"Quit URL2KeyFill" action:@selector(terminate:) keyEquivalent:@"q"];appItem.submenu=appMenu;[menu addItem:appItem];
  NSMenuItem* viewItem=[[NSMenuItem alloc]init];NSMenu* view=[[NSMenu alloc]initWithTitle:@"View"];for(NSArray* e in @[@[@"Full",@"showFull:",@"1"],@[@"Monitor Only",@"showMonitor:",@"2"],@[],@[@"Actual Size",@"zoomActual:",@"0"],@[@"Zoom In",@"zoomIn:",@"+"],@[@"Zoom Out",@"zoomOut:",@"-"],@[]]){if(!e.count){[view addItem:NSMenuItem.separatorItem];continue;}[view addItemWithTitle:e[0] action:NSSelectorFromString(e[1]) keyEquivalent:e[2]].target=self;}
- NSMenuItem* onTop=[view addItemWithTitle:@"Always on Top" action:@selector(toggleOnTop:) keyEquivalent:@"t"];onTop.keyEquivalentModifierMask=NSEventModifierFlagCommand|NSEventModifierFlagOption;onTop.target=self;viewItem.submenu=view;[menu addItem:viewItem];NSApp.mainMenu=menu;[self applyView];[self applyOnTop];
+ NSMenuItem* onTop=[view addItemWithTitle:@"Always on Top" action:@selector(toggleOnTop:) keyEquivalent:@"t"];onTop.keyEquivalentModifierMask=NSEventModifierFlagCommand|NSEventModifierFlagOption;onTop.target=self;view.delegate=self;viewItem.submenu=view;[menu addItem:viewItem];NSApp.mainMenu=menu;[self applyView];[self applyOnTop];
 
  [self refresh];if(smoke){prefs[@"mode"]=@(hardwareTestMode);prefs[@"browserSize"]=@"1920x1080";[self chooseMode];}if(avLoopbackTest){layers.firstObject[@"url"]=avTestUrl.empty()?@"u2k://Diagnostics/10_Sincronismo_AV.html":ns(avTestUrl);layers.firstObject[@"name"]=@"SDI loopback A/V";}for(NSDictionary* layer in layers)[self createRuntime:layer];[self configureScene];
  NSURL* ui=[NSBundle.mainBundle URLForResource:@"interface" withExtension:@"html"];[web loadFileURL:ui allowingReadAccessToURL:ui];
  timer=[NSTimer scheduledTimerWithTimeInterval:.05 target:self selector:@selector(update:) userInfo:nil repeats:YES];started=std::chrono::steady_clock::now();measured=started;[window makeKeyAndOrderFront:nil];[NSApp activateIgnoringOtherApps:YES];
 }
 // Views: the rack is the main view, optionally scaled; Monitor Only shows just the preview.
+// AppKit may still insert "Enter Full Screen" when the menu opens; drop it.
+-(void)menuNeedsUpdate:(NSMenu*)menu{for(NSMenuItem* item in menu.itemArray.copy)if(item.action==@selector(toggleFullScreen:))[menu removeItem:item];}
 -(void)showFull:(id)sender{[self setViewMode:@"full"];}
 -(void)showMonitor:(id)sender{[self setViewMode:@"monitor"];}
 -(void)zoomIn:(id)sender{[self setScale:[prefs[@"uiScale"] doubleValue]+.25];}
