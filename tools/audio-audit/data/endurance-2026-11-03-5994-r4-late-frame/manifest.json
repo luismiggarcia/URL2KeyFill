@@ -1,0 +1,28 @@
+{
+  "mode": "1080p5994",
+  "seconds": 28800,
+  "timing_profile": "reliable",
+  "app_sha256": "2b6ce3b36dfb7c5b75d2fd9f257d063817463bbb1d7c62e20b7da472c793665c",
+  "capture_sha256": "91319cc3aee74199a0c68cc307e3ba7764234208ad1397555663de0da3d3f1a0",
+  "command": [
+    "/Users/luisgarcia/Library/CloudStorage/OneDrive-RumosConsulting/Rumos Documents/Desenvolvimento/LG-Systems/URL2KeyFill/build/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+    "--sdi-diagnostic-stop-file",
+    "/private/tmp/claude-501/-Users-luisgarcia-Library-CloudStorage-OneDrive-RumosConsulting-Rumos-Documents-Desenvolvimento-LG-Systems-URL2KeyFill/32c966bb-dc0a-4168-99aa-504102f51472/scratchpad/endurance-5994-r4/diagnostic-stop.request",
+    "--sdi-av-test",
+    "--hardware-test-mode",
+    "1080p5994",
+    "--audio-baseline-seconds",
+    "28800",
+    "--timing-profile",
+    "reliable"
+  ],
+  "initial_power": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=22413411)\t100%; charged; 0:00 remaining present: true\n",
+  "runner_sha256": "450c51c90438aa0812b7a8cbd7fcff66120573cba748fa63cc60f6f2675ce066",
+  "sample_interval_seconds": 900,
+  "playback_pid": 2969,
+  "awake_pid": 2970,
+  "accepted": false,
+  "error": "Continuity watchdog detected an error",
+  "diagnostic_stop_acknowledged": true,
+  "diagnostic_trace_preserved": true
+}
