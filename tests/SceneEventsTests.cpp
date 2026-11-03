@@ -1,7 +1,9 @@
 #include "core/Scene.hpp"
+#include "core/MediaClock.hpp"
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
+#include <thread>
 using namespace u2k;
 #define REQUIRE(x) do{if(!(x))throw std::runtime_error(#x);}while(0)
 int main(){try{
@@ -22,6 +24,22 @@ int main(){try{
   std::unique_lock<std::mutex> lock(signal->mutex);const auto observed=signal->revision;lock.unlock();
   scene.configure({{source,false}},{1,1},{1,1});source->publish(first);
   lock.lock();REQUIRE(!signal->cv.wait_for(lock,std::chrono::milliseconds(50),[&]{return signal->revision!=observed;}));
+ }
+ // A layer change on air keeps the delayed SDI timeline covered: the old composition stays
+ // selectable before the change and the new one starts at a barrier. A size change clears it.
+ {
+  auto a=std::make_shared<LatestFrame>(),b=std::make_shared<LatestFrame>();Scene scene;scene.frames.subscribe(signal);
+  auto wait=[&](auto predicate){std::unique_lock<std::mutex> lock(signal->mutex);return signal->cv.wait_for(lock,std::chrono::seconds(2),predicate);};
+  auto published=[&](int64_t since,Size size){return wait([&]{auto f=scene.frames.history.at(mediaSampleTime());return f.frame&&f.time>=since&&f.frame->size==size;});};
+  scene.configure({{a,true},{b,true}},{1,1},{1,1});
+  auto shown=std::make_shared<Frame>(*first);shown->paintTime=mediaSampleTime();a->publish(shown);
+  REQUIRE(wait([&]{return scene.frames.get()==shown;}));
+  // Stamps are 48 kHz samples: keep the change strictly after the observed instant.
+  const auto before=mediaSampleTime();std::this_thread::sleep_for(std::chrono::milliseconds(2));
+  scene.configure({{a,true},{b,false}},{1,1},{1,1});REQUIRE(published(before,{1,1}));
+  const auto old=scene.frames.history.at(before);REQUIRE(old.frame==shown);REQUIRE(old.time<=before);
+  scene.configure({{a,true},{b,false}},{2,2},{2,2});REQUIRE(published(before,{2,2}));REQUIRE(!scene.frames.history.at(before).frame);
+  scene.frames.unsubscribe(signal);
  }
  // History chooses by media time, never a newer frame; static content spans long gaps.
  FrameHistory history;history.configure(3,12,100);

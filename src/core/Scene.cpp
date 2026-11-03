@@ -124,7 +124,11 @@ std::shared_ptr<const Frame> composite(const std::vector<std::shared_ptr<const F
 }
 Scene::Scene(){frames.history.configure(16,192*1024*1024);worker_=std::thread([this]{run();});}
 Scene::~Scene(){{std::lock_guard<std::mutex> lock(mutex_);quit_=true;for(auto& l:layers_)if(l.frames)l.frames->unsubscribe(signal_);}signal_->notify();worker_.join();}
-void Scene::configure(std::vector<ImageInput> v,Size viewport,Size target){validate(viewport);validate(target);std::lock_guard<std::mutex> lock(mutex_);if(layers_==v&&viewport_==viewport&&target_==target)return;for(auto& l:layers_)if(l.frames)l.frames->unsubscribe(signal_);frames.history.clear();layers_=std::move(v);for(auto& l:layers_)if(l.visible&&l.frames)l.frames->subscribe(signal_);viewport_=viewport;target_=target;++revision_;signal_->notify();}
+void Scene::configure(std::vector<ImageInput> v,Size viewport,Size target){validate(viewport);validate(target);std::lock_guard<std::mutex> lock(mutex_);if(layers_==v&&viewport_==viewport&&target_==target)return;for(auto& l:layers_)if(l.frames)l.frames->unsubscribe(signal_);
+ // Keep history across layer changes: SDI selects ~audio delay in the past, so clearing
+ // would leave it without a frame (transparent) until the new composition ages. The
+ // next composite is stamped "now", the barrier. Only a size change invalidates it.
+ if(!(viewport_==viewport&&target_==target))frames.history.clear();layers_=std::move(v);for(auto& l:layers_)if(l.visible&&l.frames)l.frames->subscribe(signal_);viewport_=viewport;target_=target;++revision_;signal_->notify();}
 void Scene::run(){uint64_t previous=UINT64_MAX;int64_t previousStamp=INT64_MIN;std::vector<std::shared_ptr<const Frame>> held;
  uint64_t observed=0;
  for(;;){std::unique_lock<std::mutex> wake(signal_->mutex);signal_->cv.wait(wake,[&]{return signal_->revision!=observed;});observed=signal_->revision;wake.unlock();

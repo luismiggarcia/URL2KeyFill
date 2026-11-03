@@ -2847,6 +2847,18 @@ houve ensaio SDI físico nesta revisão.
    `configure`; a mudança aparece com o mesmo atraso que o áudio, como diz o
    ARCHITECTURE.md. Em alternativa, quando não há candidata, usar a frame mais antiga.
    Acrescentar um teste em `SceneEventsTests`.
+   **Corrigido (2026-11-03, branch `fix/layer-change-blackout`):**
+   - **O que mudou:** `Scene::configure` só limpa o histórico quando muda o viewport ou
+     o tamanho de saída. Numa alteração de camadas, a composição antiga continua
+     selecionável para instantes anteriores à mudança, e a primeira composição nova,
+     carimbada com a hora atual, faz de barreira. Isto substitui a invalidação descrita
+     no §10.9.
+   - **Teste novo em `SceneEventsTests`:** com o código antigo falha 20 em 20 vezes; com
+     a correção passa 50 em 50.
+   - **Outras verificações:**
+     - CTest 8/8 e smoke nativo com CEF real a passar;
+     - a reprodução original deixou de perder frames.
+   - **Por verificar no hardware:** não houve ensaio SDI.
 2. **[Média] `driftResets_` nunca volta a zero.** Três resets do servo (salto de fase
    > 100 ms, intervalo > 10 s ou taxa fora do limite em 10 observações seguidas) em
    **qualquer** momento da sessão chamam `fail()` e param a saída de vez. Numa emissão de
