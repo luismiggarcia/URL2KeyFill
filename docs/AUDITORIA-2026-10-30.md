@@ -2864,6 +2864,13 @@ houve ensaio SDI físico nesta revisão.
    **qualquer** momento da sessão chamam `fail()` e param a saída de vez. Numa emissão de
    dias, isto converte incidentes isolados e recuperáveis numa paragem. **Correção:**
    contar só numa janela deslizante (por exemplo, 3 em 10 min) e acrescentar um teste.
+   **Corrigido (2026-11-03, `71ed2d0`):**
+   - **O que mudou:** `RecoveryBudget`, em `AudioClock.hpp`, substitui o contador.
+     A saída só falha ao terceiro reset do servo dentro de 10 minutos; os incidentes
+     mais antigos expiram.
+   - **Testes:** a terceira ocorrência dentro da janela falha; a expiração funciona;
+     30 incidentes diários isolados nunca param a saída.
+   - **Por verificar no hardware:** não houve ensaio SDI.
 3. **[Média, arquitetura] O desvio de 25 ms em 8 h é cadência e não PTS.** O movimento
    de +2,97 ms/h (§10.13.3) coincide com a correção de taxa integrada
    (≈ −0,85 ppm × 8 h ≈ 24,5 ms). O CEF pinta ao ritmo do relógio do Mac, o SDI consome
@@ -2882,6 +2889,17 @@ houve ensaio SDI físico nesta revisão.
    pacotes e o servo entra em salto de fase, reset e, ao terceiro, `fail()` (ver 2).
    **Correção:** no primeiro pacote de cada geração, rejeitar a lane se
    |pts·48 − `mediaSampleTime()`| > 1 s e mostrar a mensagem na UI. O §10.19 já o pede.
+   **Corrigido (2026-11-03, `c25d03b`):**
+   - **O que mudou:**
+     - `Browser::OnAudioStreamPacket` só aceita um stream depois de um pacote ficar a
+       menos de 1 s do uptime (`cefPtsInUptimeDomain`, em `MediaClock.hpp`);
+     - os pacotes rejeitados são contados e a camada mostra nos diagnósticos
+       "Audio rejected: unexpected CEF timestamp clock";
+     - um pacote atrasado isolado não bloqueia o stream: o pacote seguinte volta a ser
+       avaliado.
+   - **Testes:** o atraso medido de 21,5 ms é aceite; ±2 s, Epoch, valores negativos e
+     overflow são rejeitados. No smoke com CEF real, a captura áudio continua a passar
+     (13 920 amostras).
 5. **[Baixa] Higiene de tempo real.** `RenderAudioSamples` aloca vetores (`mixFloat`,
    `mixResampled`, `toPCM`, cópia dos inputs) e toma os mutexes da lane e do mixer
    dentro do callback DeckLink, com o seu próprio mutex fechado. A duração máxima
@@ -2890,6 +2908,10 @@ houve ensaio SDI físico nesta revisão.
    compila: faltam `MediaClock.cpp` e `AudioResampler.cpp`. Com essa correção numa
    cópia, os resultados mantêm-se. Os cenários de ±20 ppm do `drift_sim` modelam o
    percurso **sem** servo; devem ser rotulados como históricos ou passar a incluir o servo.
+   **Corrigido (2026-11-03, `58f41cd`):**
+   - a script compila de novo e dá os mesmos resultados;
+   - os cenários de ±20 ppm ficam rotulados como históricos, sem servo, na script, no
+     `drift_sim.cpp` e no README, com referência a `AudioClockTests`.
 7. **[Processo]**
    - A versão 0.6.0 foi publicada a partir de `codex/audio-timing`; o `main` continua
      na 0.2.0, 42 commits atrás. É preciso decidir o merge.
