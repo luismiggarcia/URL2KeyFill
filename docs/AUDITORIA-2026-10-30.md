@@ -3039,3 +3039,100 @@ houve ensaio SDI físico nesta revisão.
 Primeiro 1, porque é visível no ar em operação normal. Depois 2 e 4, que são pequenos
 e testáveis sem hardware, e 6. A seguir, um protótipo de 3 a 59,94p antes de qualquer
 nova campanha longa. O ponto 5 fica para quando se mexer no callback.
+
+### 11.4 Limites de aceitação, CEF upstream, calibração por modo e validação (2026-11-03)
+
+**Limites adotados (Luis).** Estas tolerâncias aplicam-se ao A/V na saída da app; o
+sinal positivo indica áudio atrasado.
+- **ITU-R BT.1359:** deteção a partir de −45 / +125 ms;
+- **ATSC IS-191:** −15 / +45 ms;
+- **EBU R37:** −40 / +60 ms;
+- **objetivo prático:** desvio abaixo de 40 ms.
+
+**Verificação no código do Chromium/CEF 156** (sessão separada, só leitura).
+- **Onde se perde a identidade:** perde-se no `cc` do renderer. `CompositorFrameMetadata`
+  só transporta o `begin_frame_ack` do impl frame. O `origin_begin_main_frame_args` não é
+  serializado.
+- **Patch só no CEF:** um patch de ~40–60 linhas exporia `frame_sequence` /
+  `reference_time`, mas estes também seguem o impl frame (k+1 no regime pipelined). Não
+  resolve.
+- **Patch no Chromium:** expor a identidade do conteúdo exigiria alterar cc/viz/media (~150–250
+  linhas). É pouco realista upstream.
+- **Via oficial no CEF:** o issue [CEF#4311](https://github.com/chromiumembedded/cef/issues/4311)
+  descreve exatamente os defeitos do BeginFrame externo que observámos: deadline nulo,
+  intervalo fixo de 16,67 ms e pedidos descartados em silêncio. A correção do maintainer
+  ([CEF#4317](https://github.com/chromiumembedded/cef/pull/4317), aberta) define
+  deadline = `frame_time + interval`, o intervalo a partir de `windowless_frame_rate` e
+  uma fila de um pedido. É a causa provável da alternância de regime.
+- **Próximo passo nesta frente:** quando o #4317 entrar numa versão CEF, repetir o
+  `begin-frame-probe`. Se o regime estabilizar, "conteúdo = último pedido" passa a estar
+  certo e o protótipo fica determinístico.
+
+**Calibração por modo** (`tools/audio-audit/data/calibration-2026-11-03/`).
+- **Método:**
+  - referência SDK, página A/V (3 arranques) e `<video>` com PTS conhecidos (2 arranques)
+    em 25, 50 e 59,94p, tudo em bruto (`--raw-av`);
+  - o desvio do caminho de entrada é +0,7 ms;
+  - a referência SDK a 59,94p dá −8,4 ms porque agenda o flash na grelha de 800,8
+    amostras: é quantização da própria referência, não desvio da entrada;
+  - a referência a 50p falhou por uma frame descartada no próprio programa de referência.
+- **Dentro de uma sessão:** σ 0,2–1 ms a 25p e 50p. A 59,94p é ~5 ms, mas a própria
+  referência tem σ 4,5 ms nesse modo, por isso é sobretudo medição.
+- **Entre arranques:** a variação domina. A 25p chegou a 90 ms, a 50p e a 59,94p a ~25 ms.
+- **Origem:** a telemetria separa a diferença impulso − flash à entrada da app (fonte) do
+  resto (app). A parte da fonte explica a maior parte: o Chromium fixa, a cada arranque,
+  uma fase diferente entre o áudio e a grelha de pintura. A contribuição da app é menor e
+  mais estável por modo; a exceção é o salto de uma frame a 59,94p já conhecido.
+- **Grelha de pintura mais fina:** pintar o CEF ao maior múltiplo da cadência até 60 fps
+  (25p → 50 fps; regra `cefRateMultiplier`) reduziu a 25p o desvio-padrão entre arranques
+  de ~33 para ~22 ms. Ficou como regra por defeito; o relógio de render do protótipo
+  subdivide a grelha da mesma forma.
+
+**Default calibrado com ajuste manual por cima**, como o Sync Offset do OBS.
+- **Comportamento na app:**
+  - a saída aplica `calibratedSyncMs(modo)` mais o valor guardado pelo operador, agora
+    rotulado "MANUAL A/V ADJUSTMENT";
+  - a UI mostra o default e o total; formatos sem medição não têm default;
+  - os ensaios de medição usam `--raw-av` / `--no-av-calibration`.
+- **Valores finais:** escolhidos para maximizar a menor margem entre a janela e os p1/p99
+  reais de 9–11 arranques por modo:
+
+| Modo | Default | Janela | Margem |
+|---|---:|---|---:|
+| 25p (CEF a 50 fps) | +17 ms | EBU R37 | 13,7 ms |
+| 50p | +14 ms | ATSC | 7,0 ms |
+| 59,94p | −2 ms | ATSC | 0,6 ms |
+
+  - **A 25p a janela ATSC é inalcançável:** a variação de fase entre arranques (~73 ms) é
+    maior do que a janela de 60 ms.
+  - **A 59,94p cumpre a ATSC, mas no limite:** o `<video>` fica ~15 ms mais tarde do que a
+    página de canvas.
+  - **O critério proposto de mediana a ±10 ms não é atingível** com a arquitetura atual: a
+    variação entre arranques é maior do que isso. O critério que se pode garantir é a
+    janela da norma; o ajuste manual serve para afinar cada sessão.
+
+**Validação** (`tools/audio-audit/data/validation-2026-11-03/`, 20 ensaios, com os
+defaults intermédios 13/12/−4).
+- **Continuidade:** zero atrasos, descartes e amostras em falta. A única exceção foi uma
+  recuperação de áudio no protótipo a 59,94p com duas camadas.
+- **Uma camada, caminho normal:** todos os arranques ficaram dentro da EBU R37 a 25p e
+  dentro da ATSC a 50p e 59,94p.
+- **Duas camadas** (lower third animado sobre a página A/V): a composição aumenta a
+  dispersão para σ ~8 ms a 50p e 59,94p. A 59,94p o p1 chegou a −21 ms, ou seja, fora da
+  ATSC nesse arranque. Causa provável: o carimbo da composição é o `paintTime` mais
+  recente das camadas, que segue a pintura assíncrona do overlay.
+- **Protótipo de BeginFrame:**
+  - com duas camadas é melhor a 50p e a 59,94p (σ 3,9 / 5,1 contra 8,2 ms);
+  - é pior a 25p (σ 11,8 contra 2,3 ms);
+  - deixa ~100 pedidos sem pintura por 120 s e teve 1 recuperação de áudio;
+  - **continua desligado por defeito**, à espera do CEF#4317.
+
+**Ensaio de 8 h** (autorizado pelo Luis).
+- **Configuração:** 1080p59,94, caminho normal, default calibrado sem recalibrar na
+  sessão (`--no-calibrate`), capturas intermédias a cada 15 min. Iniciado a 2026-11-03.
+  Os resultados ficam nesta secção quando terminar.
+- **Critério:** zero falhas de continuidade e envelope A/V das capturas dentro da ATSC
+  (−15 / +45 ms).
+- **Critério interno do runner:** ±1 frame em torno de 0, de uma fase anterior. Fica
+  reportado mas não serve de referência, porque o default coloca a mediana deliberadamente
+  dentro da janela assimétrica.
