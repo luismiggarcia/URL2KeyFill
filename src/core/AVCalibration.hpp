@@ -7,15 +7,16 @@ namespace u2k {
 // CEF paints at the largest integer multiple of the SDI cadence up to 60 fps (25p -> 50).
 // A finer paint grid halves the start-dependent A/V phase of browser content (audit §11).
 inline int64_t cefRateMultiplier(const Rate& rate){int64_t k=1;while(rate.scale*(k+1)<=60*rate.duration+rate.duration/2)++k;return k;}
-// Default A/V adjustment per SDI cadence (ms, positive delays audio), measured on the SDI
-// loopback with the bundled A/V page and <video> reference over several starts, net of the
-// input path (+0.7 ms, scheduled SDK reference). It places the median at +15 ms of audio
-// lag, the centre of ATSC IS-191 (-15/+45) and inside EBU R37 (-40/+60): start-to-start
-// browser phase spreads about +/-15 ms around it (audit §11). Valid with the CEF rate rule
-// above. Unmeasured cadences have no default; operators add a manual adjustment on top.
+// Default A/V adjustment per SDI cadence (ms, positive delays audio). Chosen to maximise the
+// smallest margin between the target window and the p1/p99 A/V of 9-11 SDI loopback starts
+// per cadence (bundled A/V page and <video> known-PTS reference, net of input path): EBU R37
+// (-40/+60) at 25p, where start-to-start browser phase (~73 ms) exceeds the ATSC window, and
+// ATSC IS-191 (-15/+45) at 50p and 59.94p (margins 13.7, 7.0 and 0.6 ms; audit §11). Valid
+// with the CEF rate rule above. Unmeasured cadences have no default; operators add a manual
+// adjustment on top.
 inline std::optional<int32_t> calibratedSyncMs(const Rate& rate){
  struct Entry {int64_t duration,scale;int32_t ms;};
- static constexpr Entry table[]={{1000,25000,13},{1000,50000,12},{1001,60000,-4}};
+ static constexpr Entry table[]={{1000,25000,17},{1000,50000,14},{1001,60000,-2}};
  for(const auto& e:table)if(e.duration*rate.scale==e.scale*rate.duration)return e.ms;
  return {};
 }
