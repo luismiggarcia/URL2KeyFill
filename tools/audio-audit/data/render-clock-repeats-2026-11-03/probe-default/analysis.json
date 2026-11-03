@@ -1,0 +1,15 @@
+{
+  "paints": 5413,
+  "lag_latest": 225,
+  "lag_previous": 5188,
+  "unresolved": 0,
+  "lag_switches": 1,
+  "first_lag_change_s": 3.8405416666666667,
+  "latency_ms": {
+    "p1": 3.037500023841858,
+    "p50": 19.974999984105427,
+    "p99": 25.887500007947285,
+    "max": 28.895833373069763
+  },
+  "note": "lag 0 = content of the latest BeginFrame (prototype stamp correct); lag 1 = previous BeginFrame"
+}

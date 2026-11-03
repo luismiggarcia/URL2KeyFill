@@ -2930,6 +2930,45 @@ houve ensaio SDI físico nesta revisão.
 
      São 4 ensaios curtos, não uma certificação: a campanha longa só deve vir depois
      destes pontos.
+   **Investigação das repetições (2026-11-03, `b6acac6`):**
+   - **Método:**
+     - contadores de BeginFrames sem pintura e de pinturas extra;
+     - página `begin-frame-probe.html`: cada frame escreve o timestamp do seu
+       `requestAnimationFrame` (a hora do BeginFrame que a gerou) no código de barras que a
+       app lê;
+     - `analyze_begin_frame_probe.py` atribui cada pintura ao BeginFrame que a produziu.
+       A verdade vem do conteúdo, não do tempo de chegada;
+     - dados em `tools/audio-audit/data/render-clock-repeats-2026-11-03/`.
+   - **Causa:**
+     - no probe de 90 s a 59,94p, 5 188 de 5 413 pinturas (95,9 %) contêm o BeginFrame
+       **anterior** ao último enviado;
+     - as 225 restantes são todas dos primeiros 3,8 s, antes do arranque do SDI;
+     - nesse instante a latência real salta de ~5 ms para ~21 ms, ou seja, exatamente uma
+       frame: o Chromium passa a desenhar cada frame só quando chega o BeginFrame seguinte;
+     - nos dois regimes a pintura chega 3–5 ms depois do último pedido, por isso **o tempo
+       de chegada não distingue os dois casos**.
+   - **Efeito no protótipo:** como data cada pintura com o último pedido, adianta uma frame
+     no regime pipelined. Quando o regime alterna, surgem repetições; quando muda entre
+     sessões, a mediana A/V muda uma frame. Foi o que se viu: proto-a/b com +11 a +12 ms e
+     120–214 repetições; proto-diag-a/b com −4,3 ms e 7 repetições.
+   - **Simulação de regras temporais:** "último pedido" acerta em 4,2 %, "pedido anterior"
+     em 95,9 %, e uma regra FIFO por janela de idade também em 95,9 %. Nenhuma acerta nos
+     dois regimes.
+   - **Opção do Chromium `run-all-compositor-stages-before-draw`:** testada e rejeitada.
+     A latência mínima sobe para 19,4 ms, nenhuma pintura fica no último pedido e ~20 %
+     atrasam duas frames. Foi retirada do código.
+   - **Conclusão:**
+     - o protótipo **não deve ser ativado** enquanto a associação depender da hora de
+       chegada;
+     - a vantagem de cadência mantém-se: sem oscilações entre frames vizinhas;
+     - o desvio de uma frame é real e muda com o regime do Chromium.
+   - **Proposta seguinte, sem ensaio físico para já:**
+     - migrar a captura para `OnAcceleratedPaint`, cujo `extra.timestamp` dá a hora de cada
+       frame relativa ao início da captura;
+     - identificar a frame casando esses intervalos com os dos BeginFrames enviados, com
+       um pequeno dither conhecido nos envios para tornar o padrão inequívoco;
+     - validar com o probe, cujo critério é 100 % de associações certas, antes de qualquer
+       novo ensaio A/V.
 4. **[Média] O domínio do PTS CEF não é validado.** O header do CEF descreve Epoch; o
    código assume uptime. Se uma atualização do CEF trocar o domínio, `push` aceita os
    pacotes e o servo entra em salto de fase, reset e, ao terceiro, `fail()` (ver 2).
