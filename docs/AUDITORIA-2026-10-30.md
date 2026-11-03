@@ -3130,7 +3130,7 @@ defaults intermédios 13/12/−4).
 **Ensaio de 8 h** (autorizado pelo Luis).
 - **Configuração:** 1080p59,94, caminho normal, default calibrado sem recalibrar na
   sessão (`--no-calibrate`), capturas intermédias a cada 15 min. Iniciado a 2026-11-03.
-  Os resultados ficam nesta secção quando terminar.
+  Os resultados dos cinco ensaios estão no §11.5.
 - **Critério:** zero falhas de continuidade e envelope A/V das capturas dentro da ATSC
   (−15 / +45 ms).
 - **Critério interno do runner:** ±1 frame em torno de 0, de uma fase anterior. Fica
@@ -3359,7 +3359,49 @@ calibração de fábrica −2 ms, sem gancho de teste; 10:45–18:45, captura a 
       app. Sem esses dois impulsos, o 5.º ensaio fica todo dentro da EBU R37;
     - as medições a 59,94p entre 02/11 às 21:28 e 03/11 às 21:29 (calibração, reserva,
       pausas e os ensaios longos) foram feitas nesse estado. As medianas quase não são
-      afetadas (1,5 % dos flashes), mas a calibração de 59,94p merece nova medição;
+      afetadas (1,5 % dos flashes); a calibração de 59,94p fica como está (ver §11.6);
     - **nota operacional:** se a saída mostrar frames fora de sítio depois de o
       dispositivo ser religado ou de o Mac acordar, reiniciar o Mac antes do serviço.
 - **Evidência:** `endurance-2026-11-03-5994-r5/`.
+
+### 11.6 Fecho da revisão (2026-11-03)
+
+Não há mais ensaios físicos nesta frente. Estado final de cada ponto do §11.2:
+
+| # | Ponto | Estado |
+|---|---|---|
+| 1 | Troca de camadas no ar apaga o SDI | Corrigido (`9bb1644`), com teste em `SceneEventsTests` |
+| 2 | `driftResets_` nunca volta a zero | Corrigido (`71ed2d0`): 3 recuperações em 10 min |
+| 3 | Desvio por cadência, não por PTS | Fechado sem ativar: o protótipo de BeginFrame fica atrás de `--external-begin-frame`, desligado por defeito |
+| 4 | Domínio do PTS CEF não validado | Corrigido (`c25d03b`) |
+| 5 | Higiene de tempo real no callback áudio | Adiado para o backlog: máximo medido 0,333 ms |
+| 6 | Ferramentas de evidência | Corrigido (`58f41cd`) |
+| 7 | Processo | Resolvido: o `main` está na 0.6.0 |
+
+**Correções que saíram dos ensaios de 8 h** (§11.5), todas no perfil Reliable:
+- reserva mínima de 100 ms de áudio em fila (`fda7a49`);
+- `max(3 frames, 100 ms)` de vídeo em voo (`4512533`);
+- reposição pelo relógio do dispositivo com slots de reserva (`5a0aa6e`).
+
+O 5.º ensaio (8 h a 59,94p) passou a continuidade. Os dois impulsos fora da norma vieram
+do estado do driver, não da app.
+
+**Decisões finais:**
+- **Calibração de 59,94p:** mantém-se −2 ms, sem nova medição. O estado do driver afetou
+  1,5 % dos flashes e não muda as medianas. A garantia neste modo é a EBU R37, como já
+  estava registado; o ajuste manual cobre a afinação por sessão.
+- **Ponto 3:** só se reabre quando o [CEF#4317](https://github.com/chromiumembedded/cef/pull/4317)
+  sair numa versão do CEF. Nessa altura basta repetir o `begin-frame-probe` antes de
+  decidir ativar o protótipo.
+- **Validação em hardware que fica de fora:** o ponto 2 não teve ensaio SDI dirigido; Fill
+  e Key num switcher, UHD e várias camadas em sessão longa continuam no `BACKLOG.md`.
+
+**Notas operacionais** (reunidas do §11.5):
+- desligar as atualizações automáticas (OneDrive incluído) durante o serviço;
+- se aparecerem frames fora de sítio depois de religar o UltraStudio ou de o Mac acordar,
+  reiniciar o Mac antes do serviço.
+
+**Por integrar:** os commits desta revisão estão no ramo `fix/audit-review-11`, ainda não
+enviado. As vistas reduzidas, o Monitor Only, o Always on Top e a janela About estão em
+`feature/view-modes`. Os dois ramos tocam em `Main.mm` e `interface.html` e precisam de
+resolver conflitos ao juntar.
