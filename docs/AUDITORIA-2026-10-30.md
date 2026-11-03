@@ -2813,3 +2813,81 @@ não certificada para HTML genérico, episódios de descartes/envolventes reprov
 a 59,94p e custo de latência dos ajustes negativos. A publicação autorizada não
 constitui aprovação de produção nem resolve as pendências das secções anteriores.
 Logs e proveniência: `tools/audio-audit/data/release-0.6.0-2026-11-02/`.
+
+## 11. Revisão do auditor ao trabalho de 30/10 a 02/11 (2026-11-02)
+
+Âmbito: os 42 commits de `55dbb38` a `02e3829` no branch `codex/audio-timing`
+(≈1 440 linhas novas em `src/`), com leitura do código e verificação local. Não
+houve ensaio SDI físico nesta revisão.
+
+### 11.1 Verificado e aprovado
+
+- Build e **CTest 8/8** a passar (fora do sandbox, com o CMake 3.31.6 de `third_party/`).
+- **Relógio:** `mediaSampleTime()` usa `mach_absolute_time`, o PTS CEF é preservado sem
+  heurística de parede e existe uma margem de origem explícita (60 ms). Isto resolve 3.1 e 3.3.
+- **Deriva (3.2):** `AudioDriftServo` (regressão de 120 s, banda morta de 1 ms, slew de
+  5 ppm/s, limite de ±200 ppm) com resampler polifásico. A resposta medida do resampler
+  cumpre os critérios do §8.2: 0,000 dB até 20 kHz, −0,19 dB a 21 kHz e ≤ −105 dB a
+  23–24 kHz, nas fases 0, ¼ e ½.
+- O vídeo é escolhido pelo mesmo mapeamento do áudio, o CEF segue a cadência do modo
+  (V1, exceto 59,94) e a composição é feita por evento, com atalho para camada única.
+- 8 h a 1080p25 com continuidade perfeita (§10.13). A precisão do ajuste negativo ficou demonstrada.
+- Disciplina de registo: as reprovações não foram escondidas e há evidência com hashes.
+
+### 11.2 Problemas encontrados
+
+1. **[Alta] Mudar a visibilidade de uma camada no ar apaga a imagem SDI durante 3 frames.**
+   `Scene::configure` chama `frames.history.clear()` em cada alteração de camadas
+   (visibilidade, adicionar, apagar, reordenar). A nova composição recebe a hora atual,
+   mas o SDI procura uma frame ≈ `audioTarget + sourceAge` no passado (≈180 ms a 25p).
+   `FrameHistory::at` não encontra nenhuma, e `DeckLink::schedule` envia preto
+   transparente, ou seja, o key fica a zero. Reproduzido com a `Scene` real: depois de
+   esconder a camada B, a camada A, que continua visível, desaparece nas frames 15–17 e
+   volta na 18. A 50p serão ≈6 frames. **Correção:** não limpar o histórico em
+   `configure`; a mudança aparece com o mesmo atraso que o áudio, como diz o
+   ARCHITECTURE.md. Em alternativa, quando não há candidata, usar a frame mais antiga.
+   Acrescentar um teste em `SceneEventsTests`.
+2. **[Média] `driftResets_` nunca volta a zero.** Três resets do servo (salto de fase
+   > 100 ms, intervalo > 10 s ou taxa fora do limite em 10 observações seguidas) em
+   **qualquer** momento da sessão chamam `fail()` e param a saída de vez. Numa emissão de
+   dias, isto converte incidentes isolados e recuperáveis numa paragem. **Correção:**
+   contar só numa janela deslizante (por exemplo, 3 em 10 min) e acrescentar um teste.
+3. **[Média, arquitetura] O desvio de 25 ms em 8 h é cadência e não PTS.** O movimento
+   de +2,97 ms/h (§10.13.3) coincide com a correção de taxa integrada
+   (≈ −0,85 ppm × 8 h ≈ 24,5 ms). O CEF pinta ao ritmo do relógio do Mac, o SDI consome
+   ao ritmo do relógio da placa, e a seleção desliza na grelha de frames. Resultado: um
+   dente de serra de uma frame, com período ≈13 h a 25p. A 59,94p com o CEF a 60 fps
+   salta uma frame a cada ≈16,7 s, o que é compatível com as envolventes piores a 59,94.
+   **Recomendação:** ativar `external_begin_frame_enabled` e chamar
+   `SendExternalBeginFrame` ao ritmo da saída (conclusões DeckLink ou mapeamento). Isto
+   fixa a cadência de render ao relógio da placa, resolve o caso 59,94 e dá a cada
+   pintura um instante de pedido conhecido. Não substitui o contrato de PTS de conteúdo
+   do §10.19; antes de o adotar, confirmar no CEF 156 que cada BeginFrame produz no
+   máximo um `OnPaint` associável. Discordo do §10.19 apenas por tratar esta via como
+   irrelevante: não dá PTS de conteúdo, mas resolve a cadência.
+4. **[Média] O domínio do PTS CEF não é validado.** O header do CEF descreve Epoch; o
+   código assume uptime. Se uma atualização do CEF trocar o domínio, `push` aceita os
+   pacotes e o servo entra em salto de fase, reset e, ao terceiro, `fail()` (ver 2).
+   **Correção:** no primeiro pacote de cada geração, rejeitar a lane se
+   |pts·48 − `mediaSampleTime()`| > 1 s e mostrar a mensagem na UI. O §10.19 já o pede.
+5. **[Baixa] Higiene de tempo real.** `RenderAudioSamples` aloca vetores (`mixFloat`,
+   `mixResampled`, `toPCM`, cópia dos inputs) e toma os mutexes da lane e do mixer
+   dentro do callback DeckLink, com o seu próprio mutex fechado. A duração máxima
+   medida, 0,333 ms, mostra que isto não é urgente. Pré-alocar quando houver oportunidade.
+6. **[Baixa] Ferramentas de evidência.** `tools/audio-audit/run-models.sh` já não
+   compila: faltam `MediaClock.cpp` e `AudioResampler.cpp`. Com essa correção numa
+   cópia, os resultados mantêm-se. Os cenários de ±20 ppm do `drift_sim` modelam o
+   percurso **sem** servo; devem ser rotulados como históricos ou passar a incluir o servo.
+7. **[Processo]**
+   - A versão 0.6.0 foi publicada a partir de `codex/audio-timing`; o `main` continua
+     na 0.2.0, 42 commits atrás. É preciso decidir o merge.
+   - Os commits `cb00fc5`, `72b4f20` e `dece228` não terminam com `AI-Assisted Code`.
+     Já foram enviados para o remoto, por isso fica só o registo.
+   - A recomendação 8 está cumprida de outra forma: CMake em `third_party/`, ignorado
+     pelo Git e documentado no BUILD.md.
+
+### 11.3 Ordem recomendada
+
+Primeiro 1, porque é visível no ar em operação normal. Depois 2 e 4, que são pequenos
+e testáveis sem hardware, e 6. A seguir, um protótipo de 3 a 59,94p antes de qualquer
+nova campanha longa. O ponto 5 fica para quando se mexer no callback.
