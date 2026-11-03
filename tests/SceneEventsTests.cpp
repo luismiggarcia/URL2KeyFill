@@ -48,6 +48,7 @@ int main(){try{
  REQUIRE(history.at(160,50).frame==second); // Nearest available future frame is bounded.
  REQUIRE(history.at(150,50).frame==first); // Exact ties prefer the past.
  REQUIRE(history.at(160,20).frame==first); // Never exceed permitted anticipation.
+ REQUIRE(history.countBetween(99,201)==2);REQUIRE(history.countBetween(100,200)==0);REQUIRE(history.countBetween(99,200)==1); // Cadence skips.
  first->contentTime=50;auto resized=resize(*first,{2,2});REQUIRE(resized->paintTime==100);REQUIRE(resized->contentTime==50);
  auto copied=Frame::copy(first->size,first->pixels.data(),first->stride,1,100,50);REQUIRE(copied->paintTime==100);REQUIRE(copied->contentTime==50);
  REQUIRE(composite({first},{1,1})->contentTime==50);

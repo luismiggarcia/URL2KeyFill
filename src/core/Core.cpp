@@ -76,6 +76,7 @@ void FrameHistory::publish(std::shared_ptr<const Frame> f,int64_t time){
  std::lock_guard<std::mutex> lock(mutex_);if(generation!=generation_||(!frames_.empty()&&time<frames_.back().time))return;
  frames_.push_back({std::move(f),time,std::move(prepared)});bytes_+=historyBytes(frames_.back());trim();
 }
+size_t FrameHistory::countBetween(int64_t after,int64_t before)const{std::lock_guard<std::mutex> lock(mutex_);return size_t(std::count_if(frames_.begin(),frames_.end(),[&](const TimedFrame& f){return f.time>after&&f.time<before;}));}
 TimedFrame FrameHistory::at(int64_t time,int64_t maxAhead)const{
  std::lock_guard<std::mutex> lock(mutex_);TimedFrame selected;int64_t best=INT64_MAX;
  for(const auto& f:frames_){if(f.time>time&&f.time-time>maxAhead)continue;const auto distance=f.time>time?f.time-time:time-f.time;

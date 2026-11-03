@@ -58,6 +58,8 @@ public:
     void prepareOutput(std::optional<bool> argb,size_t budget);
     void publish(std::shared_ptr<const Frame>,int64_t time);
     TimedFrame at(int64_t time,int64_t maxAhead=0)const;
+    // Entries strictly between two selection times: frames an output cadence skipped.
+    size_t countBetween(int64_t after,int64_t before)const;
     void clear();
     size_t bytes()const;
 };
