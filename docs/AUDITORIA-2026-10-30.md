@@ -3136,3 +3136,47 @@ defaults intermédios 13/12/−4).
 - **Critério interno do runner:** ±1 frame em torno de 0, de uma fase anterior. Fica
   reportado mas não serve de referência, porque o default coloca a mediana deliberadamente
   dentro da janela assimétrica.
+
+### 11.5 Primeiro ensaio de 8 h a 59,94p: falha, causa e correção (2026-11-03)
+
+**Falha.** O ensaio iniciado às 02:52 parou aos 1 296 s (~22 min) com 1 recuperação de
+áudio por **fila vazia** (`reason=1`, `buffered_before=0`). Não houve falhas de vídeo,
+amostras em falta nem erros de API. Evidência em
+`tools/audio-audit/data/endurance-2026-11-03-5994-failed/`, incluindo `recovery.json`.
+
+**Causa:**
+- os callbacks de áudio da DeckLink chegam a cada ~20 ms; nos 512 guardados,
+  p50 = 20,0 ms e p99 = 21,9 ms;
+- um deles chegou **52,5 ms** depois do anterior. O nosso processamento é curto (máx. 2,9
+  ms), por isso a pausa é do driver/SDK ou do agendamento do sistema;
+- o perfil Reliable reserva **3 frames**: a 59,94p isso são 50 ms e sobram só ~30 ms antes
+  de cada callback. A pausa esvaziou a fila;
+- a 25p os mesmos 3 frames são 120 ms (~100 ms de folga). Isto explica que as 8 h a 25p
+  tenham passado e que a 59,94p já tivesse havido uma recuperação a 2026-11-02 (§10.16).
+
+**Correção (`fda7a49`).** O perfil Reliable mantém pelo menos **100 ms** de áudio em fila
+em qualquer cadência; o Low latency não muda.
+
+| Modo | Reserva de áudio | Latência acrescentada |
+|---|---|---:|
+| 25p | 120 ms (sem alteração) | 0 |
+| 50p | 60 → 100 ms | +40 ms |
+| 59,94p | 50 → 100 ms | +50 ms |
+
+O histórico de vídeo cresce para 24 frames a 59,94p (380 MiB), dentro do orçamento de
+384 MiB.
+
+**Verificação A/V com a correção** (`reserve-floor-2026-11-03/`, 6 arranques). Em
+teoria, a reserva atrasa áudio e vídeo por igual e não muda o A/V.
+- **50p:** os medianos de 19,9–36,4 ms e os p99 até 40,5 ms ficam dentro da ATSC.
+- **59,94p:** página com mediana −0,0 / −16,3 ms e p1 −23,8 / −27,4 ms; `<video>` com
+  +13,7 ms.
+  - repetições e saltos (108–138 por 60 s) e idade de seleção iguais aos de antes da
+    correção, e iguais aos ensaios base de §11.2. Trata-se da conhecida oscilação entre
+    frames vizinhas (CEF a 60 fps), não de um efeito da reserva;
+  - com estes arranques, **a ATSC deixa de ser garantível a 59,94p**. Fica a EBU R37,
+    com ~12 ms de margem.
+  - o que resolve a oscilação é o protótipo de BeginFrame, que depende do CEF#4317.
+
+**Segundo ensaio de 8 h**, iniciado a 2026-11-03 depois da correção, nas mesmas condições.
+O resultado será acrescentado aqui.

@@ -1,0 +1,12 @@
+{
+  "application.csv.gz": "a7cfb0d0d1d8a0ee480367ba311cf931b201edd584a4a4cd2dc82aa964a8e463",
+  "capture-sample-000.csv.gz": "73ec98f3149c4d7f5c9073d8f8dcfcd393dfd54dd69d825e8cf400a4ce6027b4",
+  "capture-sample-000.log.gz": "df88ec3c20c98e10d5d38e82447138a01b4e5921ab604934b17394948ad81ef5",
+  "capture-start.csv.gz": "53207752e9b510db390fc27d537da6a6401c4267ea0d955fd880da6d216790a3",
+  "capture-start.log.gz": "3f187d9acf502cda3a2737b265581e47f0acdfb0d4b252101ce819a5bedc63d5",
+  "diagnostic-stop.request": "a11c3d917a2149a4b548217038bc8f2dd2130a1966e0c7af5c4225d81f25a8c3",
+  "manifest.json": "e4587ef66a9a7c40adc88bf4832122fc1a50bb889133ed7040e4692de98f3297",
+  "playback.log.gz": "bd1f4dbe0fb122afe952ae3e3d96521f48170e73ef1ccf3fbeb5eb40fc44a7f0",
+  "power-checks.tar.gz": "2b76babe5990fab53ea54a6f0362e4b3e20e17777dbde406e126a5172d826d93",
+  "recovery.json": "eacf86ee7c8ab7f11bfdc81c8135b9e347886cfb112bc822f14db98c146640cc"
+}
