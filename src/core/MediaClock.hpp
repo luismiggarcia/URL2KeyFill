@@ -5,6 +5,13 @@ namespace u2k {
 // Keep quotient/remainder separate: multiplying a nanosecond uptime by 48000
 // would overflow int64 long before converting the result to sample time.
 constexpr int64_t samplesFromNanoseconds(int64_t ns){return (ns/1'000'000'000)*48000+(ns%1'000'000'000)*48000/1'000'000'000;}
+// The pinned CEF emits OSR audio PTS as uptime milliseconds (audit four-clock traces),
+// although its header documents Unix Epoch. Accept a stream only once a packet lies
+// within one second of host uptime, so an updated CEF cannot feed another domain.
+constexpr bool cefPtsInUptimeDomain(int64_t ptsMilliseconds,int64_t nowSamples){
+    if(ptsMilliseconds<0||ptsMilliseconds>(INT64_MAX-48048)/48)return false;
+    const auto offset=ptsMilliseconds*48-nowSamples;return offset>-48000&&offset<48000;
+}
 struct HostClockSnapshot {int64_t uptimeNs=0,continuousNs=0,uncertaintyNs=0;};
 HostClockSnapshot hostClockSnapshot();
 int64_t mediaSampleTime();

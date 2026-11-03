@@ -1,5 +1,6 @@
 #pragma once
 #include "core/Scene.hpp"
+#include "core/MediaClock.hpp"
 #include "include/cef_audio_handler.h"
 #include "include/cef_display_handler.h"
 #include "include/cef_permission_handler.h"
@@ -16,6 +17,7 @@ class Browser final: public CefClient, public CefRenderHandler, public CefLifeSp
     LatestFrame& frames_;
     std::shared_ptr<AudioLane> audio_;
     std::atomic<int> channels_{2};
+    std::atomic<bool> audioClockChecked_{false};
     std::string pendingUrl_;
     Size size_;
     int frameRate_=60;
@@ -24,6 +26,8 @@ class Browser final: public CefClient, public CefRenderHandler, public CefLifeSp
     bool failed_=false, closing_=false;
 public:
     bool referenceDiagnostic=false,referenceUsePts=false;int lastReferenceId=-1;
+    // Packets rejected because their PTS is not host uptime; mismatch is the current stream state.
+    std::atomic<uint64_t> audioClockRejected{0};std::atomic<bool> audioClockMismatch{false};
     std::atomic<bool> syncDiagnostic{false};std::atomic<int64_t> syncFlashPts{INT64_MIN};std::atomic<uint64_t> syncFlashCount{0};
     std::string message="Starting browser…";
     std::function<void()> closed;
@@ -35,10 +39,12 @@ public:
     uint64_t paints()const{return sequence_;}
     CefRefPtr<CefAudioHandler> GetAudioHandler()override{return this;}
     bool GetAudioParameters(CefRefPtr<CefBrowser>,CefAudioParameters& p)override{p.sample_rate=48000;p.channel_layout=CEF_CHANNEL_LAYOUT_STEREO;p.frames_per_buffer=480;return true;}
-    void OnAudioStreamStarted(CefRefPtr<CefBrowser>,const CefAudioParameters&,int channels)override{channels_=channels;audio_->clear();}
+    void OnAudioStreamStarted(CefRefPtr<CefBrowser>,const CefAudioParameters&,int channels)override{channels_=channels;audioClockChecked_=false;audioClockMismatch=false;audio_->clear();}
     // Pinned CEF emits uptime milliseconds (confirmed by the four-clock traces).
     // Preserve capture age and the common domain across independently started layers.
-    void OnAudioStreamPacket(CefRefPtr<CefBrowser>,const float** data,int frames,int64_t pts)override{audio_->push(data,frames,channels_.load(),pts);}
+    void OnAudioStreamPacket(CefRefPtr<CefBrowser>,const float** data,int frames,int64_t pts)override{
+        if(!audioClockChecked_){if(!cefPtsInUptimeDomain(pts,mediaSampleTime())){++audioClockRejected;audioClockMismatch=true;return;}audioClockChecked_=true;audioClockMismatch=false;}
+        audio_->push(data,frames,channels_.load(),pts);}
     void OnAudioStreamStopped(CefRefPtr<CefBrowser>)override{audio_->clear();}
     void OnAudioStreamError(CefRefPtr<CefBrowser>,const CefString&)override{audio_->clear();}
     void create(const std::string&);

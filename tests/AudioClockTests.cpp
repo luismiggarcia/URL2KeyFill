@@ -1,5 +1,6 @@
 #include "core/AudioClock.hpp"
 #include "core/AudioResampler.hpp"
+#include "core/MediaClock.hpp"
 #include "core/Scene.hpp"
 #include <complex>
 #include <iostream>
@@ -32,6 +33,11 @@ int main(){try{
   RecoveryBudget spread;const auto w=RecoveryBudget::window;REQUIRE(spread.allow(0));REQUIRE(spread.allow(w/2));
   REQUIRE(spread.allow(w+1));REQUIRE(!spread.allow(w+2)); // Old incidents expire; recent ones still count.
   RecoveryBudget daily;for(int day=0;day<30;++day)REQUIRE(daily.allow(int64_t(day)*24*3600*48000));} // Isolated incidents never stop output.
+ {const int64_t now=int64_t(86400)*48000; // One day of uptime, in samples.
+  REQUIRE(cefPtsInUptimeDomain(now/48,now));REQUIRE(cefPtsInUptimeDomain(now/48-22,now)); // Measured ~21.5 ms capture age.
+  REQUIRE(!cefPtsInUptimeDomain(now/48-2000,now));REQUIRE(!cefPtsInUptimeDomain(now/48+2000,now));
+  REQUIRE(!cefPtsInUptimeDomain(1'793'000'000'000,now)); // Unix Epoch milliseconds, as the CEF header documents.
+  REQUIRE(!cefPtsInUptimeDomain(-1,now));REQUIRE(!cefPtsInUptimeDomain(INT64_MAX/40,now));}
  AudioResampler filter;
  double ripple=0;for(double phase:{0.,.125,.5,.9999})for(int hz=0;hz<=18000;hz+=100){std::complex<double> h=0;for(int tap=0;tap<AudioResampler::taps;++tap)h+=filter.coefficient(tap,phase)*std::exp(std::complex<double>(0,-2*std::numbers::pi*hz/48000*(tap-AudioResampler::left-phase)));ripple=std::max(ripple,std::abs(20*std::log10(std::abs(h))));}REQUIRE(ripple<.1);std::cout<<"passband max error dB="<<ripple<<'\n';
  for(double ratio:{.9999,1.,1.0001})for(int hz:{1000,18000}){
