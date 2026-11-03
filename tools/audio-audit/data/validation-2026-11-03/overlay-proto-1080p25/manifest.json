@@ -1,0 +1,35 @@
+{
+  "mode": "1080p25",
+  "seconds": 120,
+  "settle_seconds": 4,
+  "source": "application",
+  "playback_sha256": "b5bef6d62b01facacbc82bde11cadc0049c1134c2893245eb5fde7e17cf4728c",
+  "capture_sha256": "b1bc8e3b6c84d3cd2027a5de8132616e5726f55ab10e41c80249b9db360dfc25",
+  "capture_command": [
+    "/private/tmp/claude-501/-Users-luisgarcia-Library-CloudStorage-OneDrive-RumosConsulting-Rumos-Documents-Desenvolvimento-LG-Systems-URL2KeyFill/32c966bb-dc0a-4168-99aa-504102f51472/scratchpad/decklink-capture",
+    "--seconds",
+    "130",
+    "--mode",
+    "1080p25",
+    "--csv",
+    "/Users/luisgarcia/Library/CloudStorage/OneDrive-RumosConsulting/Rumos Documents/Desenvolvimento/LG-Systems/URL2KeyFill/tools/audio-audit/data/validation-2026-11-03/overlay-proto-1080p25/capture.csv"
+  ],
+  "playback_command": [
+    "/Users/luisgarcia/Library/CloudStorage/OneDrive-RumosConsulting/Rumos Documents/Desenvolvimento/LG-Systems/URL2KeyFill/build/URL2KeyFill.app/Contents/MacOS/URL2KeyFill",
+    "--sdi-av-test",
+    "--hardware-test-mode",
+    "1080p25",
+    "--audio-baseline-seconds",
+    "120",
+    "--sdi-av-overlay-url",
+    "u2k://Lower_Third/Animated_10_sec_cycle.html",
+    "--external-begin-frame",
+    "--timing-profile",
+    "reliable",
+    "--sync-offset-ms",
+    "0"
+  ],
+  "input_recording_limit_s": 113.90064924996113,
+  "playback_exit": 0,
+  "capture_exit": 0
+}
