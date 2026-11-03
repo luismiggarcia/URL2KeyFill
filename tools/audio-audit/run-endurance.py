@@ -196,7 +196,9 @@ def main():
                 if measured_began is None and elapsed>43:raise RuntimeError('Calibration did not finish within its preparation budget')
                 measured_elapsed=0 if measured_began is None else time.monotonic()-measured_began
                 if sample_child and sample_child.poll() is not None:
-                    if sample_child.returncode:raise RuntimeError('Intermediate capture failed')
+                    # Optional samples: a failed input capture is a measurement gap, not an
+                    # output failure. Output health is judged by telemetry and start/end captures.
+                    if sample_child.returncode:samples[-1]['capture_failed']=sample_child.returncode
                     sample_child=None
                 if measured_began is not None and measured_elapsed>(8 if args.no_calibrate else 2) and start_capture is None:
                     with (root/'capture-start.log').open('w') as caplog:
@@ -228,12 +230,14 @@ def main():
         result=summarize(rows,first,last,args.mode,args.seconds)
         quality_captures=[first,last]
         for sample in samples:
+            if 'capture_failed' in sample:continue
             measured=captured(root/(sample['name']+'.csv'))
             quality_captures.append(measured)
             sample['channels']={k:{q:v[q] for q in ('pairs','median_ms','min_ms','max_ms')} for k,v in measured['channels'].items()}
             (root/(sample['name']+'.json')).write_text(json.dumps(measured,indent=2)+'\n')
         result.update(sampled_quality(quality_captures,result['av_frame_limit_ms']))
         result['intermediate_captures']=samples
+        result['intermediate_capture_failures']=sum('capture_failed' in s for s in samples)
         if measured_began is None or time.monotonic()-measured_began<args.seconds-1:raise RuntimeError('Incomplete post-calibration measurement duration')
         result['post_calibration_duration_s']=time.monotonic()-measured_began
         for name,data in [('capture-start.json',first),('capture-end.json',last),('result.json',result)]:

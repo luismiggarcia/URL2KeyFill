@@ -1,0 +1,13 @@
+{
+  "application.csv.gz": "bb61b51f898e924303b62902ed0fc0fbec30cd526228a06f61f22f437e37ed27",
+  "capture-sample-000.csv.gz": "64765fb6b635eb019909444803cfc13fbe0eeb4308bf4d356839ff6fff99e298",
+  "capture-sample-000.log.gz": "a00321b2f9f5969910910b29f0c00b0faa2221d2220a6d89a1e6c7a73cefad41",
+  "capture-sample-001.csv.gz": "442f546decf9758203d66622ca9403d94300f637a1486a7640eea548d92667f3",
+  "capture-sample-001.log.gz": "f38b2f88de5b7240ac209035fc46976b227d54fa9e0a76ec489b9810087e8439",
+  "capture-start.csv.gz": "d6f256679d5348f164e5f98bbb5bee74de5b70e7d04445a96470547ca5c8d811",
+  "capture-start.log.gz": "47eadc226da7bb03a29c9af9bf7881521062f72ae91e12ba55f1f05943d72f50",
+  "diagnostic-stop.request": "a11c3d917a2149a4b548217038bc8f2dd2130a1966e0c7af5c4225d81f25a8c3",
+  "manifest.json": "6c20b66b0792be0a30e8bda1751d056a4c8e7e912315bb32acef941eeafea90a",
+  "playback.log.gz": "69946f944df3912e83c120abc1ea08c926eda427fe2dd7ad4630c472fecc5024",
+  "power-checks.tar.gz": "c5c783936e3b3453356e27f6cea2cb60e01ebd620447fa4d8c17dfd895a265f4"
+}

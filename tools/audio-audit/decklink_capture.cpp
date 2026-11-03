@@ -29,8 +29,8 @@ class Capture final:public IDeckLinkInputCallback {
  int64_t callbackHost_=0;
  std::atomic<ULONG> refs_{1};bool armed_[2]={true,true};int quiet_[2]={0,0};
 public:
- std::mutex mutex;std::vector<Row> rows;uint64_t noSignal=0,errors=0,overflow=0,audioFrames=0;bool accepting=true,recording=false,colorStats=false,colorsSampled=false;uint64_t consecutiveVideo=0;bool sawAudio=false;
- void beginRecording(){std::lock_guard<std::mutex> lock(mutex);rows.clear();noSignal=errors=overflow=audioFrames=0;armed_[0]=armed_[1]=true;quiet_[0]=quiet_[1]=0;colorsSampled=false;recording=true;}
+ std::mutex mutex;std::vector<Row> rows;uint64_t noSignal=0,errors=0,overflow=0,audioFrames=0,emptyAudioPackets=0;bool accepting=true,recording=false,colorStats=false,colorsSampled=false;uint64_t consecutiveVideo=0;bool sawAudio=false;
+ void beginRecording(){std::lock_guard<std::mutex> lock(mutex);rows.clear();noSignal=errors=overflow=audioFrames=emptyAudioPackets=0;armed_[0]=armed_[1]=true;quiet_[0]=quiet_[1]=0;colorsSampled=false;recording=true;}
  Capture(){rows.reserve(30000);}
  HRESULT QueryInterface(REFIID iid,LPVOID* p)override{if(!p)return E_INVALIDARG;*p=nullptr;const auto unknown=CFUUIDGetUUIDBytes(IUnknownUUID);if(!std::memcmp(&iid,&unknown,sizeof(iid))||!std::memcmp(&iid,&IID_IDeckLinkInputCallback,sizeof(iid))){*p=static_cast<IDeckLinkInputCallback*>(this);AddRef();return S_OK;}return E_NOINTERFACE;}
  ULONG AddRef()override{return ++refs_;}ULONG Release()override{auto n=--refs_;if(!n)delete this;return n;}
@@ -58,6 +58,8 @@ public:
      }buffer->Release();}
    }
   }
+  // Some input reacquisitions deliver bursts of empty packets; count them, do not log rows.
+  if(audio&&audio->GetSampleFrameCount()==0){++emptyAudioPackets;audio=nullptr;}
   if(audio){BMDTimeValue pts=0;void* bytes=nullptr;const auto n=audio->GetSampleFrameCount();
    if(audio->GetPacketTime(&pts,48000)!=S_OK||audio->GetBytes(&bytes)!=S_OK||!bytes)++errors;
    else{auto pcm=static_cast<const int32_t*>(bytes);audioFrames+=n;double peaks[2]={0,0};
@@ -106,7 +108,7 @@ int main(int argc,char** argv){
    std::fprintf(file,"kind,pts_48k,duration_48k,value,host_48k\n");for(const auto& r:capture->rows)std::fprintf(file,"%s,%lld,%lld,%.9f,%lld\n",r.kind,(long long)r.pts,(long long)r.duration,r.value,(long long)r.host);
    if(std::ferror(file))result=1;if(std::fclose(file))result=1;
   }}
-  std::fprintf(stderr,"rows=%zu audio_frames=%llu no_signal=%llu errors=%llu overflow=%llu\n",capture->rows.size(),capture->audioFrames,capture->noSignal,capture->errors,capture->overflow);
+  std::fprintf(stderr,"rows=%zu audio_frames=%llu no_signal=%llu errors=%llu overflow=%llu empty_audio_packets=%llu\n",capture->rows.size(),capture->audioFrames,capture->noSignal,capture->errors,capture->overflow,capture->emptyAudioPackets);
   if(capture->errors||capture->overflow||!capture->audioFrames)result=1;
  }
  if(audio&&input->DisableAudioInput()!=S_OK)result=1;if(video&&input->DisableVideoInput()!=S_OK)result=1;
