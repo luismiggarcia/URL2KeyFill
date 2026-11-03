@@ -3314,6 +3314,31 @@ calibração de fábrica −2 ms, sem gancho de teste; 10:45–18:45, captura a 
     que a app mostre uma frame de outro instante (anterior ou posterior). A luminância
     capturada não diz qual;
   - só é visível quando calha num flash (~4 % das frames). Noutras frames, o mesmo erro
-    passaria por uma frame repetida ou adiantada no movimento. **Por diagnosticar**, com
-    conteúdo que identifique cada frame (como a referência de `identified-pts`).
+    passaria por uma frame repetida ou adiantada no movimento.
+- **Diagnóstico das frames isoladas (em curso):**
+  - **A app agenda o conteúdo certo.** A telemetria conta os inícios de flash na pintura
+    do browser (`source_flash_count`) e nas frames escolhidas para cada posição SDI
+    (`scheduled_flash_count`). Nas 28 801 s houve exatamente 28 801 em cada um: nem o
+    browser nem a seleção produziram um branco a mais. O conteúdo preparado (`prepared`)
+    é criado para cada frame e fica preso a ela; o cursor de agendamento só avança.
+  - **A medição está certa:** a captura mede o brilho dentro da chamada, com o buffer de
+    entrada bloqueado.
+  - **Só a 1080p59,94.** Em 425 capturas de todos os ensaios (limite: menos de 0,8 s
+    antes do flash seguinte, para excluir flashes curtos):
+
+    | Modo | Capturas | Flashes | Frames isoladas |
+    |---|---|---|---|
+    | 1080p25 | 122 | 3 950 | 0 |
+    | 1080p50 | 108 | 3 464 | 0 |
+    | 1080p59,94 | 195 | 7 975 | 115 |
+
+  - O desvio vai de 2 a 47 frames, sem valor fixo: não acompanha a profundidade da fila
+    nem o ciclo dos buffers. As capturas com identificador por frame (25p e 50p, ~70 000
+    frames, 31/10–02/11) não têm nenhuma frame fora de ordem.
+  - **Hipótese de trabalho:** o defeito está depois do agendamento, no caminho do
+    dispositivo a 59,94p (saída ou entrada do UltraStudio). Falta o teste que decide: a
+    referência do SDK (`decklink_clock --av-reference 1`, sem a app) e a referência
+    identificada da app, ambas a 59,94p.
+  - Às 21:15 a entrada SDI deixou de sincronizar, também com a referência do SDK sem a
+    app, depois de o Mac ter estado a dormir. Os testes ficam à espera da entrada.
 - **Evidência:** `endurance-2026-11-03-5994-r5/`.
