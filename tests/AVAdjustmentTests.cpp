@@ -39,6 +39,7 @@ int main(){try{
  REQUIRE(AVTiming(Rate{1,50}).recommendedHistoryFrames(2880)==20);
  REQUIRE(AVTiming(Rate{1001,60000}).recommendedHistoryFrames(2880)==24);
  // Reliable keeps >= 100 ms of audio at every cadence; Low latency stays frame based.
+ REQUIRE(AVTiming(Rate{1,25}).videoFrames(3)==3);REQUIRE(AVTiming(Rate{1,50}).videoFrames(3)==5);REQUIRE(AVTiming(Rate{1001,60000}).videoFrames(3)==6);REQUIRE(AVTiming(Rate{1,60}).videoFrames(3)==6);REQUIRE(AVTiming(Rate{1001,60000}).videoFrames(2)==2);
  REQUIRE(AVTiming(Rate{1,25}).audioTarget(3)==5760);REQUIRE(AVTiming(Rate{1,50}).audioTarget(3)==4800);REQUIRE(AVTiming(Rate{1001,60000}).audioTarget(3)==4800);REQUIRE(AVTiming(Rate{1001,60000}).audioTarget(2)==1602);
  for(Rate rate:{Rate{1,25},Rate{1,50},Rate{1001,60000}}){
   AVTiming t(rate);const auto retained=t.recommendedHistoryFrames(2880);
