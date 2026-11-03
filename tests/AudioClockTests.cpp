@@ -28,6 +28,10 @@ int main(){try{
  {AudioMapping m{1000,1,0};const auto before=m.at(5678);m.rateAt(5678,1.0001);REQUIRE(m.at(5678)==before);REQUIRE(std::abs(m.at(10678)-before-5000.5)<1e-8);
   PublishedAudioMapping published;published.publish({0,1,0});std::atomic<bool> done{false},bad{false};std::thread writer([&]{for(int i=0;i<100000;++i)published.publish({double(i),1.,i});done=true;});while(!done){if(auto a=published.read())if(a->source!=double(a->stream))bad=true;}writer.join();REQUIRE(!bad);}
  {AudioDriftServo s;s.reset(1000000,0,991360);REQUIRE(s.observe(1024000,24000,29760,5760,2880,96));REQUIRE(!s.observe(1500001,500001,505761,5760,2880,96));}
+ {RecoveryBudget b;REQUIRE(b.allow(0));REQUIRE(b.allow(1));REQUIRE(!b.allow(2)); // Third inside the window fails.
+  RecoveryBudget spread;const auto w=RecoveryBudget::window;REQUIRE(spread.allow(0));REQUIRE(spread.allow(w/2));
+  REQUIRE(spread.allow(w+1));REQUIRE(!spread.allow(w+2)); // Old incidents expire; recent ones still count.
+  RecoveryBudget daily;for(int day=0;day<30;++day)REQUIRE(daily.allow(int64_t(day)*24*3600*48000));} // Isolated incidents never stop output.
  AudioResampler filter;
  double ripple=0;for(double phase:{0.,.125,.5,.9999})for(int hz=0;hz<=18000;hz+=100){std::complex<double> h=0;for(int tap=0;tap<AudioResampler::taps;++tap)h+=filter.coefficient(tap,phase)*std::exp(std::complex<double>(0,-2*std::numbers::pi*hz/48000*(tap-AudioResampler::left-phase)));ripple=std::max(ripple,std::abs(20*std::log10(std::abs(h))));}REQUIRE(ripple<.1);std::cout<<"passband max error dB="<<ripple<<'\n';
  for(double ratio:{.9999,1.,1.0001})for(int hz:{1000,18000}){

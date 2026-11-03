@@ -19,6 +19,18 @@ public:
  void publish(const AudioMapping& m){version_.fetch_add(1,std::memory_order_seq_cst);source_.store(m.source,std::memory_order_seq_cst);ratio_.store(m.ratio,std::memory_order_seq_cst);stream_.store(m.stream,std::memory_order_seq_cst);version_.fetch_add(1,std::memory_order_seq_cst);}
  std::optional<AudioMapping> read()const{for(int i=0;i<4;++i){const auto a=version_.load(std::memory_order_seq_cst);if(a&1)continue;AudioMapping m{source_.load(std::memory_order_seq_cst),ratio_.load(std::memory_order_seq_cst),stream_.load(std::memory_order_seq_cst)};if(a==version_.load(std::memory_order_seq_cst))return m;}return {};}
 };
+// Coarse servo recoveries tolerated inside a window before the output is declared failed.
+// A session-wide count would turn isolated incidents in a multi-day run into a stop.
+class RecoveryBudget {
+ std::array<int64_t,2> times_{};size_t count_=0;
+public:
+ static constexpr int64_t window=10*60*48000;
+ // Records a recovery at host samples; false when it is the third inside the window.
+ bool allow(int64_t host){
+  size_t kept=0;for(size_t i=0;i<count_;++i)if(host-times_[i]<window)times_[kept++]=times_[i];count_=kept;
+  if(count_==times_.size())return false;times_[count_++]=host;return true;
+ }
+};
 enum class AudioClockDecision { accepted, callbackGap, slowQuery, nonMonotonicHost, backwardConsumption, phaseJump, rateOutside };
 class AudioDriftServo {
  struct Point{double host=0,device=0;};std::array<Point,240> points_{};size_t size_=0,next_=0;

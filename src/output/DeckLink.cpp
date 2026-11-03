@@ -69,7 +69,7 @@ public:
 class AudioCallback final:public IDeckLinkAudioOutputCallback {
  std::atomic<ULONG> refs_{1};IDeckLinkOutput* output_;std::shared_ptr<AudioMixer> mixer_;std::mutex mutex_;std::condition_variable startCv_;
  int64_t playbackScale_;uint32_t startupPadding_,reserve_;AVTiming timing_;AVDelay delay_,oldDelay_;std::shared_ptr<std::atomic<int32_t>> adjustment_;AudioMapping oldMapping_;
- AudioDriftServo servo_;AudioResampler resampler_;uint32_t driftResets_=0;
+ AudioDriftServo servo_;AudioResampler resampler_;RecoveryBudget driftResets_;
  std::unique_ptr<SyncAudioTrace> syncTrace_;
  std::unique_ptr<SyncIncidentWindow<SyncCallbackEvent>> callbackTrace_;std::shared_ptr<CompletionState> completion_;
  std::unique_ptr<SyncEventBuffer<SyncCallbackEvent>> recoveryTrace_;int64_t lastCallback_=0;
@@ -121,7 +121,7 @@ public:
   const auto consumed=schedule_.cursor()-int64_t(buffered);const auto midpoint=queueBefore+(queueAfter-queueBefore)/2;
   bool driftReset=false;
   if(activeTime&&clockCalibrated&&!recovered&&!servo_.observe(midpoint,consumed,schedule_.cursor(),schedule_.target(),sourceAge_,queueAfter-queueBefore)){
-   event.reason=100+int(servo_.decision);event.phase=servo_.phaseError;event.candidateRatio=servo_.candidateRatio;driftReset=true;++recoveries;if(++driftResets_>=3)return fail();
+   event.reason=100+int(servo_.decision);event.phase=servo_.phaseError;event.candidateRatio=servo_.candidateRatio;driftReset=true;++recoveries;if(!driftResets_.allow(midpoint))return fail();
   }
   if(activeTime&&(recovered||driftReset||(!clockCalibrated&&phase_.observe(midpoint,consumed,queueAfter-queueBefore)))){
    oldMapping_=servo_.mapping;oldDelay_=delay_;startupShift=schedule_.calibrateQueue(midpoint,buffered,sourceAge_);fadePosition_=startupShift?0:240;sourceOrigin=schedule_.sourceOrigin();clockCalibrated=!recovered;servo_.reset(midpoint,consumed,schedule_.sourceOrigin());
