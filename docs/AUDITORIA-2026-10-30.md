@@ -3207,5 +3207,71 @@ teoria, a reserva atrasa áudio e vídeo por igual e não muda o A/V.
   - as capturas inicial e final e a telemetria continuam a decidir a aceitação.
 - **Evidência:** `endurance-2026-11-03-5994-r3-capture-failed/`.
 
-**Quarto ensaio de 8 h**, iniciado a 2026-11-03 com a app `4512533` e as ferramentas
-corrigidas. O resultado será acrescentado aqui.
+**Quarto ensaio de 8 h (`4512533`, ferramentas `34e21aa`).**
+- **Saída da app:** limpa durante 22 051 s (6 h 07 min). Sem recuperações, frames
+  descartadas, amostras em falta nem erros de API; o áudio nunca desceu dos 34 ms de folga.
+- **A/V** (captura inicial e 23 intermédias, medianas): de −0,6 a +29,5 ms. Todas dentro
+  da ATSC (−15/+45) e da EBU R37 (−40/+60).
+  - As medianas alternam entre ~0–7 ms e ~24–29 ms, a oscilação entre frames vizinhas já
+    descrita.
+  - Duas capturas têm um único flash detetado exatamente 15 frames (250 ms) antes da
+    grelha de 1 s; as medianas não são afetadas. Fica como curiosidade da deteção.
+  - A captura 19 recebeu só pacotes de áudio vazios (a mesma rajada da entrada do
+    terceiro ensaio). Ficou registada como lacuna e o ensaio continuou, como previsto.
+- **Paragem:** o DeckLink marcou **1 frame como exibida atrasada** (frame 1321708,
+  `DisplayedLate`), e o watchdog parou o ensaio.
+- **Causa:**
+  - o worker de vídeo só agendava quando uma notificação de conclusão devolvia um slot.
+    Entre −132,6 ms e −42,5 ms **não chegou nenhuma notificação de conclusão** (pausa de
+    90 ms), seguidas de quatro em 2,6 ms;
+  - com 6 frames em voo (100 ms), a frame seguinte foi agendada com 8,9 ms de
+    antecedência e saiu atrasada. A recuperação do cursor saltou a frame 1321709;
+  - o áudio perdeu só ~4 ms de folga na mesma janela: a pausa foi das notificações de
+    vídeo, não do driver inteiro;
+  - **gatilho externo:** às 10:18:39 o atualizador do OneDrive lançou o `installer`. O
+    log do sistema mostra uma enxurrada de eventos de ficheiros (até ~10 000 linhas/s do
+    `fseventsd`) e o reinício do OneDrive às 10:18:57,9, dois segundos antes da frame
+    atrasada.
+- **Evidência:** `endurance-2026-11-03-5994-r4-late-frame/` (inclui um resumo do log do
+  sistema por segundo e por processo).
+
+**Correção (agendamento pelo relógio do dispositivo).** Aumentar outra vez a reserva só
+mudaria o limiar e acrescentaria latência. O hardware continua a exibir durante a pausa;
+o que falta é saber que os slots ficaram livres.
+- **Slots de reserva:** além da profundidade da fila (`videoFrames`, que não muda), a app
+  aloca slots para 200 ms de pausa (`videoPool`): 25p 3+5, 50p 5+10, 59,94p 6+12, Low
+  latency a 59,94p 2+12. São ~8 MB por slot a 1080p.
+- **Worker:** acorda a cada conclusão e logo após cada fronteira de frame do relógio do
+  dispositivo (+0,25 ms). Repõe a fila até à mesma profundidade medida contra o
+  `GetScheduledStreamTime` (`videoFramesAhead`). Em regime normal comporta-se como antes;
+  numa pausa, usa os slots de reserva sem perder antecedência.
+- **Telemetria nova:** `video_completion_gap_max_ms` (maior intervalo entre conclusões) e
+  `video_frames_peak` (máximo de frames no dispositivo). Mostram se houve pausas e se
+  foram absorvidas.
+- **Gancho de teste:** `U2K_TEST_COMPLETION_PAUSE_MS` pausa uma notificação de conclusão
+  em cada 600.
+- **Verificação** (`completion-pause-2026-11-03/`, loopback de 60–90 s por caso):
+
+  | Caso | Atrasadas / descartadas | Maior intervalo | Pico de frames | A/V |
+  |---|---|---|---|---|
+  | 59,94p Reliable, sem pausa | 0 / 0 | 16,9 ms | 6 | +11,6 ms |
+  | 59,94p Reliable, pausa de 150 ms | 0 / 0 | 176,8 ms | 16 | −1,3 ms |
+  | 59,94p Low latency, sem pausa | 0 / 0 | 17,0 ms | 2 | −15,4 ms |
+  | 59,94p Low latency, pausa de 90 ms | 0 / 0 | 116,7 ms | 8 | −3,4 ms |
+  | 50p Reliable, sem pausa | 0 / 0 | 20,1 ms | 5 | +22,5 ms |
+  | 25p Reliable, sem pausa | 0 / 0 | 40,2 ms | 3 | +3,5 ms |
+  | 25p Reliable, pausa de 150 ms | 0 / 0 | 200,0 ms | 7 | +26,2 ms |
+
+  - Sem pausa, o pico é igual à profundidade: o regime normal não mudou.
+  - **Controlo:** uma pausa de 400 ms ultrapassa fila mais reserva (300 ms a 59,94p) e dá
+    7 frames descartadas, com os 18 slots em uso. O gancho reproduz o problema, e um
+    callback parado não bloqueia o `ScheduleVideoFrame`.
+  - **Primeira versão rejeitada:** com um temporizador fixo de meia frame, o Low latency
+    falhou com a pausa de 90 ms (7 atrasadas, 12 descartadas). Neste perfil a antecedência
+    é de ~1 frame, e acordar até 8,3 ms depois da fronteira deixava ~8 ms. Daí acordar na
+    fronteira.
+  - O −15,4 ms do Low latency sem pausa fica 0,4 ms fora da ATSC e dentro da EBU, a
+    oscilação entre frames vizinhas já conhecida a 59,94p.
+
+**Nota operacional:** numa máquina de emissão, desligar as atualizações automáticas
+(OneDrive incluído) durante o serviço; esta correção dá margem, não a substitui.
