@@ -220,10 +220,12 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
 }
 -(void)setScale:(double)scale{
  scale=std::clamp(scale,.5,1.);const double old=[prefs[@"uiScale"] doubleValue];if(scale==old||[prefs[@"viewMode"] isEqual:@"monitor"])return;
- prefs[@"uiScale"]=@(scale);web.pageZoom=scale;window.minSize=NSMakeSize(std::round(1050*scale),std::round(390*scale));
- // Keep the top-left corner; the page then reports the scaled height.
+ prefs[@"uiScale"]=@(scale);window.minSize=NSMakeSize(std::round(1050*scale),std::round(390*scale));
+ // Keep the top-left corner; the page scales itself with a CSS transform and reports
+ // the scaled height. WKWebView pageZoom is not used: WebKit keeps zoomed text at 9 px
+ // or more, so text outgrew its controls at the smaller scales.
  NSRect f=window.frame;const double top=NSMaxY(f);f.size=NSMakeSize(std::round(f.size.width*scale/old),std::round(f.size.height*scale/old));f.origin.y=top-f.size.height;[window setFrame:f display:YES];
- [self scheduleSave];
+ [self scheduleSave];[self sendState];
 }
 -(void)setViewMode:(NSString*)mode{
  if([prefs[@"viewMode"] isEqual:mode])return;
@@ -231,7 +233,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  prefs[@"viewMode"]=mode;[self applyView];[self scheduleSave];[self sendState];
 }
 -(void)applyView{
- const bool solo=[prefs[@"viewMode"] isEqual:@"monitor"];const double scale=[prefs[@"uiScale"] doubleValue];web.pageZoom=solo?1:scale;
+ const bool solo=[prefs[@"viewMode"] isEqual:@"monitor"];const double scale=[prefs[@"uiScale"] doubleValue];
  // Monitor Only puts the preview under the transparent page so its overlay controls stay on top.
  [preview removeFromSuperview];[window.contentView addSubview:preview positioned:solo?NSWindowBelow:NSWindowAbove relativeTo:web];
  if(!solo){window.contentResizeIncrements=NSMakeSize(1,1);window.minSize=NSMakeSize(std::round(1050*scale),std::round(390*scale));[window setFrame:fullFrame display:YES];return;}
@@ -257,9 +259,9 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  NSDictionary* data=msg.body;NSString* type=data[@"type"];if(![type isKindOfClass:NSString.class])return;
  try{
  if([type isEqual:@"ready"]){ready=YES;[self sendState];return;}
- if([type isEqual:@"layout"]){const bool solo=[prefs[@"viewMode"] isEqual:@"monitor"];const double z=web.pageZoom;double h=[data[@"heightWindow"] doubleValue];if(!solo&&std::isfinite(h)&&h>=300&&h<2000){NSRect f=window.frame;double desired=std::min(std::round(h*z),NSScreen.mainScreen.visibleFrame.size.height-30);if(std::abs(f.size.height-desired)>2){f.origin.y+=f.size.height-desired;f.size.height=desired;[window setFrame:f display:YES];}}
+ if([type isEqual:@"layout"]){const bool solo=[prefs[@"viewMode"] isEqual:@"monitor"];double h=[data[@"heightWindow"] doubleValue];if(!solo&&std::isfinite(h)&&h>=150&&h<2000){NSRect f=window.frame;double desired=std::min(std::round(h),NSScreen.mainScreen.visibleFrame.size.height-30);if(std::abs(f.size.height-desired)>2){f.origin.y+=f.size.height-desired;f.size.height=desired;[window setFrame:f display:YES];}}
   // Page coordinates are CSS pixels; page zoom scales them to view points.
-  NSRect r=NSMakeRect([data[@"x"] doubleValue]*z,window.contentView.bounds.size.height-([data[@"y"] doubleValue]+[data[@"height"] doubleValue])*z,[data[@"width"] doubleValue]*z,[data[@"height"] doubleValue]*z);if(r.size.width>=0&&r.size.width<10000&&r.size.height>=0&&r.size.height<10000)preview.frame=r;preview.hidden=![data[@"show"] boolValue];return;}
+  NSRect r=NSMakeRect([data[@"x"] doubleValue],window.contentView.bounds.size.height-([data[@"y"] doubleValue]+[data[@"height"] doubleValue]),[data[@"width"] doubleValue],[data[@"height"] doubleValue]);if(r.size.width>=0&&r.size.width<10000&&r.size.height>=0&&r.size.height<10000)preview.frame=r;preview.hidden=![data[@"show"] boolValue];return;}
  if([type isEqual:@"drag"]){dragging=YES;dragScreen=NSEvent.mouseLocation;dragOrigin=window.frame.origin;return;}
  if([type isEqual:@"view"]){NSString* mode=data[@"mode"];if([mode isKindOfClass:NSString.class]&&[@[@"full",@"monitor"] containsObject:mode])[self setViewMode:mode];return;}
  if([type isEqual:@"alwaysOnTop"]){[self toggleOnTop:nil];return;}
@@ -329,7 +331,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  std::ostringstream metrics;metrics<<std::fixed<<std::setprecision(1)<<"CEF "<<browserRate<<" fps · Composite "<<composeRate<<" fps · SDI "<<sdIRate<<" fps · Browser "<<size.width<<" × "<<size.height<<" · ";if(mode)metrics<<"SDI "<<mode->rate.label()<<" · ";metrics<<"Composites "<<scene->composed<<" · SDI frames "<<status.completed<<" · Late "<<status.late<<" · Dropped "<<status.dropped<<" · Audio captured "<<captured<<" / SDI "<<status.audioFrames<<" frames · Audio errors "<<status.audioErrors<<" · Audio missing source frames "<<missingFrames<<" · Audio buffer overruns "<<overruns<<" · Audio unused expired "<<unusedExpired<<" · Audible audio samples "<<mixer->nonSilent<<" · Limited samples "<<mixer->clipped;metrics<<" · Audio clock recoveries "<<status.audioRecoveries<<" · Source read offset "<<status.audioSourceAge/48.<<" ms · Clock resets "<<clockResets;if(status.audioReadAge!=INT64_MIN)metrics<<" · Last source window age "<<status.audioReadAge/48.<<" ms";
  metrics<<" · Clock correction "<<status.audioRatePpm<<" ppm · Clock phase "<<status.audioPhaseError/48.<<" ms · Timing profile "<<([prefs[@"timingProfile"] isEqual:@"low"]?"Low latency":"Reliable")<<" · A/V adjustment "<<[prefs[@"syncOffsetMs"] intValue]<<" ms";
  NSString* detail=[[pageStates componentsJoinedByString:@" | "] stringByAppendingFormat:@"\nSource headroom (last read, per layer): %@",[audioWindows componentsJoinedByString:@" | "]];NSString* diagnostics=[ns(metrics.str()) stringByAppendingFormat:@"\n%@",detail];
- NSDictionary* state=@{@"examples":examples?:@[],@"layers":layers,@"layersVisible":prefs[@"layersVisible"],@"device":prefs[@"device"],@"deviceName":deviceName,@"devices":deviceList,@"mode":prefs[@"mode"],@"modeName":mode?ns(mode->name.substr(0,mode->name.find(" · "))):@"Unavailable",@"modes":modeList,@"pixels":pixels,@"pixel":prefs[@"pixel"],@"outputs":outputs,@"keying":prefs[@"keying"],@"width":@(size.width),@"height":@(size.height),@"browserSize":prefs[@"browserSize"],@"timingProfile":prefs[@"timingProfile"],@"version":appVersion(),@"viewMode":prefs[@"viewMode"],@"alwaysOnTop":prefs[@"alwaysOnTop"],@"syncOffsetMs":prefs[@"syncOffsetMs"],@"audioMuted":prefs[@"audioMuted"],@"audioGain":prefs[@"audioGain"]?:@1,@"audioMono":prefs[@"audioMono"]?:@NO,@"audioLeft":prefs[@"audioLeft"]?:@YES,@"audioRight":prefs[@"audioRight"]?:@YES,@"monitorOutput":@(monitorOutput),@"monitoredLayers":monitoredLayers.allObjects,@"monitoredAFL":monitoredAFL.allObjects,@"monitorOutputPFL":@(monitorOutputPFL),@"output":@{@"running":@(status.running),@"onAir":@(status.onAir)},@"diagnostics":diagnostics,@"message":message?:@"Ready",@"openSetup":@(openSetup),@"openLayerId":openLayerId?:@""};
+ NSDictionary* state=@{@"examples":examples?:@[],@"layers":layers,@"layersVisible":prefs[@"layersVisible"],@"device":prefs[@"device"],@"deviceName":deviceName,@"devices":deviceList,@"mode":prefs[@"mode"],@"modeName":mode?ns(mode->name.substr(0,mode->name.find(" · "))):@"Unavailable",@"modes":modeList,@"pixels":pixels,@"pixel":prefs[@"pixel"],@"outputs":outputs,@"keying":prefs[@"keying"],@"width":@(size.width),@"height":@(size.height),@"browserSize":prefs[@"browserSize"],@"timingProfile":prefs[@"timingProfile"],@"version":appVersion(),@"viewMode":prefs[@"viewMode"],@"uiScale":prefs[@"uiScale"],@"alwaysOnTop":prefs[@"alwaysOnTop"],@"syncOffsetMs":prefs[@"syncOffsetMs"],@"audioMuted":prefs[@"audioMuted"],@"audioGain":prefs[@"audioGain"]?:@1,@"audioMono":prefs[@"audioMono"]?:@NO,@"audioLeft":prefs[@"audioLeft"]?:@YES,@"audioRight":prefs[@"audioRight"]?:@YES,@"monitorOutput":@(monitorOutput),@"monitoredLayers":monitoredLayers.allObjects,@"monitoredAFL":monitoredAFL.allObjects,@"monitorOutputPFL":@(monitorOutputPFL),@"output":@{@"running":@(status.running),@"onAir":@(status.onAir)},@"diagnostics":diagnostics,@"message":message?:@"Ready",@"openSetup":@(openSetup),@"openLayerId":openLayerId?:@""};
  openSetup=NO;openLayerId=nil;NSData* json=[NSJSONSerialization dataWithJSONObject:state options:0 error:nil];NSString* script=[@"window.receiveState(" stringByAppendingFormat:@"%@);",[[NSString alloc]initWithData:json encoding:NSUTF8StringEncoding]];[web evaluateJavaScript:script completionHandler:^(id value,NSError* error){if(error)std::cerr<<"UI state error: "<<error.localizedDescription.UTF8String<<'\n';}];
 }
 -(void)sendAudioLevels{
