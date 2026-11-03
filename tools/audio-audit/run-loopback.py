@@ -31,6 +31,9 @@ def main():
     p.add_argument('--content-pts', action='store_true', help='Select by identified content PTS; requires --reference-ids')
     p.add_argument('--source-url', help='Diagnostic source override, only with --app')
     p.add_argument('--mode', choices=['1080p25', '1080p50', '1080p5994'], default='1080p25')
+    p.add_argument('--overlay-url', help='Second, animated layer above the A/V source; only with --app')
+    p.add_argument('--cef-rate-multiplier', type=int, choices=[1,2], default=1, help='Paint CEF at N x the SDI cadence; only with --app')
+    p.add_argument('--raw-av', action='store_true', help='Measure without the calibrated per-mode default (--no-av-calibration); only with --app')
     p.add_argument('--external-begin-frame', action='store_true', help='Prototype: paint CEF on the SDI selection grid; only with --app')
     p.add_argument('--seconds', type=int, default=30)
     p.add_argument('--settle-seconds', type=float, default=4, help='Start playback first and settle 1..10 seconds before locked capture')
@@ -57,6 +60,15 @@ def main():
         play_cmd += ['--sdi-av-reference-ids']
     if args.content_pts:
         play_cmd += ['--sdi-av-content-pts']
+    if args.overlay_url:
+        if not args.app:p.error('--overlay-url requires --app')
+        play_cmd += ['--sdi-av-overlay-url', args.overlay_url]
+    if args.cef_rate_multiplier!=1:
+        if not args.app:p.error('--cef-rate-multiplier requires --app')
+        play_cmd += ['--cef-rate-multiplier', str(args.cef_rate_multiplier)]
+    if args.raw_av:
+        if not args.app:p.error('--raw-av requires --app')
+        play_cmd += ['--no-av-calibration']
     if args.external_begin_frame:
         if not args.app:p.error('--external-begin-frame requires --app')
         play_cmd += ['--external-begin-frame']

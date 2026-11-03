@@ -1,4 +1,5 @@
 #include "core/AVAdjustment.hpp"
+#include "core/AVCalibration.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
@@ -54,6 +55,13 @@ int main(){try{
    const auto again=nextVideoSelectionTime(m,duration,scale,delay,*next+1);REQUIRE(again&&*again-*next>=799&&*again-*next<=803);host=*next+400;}
  }
  REQUIRE(!nextVideoSelectionTime({0,0,0},1001,60000,0,1000));
+ // Calibrated defaults exist only for measured cadences; manual adjustment adds and clamps.
+ for(const Rate r:{Rate{1000,25000},Rate{1000,50000},Rate{1001,60000}})REQUIRE(calibratedSyncMs(r).has_value());
+ REQUIRE(!calibratedSyncMs(Rate{1001,30000}));REQUIRE(!calibratedSyncMs(Rate{1000,60000}));
+ REQUIRE(cefRateMultiplier(Rate{1000,25000})==2);REQUIRE(cefRateMultiplier(Rate{1000,50000})==1);REQUIRE(cefRateMultiplier(Rate{1001,60000})==1);
+ REQUIRE(cefRateMultiplier(Rate{1000,60000})==1);REQUIRE(cefRateMultiplier(Rate{1001,30000})==2);REQUIRE(cefRateMultiplier(Rate{1001,24000})==2);
+ REQUIRE(effectiveSyncMs(std::nullopt,-35)==-35);REQUIRE(effectiveSyncMs(30,15)==45);
+ REQUIRE(effectiveSyncMs(150,100)==200);REQUIRE(effectiveSyncMs(-150,-100)==-200);
  std::cout<<"PASS plans="<<plans<<" physical-grid onset comparisons="<<onsets<<" including zero/positive unchanged and +/-200 ppm\n";
  return 0;
 }catch(const std::exception& e){std::cerr<<"FAIL "<<e.what()<<'\n';return 1;}}

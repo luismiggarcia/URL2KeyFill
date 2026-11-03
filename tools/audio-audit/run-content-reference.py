@@ -17,8 +17,10 @@ def main():
     p.add_argument('--sync-offset-ms', type=int, default=0)
     p.add_argument('--selection', choices=['arrival', 'content'], help='Use the identified reference, selecting arrival or experimental content PTS')
     p.add_argument('--app', required=True)
+    p.add_argument('--cef-rate-multiplier', type=int, choices=[1,2], default=1)
+    p.add_argument('--raw-av', action='store_true', help='Measure without the calibrated per-mode default')
     p.add_argument('--capture', required=True)
-    p.add_argument('--mode', choices=['1080p25', '1080p50'], required=True)
+    p.add_argument('--mode', choices=['1080p25', '1080p50', '1080p5994'], required=True)
     p.add_argument('--seconds', type=int, default=30)
     p.add_argument('--directory', required=True)
     args = p.parse_args()
@@ -73,6 +75,10 @@ def main():
                    '--timing-profile', args.timing_profile, '--sync-offset-ms', str(args.sync_offset_ms)]
         if args.sync_change_ms is not None:
             command += ['--sync-change-ms',str(args.sync_change_ms)]
+        if args.raw_av:
+            command += ['--raw-av']
+        if args.cef_rate_multiplier!=1:
+            command += ['--cef-rate-multiplier', str(args.cef_rate_multiplier)]
         if args.selection:
             command += ['--reference-ids']
         if args.selection == 'content':
