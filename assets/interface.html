@@ -265,6 +265,18 @@
 @container (max-width:520px){#studio-refined .sr-front{grid-template-columns:1fr 1fr;gap:20px 16px;padding:20px 16px}#studio-refined .sr-identity{grid-column:1 / span 2;grid-row:auto;display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}#studio-refined .sr-logo{font-size:22px}#studio-refined .sr-output{grid-column:2;grid-row:2}#studio-refined .sr-power{grid-column:1;grid-row:2;margin:0}#studio-refined .sr-controls{grid-column:1;grid-row:2}#studio-refined .sr-layers{grid-column:2;grid-row:2}#studio-refined .sr-monitor{grid-column:1 / span 2;grid-row:3}#studio-refined .sr-fields{grid-template-columns:1fr}#studio-refined .sr-layer-name{font-size:11px}#studio-refined .sr-layer-toggle{padding-left:7px;gap:5px}#studio-refined .sr-layer-number{display:none}#studio-refined .sr-link{flex-basis:27px}#studio-refined .sr-settings{padding:18px 16px}#studio-refined select,#studio-refined .sr-url-input{font-size:16px}#studio-refined .sr-matrix{gap:12px 8px}#studio-refined footer{padding:6px 16px;font-size:11px}#studio-refined .sr-feedback{max-width:65%}#studio-refined .sr-layer-row{min-height:42px}}
 #studio-refined .sr-delete{margin-right:auto}
 #studio-refined .sr-small-button.sr-delete.is-armed{background:linear-gradient(#b0463d,#80281f);border-color:#ec8576;color:#fff;text-shadow:none}
+/* POWER armed (outside PLAY): red symbol, label OFF. In PLAY: red symbol blinking for 5 s. */
+#studio-refined .sr-power:is(.is-armed,.is-air-warning) .sr-power-icon{color:#ff6f61;filter:drop-shadow(0 0 2px #ff5a4caa) drop-shadow(0 0 5px #ff5a4c66)}
+#studio-refined .sr-power.is-air-warning .sr-power-icon{animation:sr-power-blink 1s step-end 5}
+@keyframes sr-power-blink{50%{opacity:.15}}
+/* Quitting refused in PLAY: the ON AIR label blinks inverted (red background, black text) for 5 s. */
+#studio-refined .sr-monitor-air{--sr-air-color:#bfcbd9;--sr-air-bg:transparent}
+#studio-refined .sr-monitor-air[data-state=live],#studio-refined .sr-solo-tally[data-state=live]{--sr-air-color:#ff2535}
+#studio-refined .sr-monitor-air[data-state=paused],#studio-refined .sr-solo-tally[data-state=paused]{--sr-air-color:#edc06b}
+#studio-refined .sr-solo-tally{--sr-air-bg:#0b0f13cc}
+#studio-refined :is(.sr-monitor-air,.sr-solo-tally).is-air-warning{animation:sr-air-invert 1s step-end 5}
+#studio-refined .sr-solo-tally.is-air-warning .sr-air-dot{visibility:hidden}
+@keyframes sr-air-invert{0%{background:#ff2535;color:#000}50%{background:var(--sr-air-bg);color:var(--sr-air-color)}}
 
 #studio-refined .sr-output-values{display:flex;align-items:baseline;gap:4.5px;flex-wrap:wrap;margin-top:6px}
 #studio-refined .sr-output-values .sr-format-label,#studio-refined .sr-output-values .sr-output-kind{margin:0;display:inline}
@@ -795,7 +807,7 @@ if(!customElements.get('studio-button'))customElements.define('studio-button',St
 <script>
 (()=>{
 const root=document.getElementById('studio-refined'),chassis=root.querySelector('.sr-chassis'),list=root.querySelector('.sr-layer-list'),setup=root.querySelector('.sr-setup-drawer'),drawer=root.querySelector('.sr-layer-drawer'),modal=root.querySelector('.sr-modal'),feedback=root.querySelector('.sr-feedback');
-let deleteArmed=null,state=null,editing=null,editMode=false,setupOpen=false,audioOpen=false,layerOpen=false,monitor='image',modalMode='quit',signature='',drag=null,suppressUntil=0;
+let deleteArmed=null,powerArmed=null,airWarning=null,state=null,editing=null,editMode=false,setupOpen=false,audioOpen=false,layerOpen=false,monitor='image',modalMode='quit',signature='',drag=null,suppressUntil=0;
 const button=a=>root.querySelector('[data-action="'+a+'"]');
 function send(type,data={}){window.webkit.messageHandlers.native.postMessage({type,...data});}
 function paintIcons(){root.querySelectorAll('[data-lucide]').forEach(i=>{i.textContent=({'power':'⏻','chevron-down':'⌄','refresh-cw':'⟳'})[i.dataset.lucide]||'';i.removeAttribute('data-lucide');});}
@@ -805,7 +817,7 @@ function setSetup(open){setupOpen=open;setup.classList.toggle('open',open);setup
 // CONFIRM DELETE) for 3 s; Esc, a click elsewhere or closing the layer disarms it.
 function armDelete(){const b=button('delete-layer');b.classList.add('is-armed');b.textContent='CONFIRM DELETE';deleteArmed=setTimeout(disarmDelete,3000);}
 function disarmDelete(){if(!deleteArmed)return;clearTimeout(deleteArmed);deleteArmed=null;const b=button('delete-layer');b.classList.remove('is-armed');b.textContent='DELETE';}
-document.addEventListener('pointerdown',e=>{if(deleteArmed&&!e.target.closest('[data-action="delete-layer"]'))disarmDelete();},true);
+document.addEventListener('pointerdown',e=>{if(deleteArmed&&!e.target.closest('[data-action="delete-layer"]'))disarmDelete();if(powerArmed&&!e.target.closest('[data-action="power"]'))disarmPower();},true);
 function closeLayer(){disarmDelete();layerOpen=false;editing=null;drawer.classList.remove('open');drawer.inert=true;drawer.setAttribute('aria-hidden','true');report();}
 function syncLayerButtons(layer){
  [['.sr-visible-input',layer.visible],['.sr-layer-mute',layer.muted],['.sr-layer-mono',layer.mono],['.sr-layer-left',layer.left!==false],['.sr-layer-right',layer.right!==false]].forEach(([selector,value])=>root.querySelector(selector).setAttribute('aria-pressed',String(!!value)));
@@ -938,8 +950,16 @@ root.querySelector('.sr-gain-db').addEventListener('keydown',e=>{if(e.key==='Ent
 
 root.querySelector('.sr-layer-editor').onsubmit=e=>{e.preventDefault();document.activeElement.blur();};
 function showConfirm(mode){modalMode=mode;modal.hidden=false;modal.classList.toggle('sr-live-warning',mode==='quit');modal.querySelector('.sr-dialog').setAttribute('role',mode==='quit'?'alertdialog':'dialog');modal.querySelector('h3').textContent=mode==='delete'?'Delete this layer?':'WARNING — SDI OUTPUT ACTIVE';modal.querySelector('p').textContent=mode==='delete'?'This layer will be removed from the composition.':'Quitting will immediately cut the SDI video and audio signal. This may interrupt a live broadcast. Are you sure you want to stop output and quit?';button('confirm-quit').textContent=mode==='delete'?'DELETE':'STOP OUTPUT AND QUIT';report();button('cancel-quit').focus();}
-window.confirmQuit=()=>showConfirm('quit');
-root.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>{const a=b.dataset.action;if(a==='play')send('play');if(a==='pause')send('pause');if(a==='edit'){editMode=!editMode;if(!editMode)closeLayer();signature='';drawLayers();colors();}if(a==='audio')setAudio(!audioOpen);if(a==='close-audio')setAudio(false);if(a==='setup')setSetup(!setupOpen);if(a==='close-setup')setSetup(false);if(a==='close-layer')closeLayer();if(a==='add')send('add');if(a==='reload')send('reload');if(a==='reload-one'&&editing)send('reload',{id:editing});if(a==='refresh'||a==='refresh-help')send('refresh');if(a==='image'||a==='key'){monitor=a;send('monitor',{key:a==='key'});colors();}if(a==='solo-monitor'){monitor=b.dataset.monitor;send('monitor',{key:monitor==='key'});colors();}if(a==='on-top')send('alwaysOnTop');if(a==='full-view')send('view',{mode:'full'});if(a==='master-mute')send('audioMute',{value:!state.audioMuted});if(a==='power')send('requestQuit');if(a==='cancel-quit'){modal.hidden=true;report();}if(a==='delete-layer'){if(deleteArmed){const id=editing;disarmDelete();send('delete',{id});closeLayer();}else armDelete();}if(a==='confirm-quit'){modal.hidden=true;send('quit');report();}if(a==='diagnostics'){const el=root.querySelector('.sr-diagnostics');el.hidden=!el.hidden;report();}}));
+// POWER: outside PLAY the first press arms it (red symbol, OFF) for 5 s and a second press
+// quits. In PLAY it never quits: the symbol blinks red and the ON AIR label blinks inverted
+// for 5 s. ⌘Q/⌘W in PLAY reach window.confirmQuit and blink the label the same way.
+function armPower(){const b=button('power');b.classList.add('is-armed');b.querySelector('span').textContent='OFF';clearTimeout(powerArmed);powerArmed=setTimeout(disarmPower,5000);}
+function disarmPower(){if(!powerArmed)return;clearTimeout(powerArmed);powerArmed=null;const b=button('power');b.classList.remove('is-armed');b.querySelector('span').textContent='POWER';}
+function warnOnAir(fromPower){disarmPower();const targets=[root.querySelector('.sr-monitor-air'),root.querySelector('.sr-solo-tally')];if(fromPower)targets.push(button('power'));
+ targets.forEach(e=>{e.classList.remove('is-air-warning');void e.offsetWidth;e.classList.add('is-air-warning');});
+ clearTimeout(airWarning);airWarning=setTimeout(()=>targets.forEach(e=>e.classList.remove('is-air-warning')),5000);}
+window.confirmQuit=()=>warnOnAir(false);
+root.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>{const a=b.dataset.action;if(a==='play')send('play');if(a==='pause')send('pause');if(a==='edit'){editMode=!editMode;if(!editMode)closeLayer();signature='';drawLayers();colors();}if(a==='audio')setAudio(!audioOpen);if(a==='close-audio')setAudio(false);if(a==='setup')setSetup(!setupOpen);if(a==='close-setup')setSetup(false);if(a==='close-layer')closeLayer();if(a==='add')send('add');if(a==='reload')send('reload');if(a==='reload-one'&&editing)send('reload',{id:editing});if(a==='refresh'||a==='refresh-help')send('refresh');if(a==='image'||a==='key'){monitor=a;send('monitor',{key:a==='key'});colors();}if(a==='solo-monitor'){monitor=b.dataset.monitor;send('monitor',{key:monitor==='key'});colors();}if(a==='on-top')send('alwaysOnTop');if(a==='full-view')send('view',{mode:'full'});if(a==='master-mute')send('audioMute',{value:!state.audioMuted});if(a==='power'){if(state?.output.running)warnOnAir(true);else if(powerArmed){disarmPower();send('requestQuit');}else armPower();}if(a==='cancel-quit'){modal.hidden=true;report();}if(a==='delete-layer'){if(deleteArmed){const id=editing;disarmDelete();send('delete',{id});closeLayer();}else armDelete();}if(a==='confirm-quit'){modal.hidden=true;send('quit');report();}if(a==='diagnostics'){const el=root.querySelector('.sr-diagnostics');el.hidden=!el.hidden;report();}}));
 function config(){send('configure',{device:root.querySelector('.sr-device-select').value,mode:root.querySelector('.sr-format').value,pixel:root.querySelector('.sr-pixel').value,keying:root.querySelector('.sr-kind').value==='Fill + Key',browserSize:root.querySelector('.sr-browser-size').value,width:Number(root.querySelector('.sr-custom-width').value),height:Number(root.querySelector('.sr-custom-height').value),timingProfile:root.querySelector('.sr-timing-profile').value,syncOffsetMs:Number(root.querySelector('.sr-sync-offset').value),audioMuted:root.querySelector('.sr-master-mute').getAttribute('aria-pressed')==='true'});}
 root.querySelector('.sr-master-mute').addEventListener('click',()=>toggleMasterMute());
 ['.sr-device-select','.sr-format','.sr-pixel','.sr-kind','.sr-browser-size','.sr-timing-profile'].forEach(s=>root.querySelector(s).addEventListener('change',()=>{root.querySelector('.sr-custom-size').hidden=root.querySelector('.sr-browser-size').value!=='custom';config();}));root.querySelector('.sr-sync-offset').addEventListener('change',()=>send('syncAdjustment',{ms:Number(root.querySelector('.sr-sync-offset').value)}));['.sr-custom-width','.sr-custom-height'].forEach(s=>root.querySelector(s).addEventListener('blur',config));
@@ -997,7 +1017,7 @@ document.addEventListener('mousedown',e=>{
  if(layerList&&layerList.scrollHeight>layerList.clientHeight){const r=layerList.getBoundingClientRect();if(e.clientX>=r.right-8)return;}
  send('drag');
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&deleteArmed){disarmDelete();return;}if(e.key==='Escape'&&root.classList.contains('sr-view-monitor')){send('view',{mode:'full'});return;}if(e.key==='Escape'){if(!modal.hidden){modal.hidden=true;report();}else if(layerOpen)closeLayer();else if(setupOpen)setSetup(false);}if(e.key==='Tab'&&!modal.hidden){const first=button('cancel-quit'),last=button('confirm-quit');if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(deleteArmed||powerArmed)){disarmDelete();disarmPower();return;}if(e.key==='Escape'&&root.classList.contains('sr-view-monitor')){send('view',{mode:'full'});return;}if(e.key==='Escape'){if(!modal.hidden){modal.hidden=true;report();}else if(layerOpen)closeLayer();else if(setupOpen)setSetup(false);}if(e.key==='Tab'&&!modal.hidden){const first=button('cancel-quit'),last=button('confirm-quit');if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
 paintIcons();send('ready');
 })();
 </script></body></html>
