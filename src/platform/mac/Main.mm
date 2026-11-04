@@ -48,6 +48,21 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  CGImageRelease(image);CGColorSpaceRelease(color);CGDataProviderRelease(provider);CFRelease(bytes);
 }
 @end
+// Right-click shows only text editing: Cut/Copy/Paste/Select All in a field, Copy on
+// selected text. The page blocks the menu everywhere else. WebKit's own menu tells
+// which case applies (Paste only when editable, Copy only with a selection).
+@interface RackWebView:WKWebView
+@end
+@implementation RackWebView
+-(void)willOpenMenu:(NSMenu*)menu withEvent:(NSEvent*)event{
+ bool editable=false,selection=false;for(NSMenuItem* item in menu.itemArray){if([item.identifier isEqual:@"WKMenuItemIdentifierPaste"])editable=true;if([item.identifier isEqual:@"WKMenuItemIdentifierCopy"])selection=true;}
+ [menu removeAllItems];menu.autoenablesItems=NO;
+ const auto add=[&](NSString* title,SEL action,bool enabled){[menu addItemWithTitle:title action:action keyEquivalent:@""].enabled=enabled;};
+ if(editable){add(@"Cut",@selector(cut:),selection);add(@"Copy",@selector(copy:),selection);add(@"Paste",@selector(paste:),true);[menu addItem:NSMenuItem.separatorItem];add(@"Select All",@selector(selectAll:),true);}
+ else if(selection)add(@"Copy",@selector(copy:),true);
+ [super willOpenMenu:menu withEvent:event];
+}
+@end
 @interface RackWindow:NSWindow
 @end
 @implementation RackWindow
@@ -203,7 +218,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  try{validate([self viewport]);}catch(...){prefs[@"browserSize"]=@"match";}
  if(![prefs[@"device"] isKindOfClass:NSString.class])prefs[@"device"]=@"";
  const double scale=[prefs[@"uiScale"] doubleValue];window=[[RackWindow alloc]initWithContentRect:NSMakeRect(0,0,std::round(1280*scale),std::round(460*scale)) styleMask:NSWindowStyleMaskBorderless|NSWindowStyleMaskResizable backing:NSBackingStoreBuffered defer:NO];window.title=@"URL2KeyFill";window.delegate=self;window.minSize=NSMakeSize(std::round(1050*scale),std::round(390*scale));window.opaque=NO;window.backgroundColor=NSColor.clearColor;window.contentView.wantsLayer=YES;window.contentView.layer.cornerRadius=13;window.contentView.layer.masksToBounds=YES;[window center];fullFrame=window.frame;
- WKWebViewConfiguration* configuration=[[WKWebViewConfiguration alloc]init];configuration.websiteDataStore=WKWebsiteDataStore.nonPersistentDataStore;[configuration.userContentController addScriptMessageHandler:self name:@"native"];web=[[WKWebView alloc]initWithFrame:window.contentView.bounds configuration:configuration];web.autoresizingMask=NSViewWidthSizable|NSViewHeightSizable;web.navigationDelegate=self;web.UIDelegate=self;[web setValue:@NO forKey:@"drawsBackground"];[window.contentView addSubview:web];
+ WKWebViewConfiguration* configuration=[[WKWebViewConfiguration alloc]init];configuration.websiteDataStore=WKWebsiteDataStore.nonPersistentDataStore;[configuration.userContentController addScriptMessageHandler:self name:@"native"];web=[[RackWebView alloc]initWithFrame:window.contentView.bounds configuration:configuration];web.autoresizingMask=NSViewWidthSizable|NSViewHeightSizable;web.navigationDelegate=self;web.UIDelegate=self;[web setValue:@NO forKey:@"drawsBackground"];[window.contentView addSubview:web];
  preview=[[Preview alloc]initWithFrame:NSZeroRect];[window.contentView addSubview:preview];
  // No "Enter Full Screen" or tab items: the borderless rack has neither.
  [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"NSFullScreenMenuItemEverywhere"];NSWindow.allowsAutomaticWindowTabbing=NO;

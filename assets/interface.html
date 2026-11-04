@@ -976,7 +976,9 @@ document.addEventListener('wheel',e=>{
  if(lanes){const delta=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;const unit=e.deltaMode===1?16:e.deltaMode===2?lanes.clientWidth:1;lanes.scrollLeft+=delta*unit;e.preventDefault();return;}
  if(!e.target.closest('.sr-layer-list,.sr-diagnostic-metric,.sr-diagnostic-detail'))e.preventDefault();
 },{passive:false});
-document.addEventListener('contextmenu',e=>e.preventDefault());
+// Right-click menu only for text: in fields and on selected text (the native side keeps it to
+// Cut/Copy/Paste/Select All). Elsewhere the rack has no context menu.
+document.addEventListener('contextmenu',e=>{if(e.target.closest('input,textarea,[contenteditable]'))return;const s=getSelection();if(s&&!s.isCollapsed&&String(s).trim())return;e.preventDefault();});
 document.addEventListener('mousedown',e=>{
  if(e.button!==0||e.target.closest('button,input,gain-slider,select,summary,a,label,form,.sr-layer-row,.sr-audio-meter,.sr-audio-lanes'))return;
  // Keep the list's scrollbar available while allowing window dragging on empty space.
