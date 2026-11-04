@@ -57,7 +57,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  const NSEventModifierFlags mods=event.modifierFlags&NSEventModifierFlagDeviceIndependentFlagsMask&~(NSEventModifierFlagCapsLock|NSEventModifierFlagNumericPad|NSEventModifierFlagFunction);
  if(mods==NSEventModifierFlagCommand){NSString* key=event.charactersIgnoringModifiers.lowercaseString;
   if([key isEqual:@"w"]){[NSApp terminate:nil];return YES;}
-  if([key isEqual:@"1"]&&[NSApp sendAction:NSSelectorFromString(@"showActualSize:") to:nil from:self])return YES;
+  if([key isEqual:@"0"]&&[NSApp sendAction:NSSelectorFromString(@"showActualSize:") to:nil from:self])return YES;
   NSDictionary* edit=@{@"x":@"cut:",@"c":@"copy:",@"v":@"paste:",@"a":@"selectAll:",@"z":@"undo:"};
   if(NSString* action=edit[key])if([NSApp sendAction:NSSelectorFromString(action) to:nil from:self])return YES;}
  if(mods==(NSEventModifierFlagCommand|NSEventModifierFlagShift)&&[event.charactersIgnoringModifiers.lowercaseString isEqual:@"z"]&&[NSApp sendAction:@selector(redo:) to:nil from:self])return YES;
@@ -208,7 +208,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  // No "Enter Full Screen" or tab items: the borderless rack has neither.
  [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"NSFullScreenMenuItemEverywhere"];NSWindow.allowsAutomaticWindowTabbing=NO;
  NSMenu* menu=[[NSMenu alloc]init];NSMenuItem* appItem=[[NSMenuItem alloc]init];NSMenu* appMenu=[[NSMenu alloc]init];[appMenu addItemWithTitle:@"About URL2KeyFill" action:@selector(showAbout:) keyEquivalent:@""].target=self;[appMenu addItem:NSMenuItem.separatorItem];[appMenu addItemWithTitle:@"Quit URL2KeyFill" action:@selector(terminate:) keyEquivalent:@"q"];appItem.submenu=appMenu;[menu addItem:appItem];
- NSMenuItem* viewItem=[[NSMenuItem alloc]init];NSMenu* view=[[NSMenu alloc]initWithTitle:@"View"];for(NSArray* e in @[@[@"Actual Size",@"showActualSize:",@"0"],@[@"75%",@"showThreeQuarters:",@"2"],@[@"50%",@"showHalf:",@"3"],@[@"Monitor Only",@"showMonitor:",@"4"],@[]]){if(!e.count){[view addItem:NSMenuItem.separatorItem];continue;}[view addItemWithTitle:e[0] action:NSSelectorFromString(e[1]) keyEquivalent:e[2]].target=self;}
+ NSMenuItem* viewItem=[[NSMenuItem alloc]init];NSMenu* view=[[NSMenu alloc]initWithTitle:@"View"];for(NSArray* e in @[@[@"Rack Size",@"showActualSize:",@"1"],@[@"Small Size",@"showThreeQuarters:",@"2"],@[@"Tiny Size",@"showHalf:",@"3"],@[@"Just Monitor",@"showMonitor:",@"4"],@[]]){if(!e.count){[view addItem:NSMenuItem.separatorItem];continue;}[view addItemWithTitle:e[0] action:NSSelectorFromString(e[1]) keyEquivalent:e[2]].target=self;}
  NSMenuItem* onTop=[view addItemWithTitle:@"Always on Top" action:@selector(toggleOnTop:) keyEquivalent:@"t"];onTop.keyEquivalentModifierMask=NSEventModifierFlagCommand|NSEventModifierFlagOption;onTop.target=self;view.delegate=self;viewItem.submenu=view;[menu addItem:viewItem];NSApp.mainMenu=menu;[self applyView];[self applyOnTop];
 
  [self refresh];if(smoke){prefs[@"mode"]=@(hardwareTestMode);prefs[@"browserSize"]=@"1920x1080";[self chooseMode];}if(avLoopbackTest){layers.firstObject[@"url"]=avTestUrl.empty()?@"u2k://Diagnostics/10_Sincronismo_AV.html":ns(avTestUrl);layers.firstObject[@"name"]=@"SDI loopback A/V";}for(NSDictionary* layer in layers)[self createRuntime:layer];[self configureScene];
@@ -218,7 +218,8 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
 // Views: the rack is the main view, optionally scaled; Monitor Only shows just the preview.
 // AppKit may still insert "Enter Full Screen" when the menu opens; drop it.
 -(void)menuNeedsUpdate:(NSMenu*)menu{for(NSMenuItem* item in menu.itemArray.copy)if(item.action==@selector(toggleFullScreen:))[menu removeItem:item];}
-// ⌘0 (and ⌘1, handled by the window) 100%, ⌘2 75%, ⌘3 50%: always the rack view.
+// Rack Size ⌘1 (⌘0 too, handled by the window) 100%, Small Size ⌘2 75%, Tiny Size ⌘3 50%:
+// always the rack view. Just Monitor ⌘4.
 -(void)showSize:(double)scale{if([prefs[@"viewMode"] isEqual:@"monitor"])[self setViewMode:@"full"];[self setScale:scale];}
 -(void)showActualSize:(id)sender{[self showSize:1];}
 -(void)showThreeQuarters:(id)sender{[self showSize:.75];}
