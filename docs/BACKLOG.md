@@ -1,12 +1,14 @@
-# Development status — URL2KeyFill 0.6
+# Development status — URL2KeyFill 0.7
 
 ## Implemented
 
 - [x] Independent CEF URL layers, ordered premultiplied-alpha composition and persistent names, URLs, visibility, mute and gain.
 - [x] Studio Rack English interface, four columns, stable monitor dimensions, fixed-height scrollable layer list and native background window dragging.
-- [x] PLAY / PAUSE; LAYERS / EDIT LAYER; ADD LAYER / RELOAD; SETUP, with the agreed red/green/yellow states and unified status LEDs.
-- [x] Layer drawer above Setup/diagnostics, reload all/individual, confirmed deletion, device refresh and persistence, browser size presets and proportional transparent fitting.
-- [x] Visibility-only operation mode and editing/reordering mode; hiding LAYERS disables editing without changing video visibility.
+- [x] PLAY / PAUSE; EDIT LAYERS / ADD LAYER (only while editing); RELOAD LAYERS / blank key; SETUP / AUDIO, with the agreed red/green/yellow states and unified status LEDs.
+- [x] Layer drawer above Setup/diagnostics, reload all/individual, deletion confirmed by a second press, device refresh and persistence, browser size presets and proportional transparent fitting.
+- [x] Always-visible layer list with a visibility-only operation mode and an editing/reordering mode.
+- [x] View menu: Rack Size, Small Size (75%), Tiny Size (50%), Just Monitor and Always on Top; About panel and version in SETUP.
+- [x] Local confirmations instead of dialogs: POWER asks for a second press outside PLAY and refuses to quit in PLAY (blinking ON AIR), also for ⌘Q/⌘W.
 - [x] Real CEF audio capture, per-layer stereo mixing/gain/mute, bounded timestamped queues, limiting and scheduled SDI audio.
 - [x] Confirmed policy: PAUSE silences the mix; hiding a layer silences that layer. Master audio mute is also available.
 - [x] Asynchronous close of multiple browsers, driver failure handling, migration/atomic configuration, temporary incognito profiles and no personal keychain access.

@@ -61,3 +61,39 @@ Validation: native application build, JavaScript syntax check and CTest (5/5). T
 Validation: native Release arm64 build with DeckLink enabled; CTest (5/5); browser integration checks with a simulated native bridge, including gain routing, all horizontal markers, numeric dB entry, reset, mono/mute, RMS calibration and layout at 1050 and 1280 px. No new physical SDI or listening validation was performed for this UI release.
 
 macOS Apple Silicon (M1 and later), macOS 13 or later. Ad-hoc signed; not Apple notarized. The ZIP includes the application; SHA256SUMS.txt contains its checksum.
+
+## 0.6.0
+
+- Precise negative A/V adjustment using a common whole-frame video delay with fractional audio compensation. Zero and positive adjustments retain the existing timing path.
+- Bounded video-history sizing and validation for negative adjustments, including fractional output rates.
+- Detailed SDI recovery, callback and video-scheduling diagnostics, with controlled watchdog shutdown that preserves traces.
+- Shared interface controls and graphite styling, consistent buttons, gain sliders, channel controls and stereo meters.
+- PFL/AFL local monitoring for individual layers and PROGRAM, including a pre-master PROGRAM tap that preserves layer processing and bypasses master controls.
+- The source repository includes the audit, measured results and architectural review accumulated since 0.5.2.
+
+Known limitations: A/V stability is not certified for arbitrary HTML sources. Generic CEF paint arrival timestamps do not establish common audio/video content timestamps. Intermittent SDI frame drops and failed A/V stability envelopes have been observed at 59.94p; recent clean runs do not invalidate those failures. Negative A/V adjustment can add common latency. The proposed graphics-without-audio mode and verified source-timing architecture are not implemented in this release. Not certified for production.
+
+macOS Apple Silicon (M1 and later), macOS 13 or later; native Release arm64 build with DeckLink enabled. Ad-hoc signed, not Apple notarized. The ZIP contains the application; SHA256SUMS.txt provides the archive checksum. No new physical SDI endurance test is part of this release build.
+
+Release validation: 8/8 CTests, 72/72 Python tests, shared-control source consistency, browser UI control integration checks, native CEF smoke test, arm64/version verification and strict deep code-signature verification. The native smoke test exercised transparency, independent layers, visibility, temporary settings, audio capture and bundled diagnostics without enabling SDI output.
+
+## 0.7.0
+
+Interface
+- View menu: Rack Size (⌘1 or ⌘0), Small Size (⌘2, 75%), Tiny Size (⌘3, 50%) and Just Monitor (⌘4, the preview alone with FILL/KEY, ON TOP and RACK on hover). The reduced sizes scale text and controls together. Always on Top (⌥⌘T).
+- About URL2KeyFill panel with version and CEF engine; the version is also shown in SETUP.
+- Layer controls: the layer list is always visible, the LAYERS key is gone, EDIT LAYERS replaces EDIT LAYER, ADD LAYER is available only while editing, RELOAD LAYERS moves to the left column.
+- Local confirmations instead of dialogs. DELETE asks for a second press (CONFIRM DELETE, 3 s). POWER outside PLAY turns red and reads OFF for 5 s; a second press quits. In PLAY, POWER, ⌘Q and ⌘W never quit: ON AIR blinks inverted for 5 s.
+- SETUP: REFRESH is a button beside the device, MUTE SDI AUDIO is an LED button, light steppers on number fields, aligned fields.
+- Menus reduced to About, Quit and View; ⌘W still quits and copy/paste shortcuts keep working. Right-click offers Cut/Copy/Paste/Select All in fields and Copy on selected text.
+
+Output timing and reliability
+- Calibrated A/V default per output mode (25p +17 ms, 50p +14 ms, 59.94p −2 ms) with the manual A/V adjustment added on top.
+- Reliable profile keeps at least 100 ms of SDI audio queued and max(3 frames, 100 ms) of video in flight, and tops up video by the device clock with spare slots. An eight-hour 1080p59.94 run passed continuity (no late or dropped frames, no missing audio).
+- Layer visibility changes on air no longer blank the SDI image for a few frames.
+- The audio clock servo fails the output only after three recoveries within 10 minutes.
+- CEF audio is accepted only with timestamps in the expected clock domain.
+
+Known limitations: A/V alignment is a calibrated default, not certified for arbitrary HTML sources; at 59.94p only the EBU R37 window is guaranteed. After reconnecting the UltraStudio or waking the Mac, restart the Mac if frames appear out of place. The external BeginFrame prototype stays off by default. Not certified for production.
+
+macOS Apple Silicon (M1 and later), macOS 13 or later; native Release arm64 build with DeckLink enabled. Ad-hoc signed, not Apple notarized. The ZIP contains the application; SHA256SUMS.txt provides the archive checksum.

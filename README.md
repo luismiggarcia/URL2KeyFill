@@ -10,14 +10,14 @@ Use the **URL2KeyFill** Desktop shortcut or `~/Applications/URL2KeyFill.app`. Th
 
 - **PLAY** starts/stops physical SDI output. Red means on air; green means playing but paused.
 - **PAUSE** cuts image to transparent and silences audio while maintaining the SDI signal. It is only available during PLAY.
-- **LAYERS** shows/hides the layer column without resizing the monitor. Hiding it disables editing.
-- With **EDIT LAYER** off, a layer key toggles visibility and its audio. With editing on, click opens/closes the layer drawer; drag between rows changes the stacking order. Alt+Up/Down provides keyboard reordering.
-- **ADD LAYER** adds the built-in test page at the top, initially hidden, shows the layer list and opens the new layer drawer with **EDIT LAYER** enabled. New installations start with one visible test layer.
-- **RELOAD** reloads all layers. The layer drawer has an individual Reload and confirmed Delete.
+- The layer list is always visible. With **EDIT LAYERS** off, a layer key toggles visibility and its audio. With editing on, click opens/closes the layer drawer; drag between rows changes the stacking order. Alt+Up/Down provides keyboard reordering.
+- **ADD LAYER** is available only while editing layers. It adds the built-in test page at the top, initially hidden, and opens the new layer drawer. New installations start with one visible test layer.
+- **RELOAD LAYERS** reloads all layers. The layer drawer has an individual Reload and a Delete that asks for a second press: the first press turns it red (CONFIRM DELETE) for 3 s.
 - Names/URLs apply on field blur. A changed valid URL automatically reloads that layer. Visibility applies immediately. Under Audio, each layer has mute and gain; the stereo sum is limited to prevent integer overflow.
-- **SETUP** configures device, exact SDI mode, pixel format, Fill/Key, browser size and master audio mute. Stop PLAY before changing output settings. Custom dimensions appear below Browser Size.
-- **IMAGE / KEY** choose the local monitor view. A preview is not proof of physical Fill/Key.
-- **POWER** and Command+Q request confirmation before stopping output and quitting.
+- **SETUP** configures device (with REFRESH beside it), exact SDI mode, pixel format, Fill/Key, browser size, timing profile, manual A/V adjustment and the MUTE SDI AUDIO button (red LED while muted). Stop PLAY before changing output settings. Custom dimensions appear below Browser Size.
+- **FILL / KEY** choose the local monitor view. A preview is not proof of physical Fill/Key.
+- **POWER** outside PLAY: the first press turns its symbol red and its label to OFF for 5 s; a second press quits. In PLAY it never quits: the symbol blinks red and the ON AIR label blinks inverted for 5 s. Command+Q and Command+W behave the same way in PLAY (the label blinks, the application stays open) and quit directly otherwise.
+- **View** menu: Rack Size (⌘1 or ⌘0), Small Size (⌘2, 75%), Tiny Size (⌘3, 50%), Just Monitor (⌘4, the preview alone with controls on hover; Esc or double-click returns) and Always on Top (⌥⌘T). **About URL2KeyFill** shows the version, also shown in SETUP.
 
 A valid saved device selection takes priority; otherwise the first detected device is selected and saved. Without compatible hardware, SETUP displays driver installation/authorization guidance while web rendering and local preview remain available. Device refresh is manual and does not change system permissions.
 
@@ -39,7 +39,7 @@ Progressive HD/UHD modes in BGRA8/ARGB8; no interlaced field rendering, audio in
 
 ## Built-in HTML graphics
 
-In EDIT LAYER, the URL list uses the same appearance as the other settings lists. Choose a bundled graphic or select **Custom URL…** to enter an HTTP/HTTPS address.
+In the layer drawer, the URL list uses the same appearance as the other settings lists. Choose a bundled graphic or select **Custom URL…** to enter an HTTP/HTTPS address.
 
 The application scans its bundled `assets` directory at startup. Each subfolder forms a group; each HTML file appears by filename without the `.html` extension, with underscores replaced by spaces in both group and file names. The root `interface.html` is not a graphic example. Add new examples under `assets/<group>/<filename>.html` and rebuild the application to include them; no source-code list needs editing.
 
