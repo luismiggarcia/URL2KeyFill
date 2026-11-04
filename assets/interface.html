@@ -304,6 +304,8 @@
 #studio-refined .sr-edit-active{background:linear-gradient(#e5d0ac,#ba9b71);color:#322b22;border-color:#bda580}
 #studio-refined .sr-timing-settings{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}#studio-refined .sr-timing-settings input{background:#171e26;color:#e3ebf5;border:1px solid #546172;border-radius:4px;padding:10px 12px;max-width:150px}#studio-refined .sr-timing-hint{font-size:12px;color:#afbdcf;line-height:1.5}
 #studio-refined .sr-device-label{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:22px}
+/* REFRESH sits in the caption row: keep it at the caption height so DEVICE lines up with the other fields. */
+#studio-refined .sr-device-label .sr-refresh{min-height:0;height:22px;padding-top:0;padding-bottom:0}
 
 
 #studio-refined .sr-fields{align-items:end}
