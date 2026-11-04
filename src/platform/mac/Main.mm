@@ -57,6 +57,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  const NSEventModifierFlags mods=event.modifierFlags&NSEventModifierFlagDeviceIndependentFlagsMask&~(NSEventModifierFlagCapsLock|NSEventModifierFlagNumericPad|NSEventModifierFlagFunction);
  if(mods==NSEventModifierFlagCommand){NSString* key=event.charactersIgnoringModifiers.lowercaseString;
   if([key isEqual:@"w"]){[NSApp terminate:nil];return YES;}
+  if([key isEqual:@"1"]&&[NSApp sendAction:NSSelectorFromString(@"showActualSize:") to:nil from:self])return YES;
   NSDictionary* edit=@{@"x":@"cut:",@"c":@"copy:",@"v":@"paste:",@"a":@"selectAll:",@"z":@"undo:"};
   if(NSString* action=edit[key])if([NSApp sendAction:NSSelectorFromString(action) to:nil from:self])return YES;}
  if(mods==(NSEventModifierFlagCommand|NSEventModifierFlagShift)&&[event.charactersIgnoringModifiers.lowercaseString isEqual:@"z"]&&[NSApp sendAction:@selector(redo:) to:nil from:self])return YES;
@@ -207,7 +208,7 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
  // No "Enter Full Screen" or tab items: the borderless rack has neither.
  [NSUserDefaults.standardUserDefaults setBool:NO forKey:@"NSFullScreenMenuItemEverywhere"];NSWindow.allowsAutomaticWindowTabbing=NO;
  NSMenu* menu=[[NSMenu alloc]init];NSMenuItem* appItem=[[NSMenuItem alloc]init];NSMenu* appMenu=[[NSMenu alloc]init];[appMenu addItemWithTitle:@"About URL2KeyFill" action:@selector(showAbout:) keyEquivalent:@""].target=self;[appMenu addItem:NSMenuItem.separatorItem];[appMenu addItemWithTitle:@"Quit URL2KeyFill" action:@selector(terminate:) keyEquivalent:@"q"];appItem.submenu=appMenu;[menu addItem:appItem];
- NSMenuItem* viewItem=[[NSMenuItem alloc]init];NSMenu* view=[[NSMenu alloc]initWithTitle:@"View"];for(NSArray* e in @[@[@"Full",@"showFull:",@"1"],@[@"Monitor Only",@"showMonitor:",@"2"],@[],@[@"Actual Size",@"zoomActual:",@"0"],@[@"Zoom In",@"zoomIn:",@"+"],@[@"Zoom Out",@"zoomOut:",@"-"],@[]]){if(!e.count){[view addItem:NSMenuItem.separatorItem];continue;}[view addItemWithTitle:e[0] action:NSSelectorFromString(e[1]) keyEquivalent:e[2]].target=self;}
+ NSMenuItem* viewItem=[[NSMenuItem alloc]init];NSMenu* view=[[NSMenu alloc]initWithTitle:@"View"];for(NSArray* e in @[@[@"Actual Size",@"showActualSize:",@"0"],@[@"75%",@"showThreeQuarters:",@"2"],@[@"50%",@"showHalf:",@"3"],@[@"Monitor Only",@"showMonitor:",@"4"],@[]]){if(!e.count){[view addItem:NSMenuItem.separatorItem];continue;}[view addItemWithTitle:e[0] action:NSSelectorFromString(e[1]) keyEquivalent:e[2]].target=self;}
  NSMenuItem* onTop=[view addItemWithTitle:@"Always on Top" action:@selector(toggleOnTop:) keyEquivalent:@"t"];onTop.keyEquivalentModifierMask=NSEventModifierFlagCommand|NSEventModifierFlagOption;onTop.target=self;view.delegate=self;viewItem.submenu=view;[menu addItem:viewItem];NSApp.mainMenu=menu;[self applyView];[self applyOnTop];
 
  [self refresh];if(smoke){prefs[@"mode"]=@(hardwareTestMode);prefs[@"browserSize"]=@"1920x1080";[self chooseMode];}if(avLoopbackTest){layers.firstObject[@"url"]=avTestUrl.empty()?@"u2k://Diagnostics/10_Sincronismo_AV.html":ns(avTestUrl);layers.firstObject[@"name"]=@"SDI loopback A/V";}for(NSDictionary* layer in layers)[self createRuntime:layer];[self configureScene];
@@ -217,20 +218,19 @@ struct Runtime {std::string id;std::shared_ptr<LatestFrame> frame=std::make_shar
 // Views: the rack is the main view, optionally scaled; Monitor Only shows just the preview.
 // AppKit may still insert "Enter Full Screen" when the menu opens; drop it.
 -(void)menuNeedsUpdate:(NSMenu*)menu{for(NSMenuItem* item in menu.itemArray.copy)if(item.action==@selector(toggleFullScreen:))[menu removeItem:item];}
--(void)showFull:(id)sender{[self setViewMode:@"full"];}
+// ⌘0 (and ⌘1, handled by the window) 100%, ⌘2 75%, ⌘3 50%: always the rack view.
+-(void)showSize:(double)scale{if([prefs[@"viewMode"] isEqual:@"monitor"])[self setViewMode:@"full"];[self setScale:scale];}
+-(void)showActualSize:(id)sender{[self showSize:1];}
+-(void)showThreeQuarters:(id)sender{[self showSize:.75];}
+-(void)showHalf:(id)sender{[self showSize:.5];}
 -(void)showMonitor:(id)sender{[self setViewMode:@"monitor"];}
--(void)zoomIn:(id)sender{[self setScale:[prefs[@"uiScale"] doubleValue]+.25];}
--(void)zoomOut:(id)sender{[self setScale:[prefs[@"uiScale"] doubleValue]-.25];}
--(void)zoomActual:(id)sender{[self setScale:1];}
 -(void)toggleOnTop:(id)sender{prefs[@"alwaysOnTop"]=@(![prefs[@"alwaysOnTop"] boolValue]);[self applyOnTop];[self scheduleSave];[self sendState];}
 -(BOOL)validateMenuItem:(NSMenuItem*)item{
  const bool solo=[prefs[@"viewMode"] isEqual:@"monitor"];const double scale=[prefs[@"uiScale"] doubleValue];const SEL action=item.action;
- if(action==@selector(showFull:))item.state=solo?NSControlStateValueOff:NSControlStateValueOn;
+ const auto mark=[&](SEL a,double s){if(action==a)item.state=!solo&&scale==s?NSControlStateValueOn:NSControlStateValueOff;};
+ mark(@selector(showActualSize:),1);mark(@selector(showThreeQuarters:),.75);mark(@selector(showHalf:),.5);
  if(action==@selector(showMonitor:))item.state=solo?NSControlStateValueOn:NSControlStateValueOff;
  if(action==@selector(toggleOnTop:))item.state=[prefs[@"alwaysOnTop"] boolValue]?NSControlStateValueOn:NSControlStateValueOff;
- if(action==@selector(zoomIn:))return !solo&&scale<1;
- if(action==@selector(zoomOut:))return !solo&&scale>.5;
- if(action==@selector(zoomActual:))return !solo&&scale!=1;
  return YES;
 }
 -(void)setScale:(double)scale{
