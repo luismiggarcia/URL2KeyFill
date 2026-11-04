@@ -1,0 +1,43 @@
+{
+ "release": {
+  "assets": [
+   {
+    "digest": "sha256:ae33b0a15aea186b566378b4db5b82a601e11cc8909fa7169a0915f23b72d5ef",
+    "name": "SHA256SUMS.txt",
+    "size": 100
+   },
+   {
+    "digest": "sha256:5f8947452ddcb2e6b00e9291050a32982d9b1060154f358bf0d8c22f38558420",
+    "name": "URL2KeyFill-0.7.0-macOS-arm64.zip",
+    "size": 148610811
+   }
+  ],
+  "isDraft": false,
+  "isPrerelease": false,
+  "publishedAt": "2026-11-04T01:27:07Z",
+  "url": "https://github.com/luismiggarcia/URL2KeyFill/releases/tag/0.7.0"
+ },
+ "source_commit": "23f20f7e2ab811937db24a3aa267131a9cf76091",
+ "tag": "0.7.0",
+ "version": "0.7.0",
+ "bundle_build": "11",
+ "architecture": "arm64",
+ "build_type": "Release",
+ "decklink_enabled": true,
+ "cef_sandbox_enabled": true,
+ "isolated_worktree_build": true,
+ "ctests_passed": 8,
+ "python_tests_passed": 72,
+ "browser_ui_controls": "PASS in an offscreen WKWebView against tools/preview-ui-controls.py: shared button paint, PAUSE, compact meters/RMS, gain arrows, markers, dB entry, mono/mute, layer/output faders",
+ "native_smoke_passed": true,
+ "native_smoke_no_device_passed": true,
+ "physical_sdi_output_enabled_for_release_checks": false,
+ "archive_sha256": "5f8947452ddcb2e6b00e9291050a32982d9b1060154f358bf0d8c22f38558420",
+ "executable_sha256": "0b6a4811b36e5e9b2180197281e6b91d47792519d0b4e7909e7b958135475c71",
+ "archive_extraction_verified": true,
+ "executable_identical_to_build": true,
+ "code_signature_verified_deep_strict": true,
+ "signing": "ad-hoc",
+ "notarized": false,
+ "release_notes": "Interface\n- View menu: Rack Size (⌘1 or ⌘0), Small Size (⌘2, 75%), Tiny Size (⌘3, 50%) and Just Monitor (⌘4, the preview alone with FILL/KEY, ON TOP and RACK on hover). The reduced sizes scale text and controls together. Always on Top (⌥⌘T).\n- About URL2KeyFill panel with version and CEF engine; the version is also shown in SETUP.\n- Layer controls: the layer list is always visible, the LAYERS key is gone, EDIT LAYERS replaces EDIT LAYER, ADD LAYER is available only while editing, RELOAD LAYERS moves to the left column.\n- Local confirmations instead of dialogs. DELETE asks for a second press (CONFIRM DELETE, 3 s). POWER outside PLAY turns red and reads OFF for 5 s; a second press quits. In PLAY, POWER, ⌘Q and ⌘W never quit: ON AIR blinks inverted for 5 s.\n- SETUP: REFRESH is a button beside the device, MUTE SDI AUDIO is an LED button, light steppers on number fields, aligned fields.\n- Menus reduced to About, Quit and View; ⌘W still quits and copy/paste shortcuts keep working. Right-click offers Cut/Copy/Paste/Select All in fields and Copy on selected text.\n\nOutput timing and reliability\n- Calibrated A/V default per output mode (25p +17 ms, 50p +14 ms, 59.94p −2 ms) with the manual A/V adjustment added on top.\n- Reliable profile keeps at least 100 ms of SDI audio queued and max(3 frames, 100 ms) of video in flight, and tops up video by the device clock with spare slots. An eight-hour 1080p59.94 run passed continuity (no late or dropped frames, no missing audio).\n- Layer visibility changes on air no longer blank the SDI image for a few frames.\n- The audio clock servo fails the output only after three recoveries within 10 minutes.\n- CEF audio is accepted only with timestamps in the expected clock domain.\n\nKnown limitations: A/V alignment is a calibrated default, not certified for arbitrary HTML sources; at 59.94p only the EBU R37 window is guaranteed. After reconnecting the UltraStudio or waking the Mac, restart the Mac if frames appear out of place. The external BeginFrame prototype stays off by default. Not certified for production.\n\nmacOS Apple Silicon (M1 and later), macOS 13 or later; native Release arm64 build with DeckLink enabled. Ad-hoc signed, not Apple notarized. The ZIP contains the application; SHA256SUMS.txt provides the archive checksum."
+}

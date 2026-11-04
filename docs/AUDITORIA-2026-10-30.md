@@ -3405,3 +3405,33 @@ do estado do driver, não da app.
 enviado. As vistas reduzidas, o Monitor Only, o Always on Top e a janela About estão em
 `feature/view-modes`. Os dois ramos tocam em `Main.mm` e `interface.html` e precisam de
 resolver conflitos ao juntar.
+
+### 11.7 Publicação expressamente autorizada da versão 0.7.0 (2026-11-04)
+
+A pedido do Luis, foi compilada e publicada a versão **0.7.0, build 11**, para macOS
+Apple Silicon/arm64. A tag `0.7.0` identifica o commit
+`23f20f7e2ab811937db24a3aa267131a9cf76091`, que junta as correções desta revisão
+(§11.2–11.6) com as vistas e os ajustes de interface feitos a seguir (menu View com
+Rack, Small, Tiny e Just Monitor; Always on Top; janela About; matriz de layers sem
+LAYERS; DELETE e POWER com confirmação local; SETUP revisto). O `main` avançou para
+esse commit.
+
+- **Compilação:** Release com DeckLink e sandbox CEF ativos, numa cópia isolada
+  (worktree) do commit da tag.
+- **Validação:** CTest 8/8; testes Python 72/72; teste dos controlos da interface
+  (`tests/UIControls.js` com `tools/preview-ui-controls.py`) num WKWebView fora do
+  ecrã: PASS; smoke test nativo com CEF real e o teste sem dispositivo: 8/8 cada. Sem
+  saída SDI e sem nova campanha física.
+- **Arquivo:** o ZIP foi extraído e verificado: versão 0.7.0 (11), executável arm64
+  idêntico ao compilado (SHA-256 `0b6a4811…5c71`) e `codesign --deep --strict`
+  válido. Assinatura ad-hoc, sem notarização Apple.
+- **Publicação:** https://github.com/luismiggarcia/URL2KeyFill/releases/tag/0.7.0 ,
+  pública, sem rascunho nem pré-release, marcada como mais recente. Artefactos
+  `URL2KeyFill-0.7.0-macOS-arm64.zip` (SHA-256
+  `5f8947452ddcb2e6b00e9291050a32982d9b1060154f358bf0d8c22f38558420`, igual ao
+  digest do GitHub) e `SHA256SUMS.txt`.
+- **Limites mantidos nas notas:** A/V calibrado e não certificado para HTML genérico;
+  a 59,94p só a EBU R37 é garantida; reiniciar o Mac se aparecerem frames fora de
+  sítio depois de religar o UltraStudio; protótipo de BeginFrame desligado; não
+  certificado para produção.
+- **Evidência:** `tools/audio-audit/data/release-0.7.0-2026-11-04/`.
