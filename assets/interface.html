@@ -45,7 +45,7 @@
 #studio-refined .sr-solo-bar button{min-height:24px;padding:3px 9px;border-radius:4px;border:1px solid #6c747f;background:linear-gradient(#4e5c6c,#354353);color:#ecf2f9;white-space:nowrap}
 #studio-refined .sr-solo-bar button[aria-pressed=true]{color:#ffd077;text-shadow:0 0 2px #ffc15b70,0 0 8px #ffad2230}
 #studio-refined .sr-solo-meter{position:absolute;top:8px;right:8px;bottom:48px;display:flex;opacity:0;transition:opacity .15s}
-#studio-refined .sr-solo-meter .sr-audio-meter{width:22px;height:100%;margin:0;flex-basis:22px;align-items:stretch}
+#studio-refined .sr-solo-meter .sr-audio-meter{height:100%;margin:0;align-items:stretch}
 #studio-refined .sr-solo:hover :is(.sr-solo-bar,.sr-solo-meter),#studio-refined .sr-solo:focus-within :is(.sr-solo-bar,.sr-solo-meter){opacity:1}@container (max-width:520px){#studio-refined .sr-audio-mixer{grid-template-columns:minmax(0,1fr) 145px}#studio-refined .sr-audio-strip{flex-basis:145px;padding:0 10px}#studio-refined .sr-audio-output{padding:15px 10px}}
 
 /* Shared audio states and meter zones, including inactive LEDs. */
@@ -873,6 +873,8 @@ const meterLayout=new ResizeObserver(entries=>{for(const {target,contentRect} of
 }});
 meterLayout.observe(root.querySelector('.sr-master-meter-slot'));
 meterLayout.observe(root.querySelector('.sr-drawer-meter-slot'));
+// Monitor Only: the meter follows the window height, so its LEDs must shrink with it.
+meterLayout.observe(root.querySelector('.sr-solo-meter'));
 function setAudio(open){audioOpen=open;if(!open)hideMonitorTooltip();const panel=root.querySelector('.sr-audio-drawer');panel.classList.toggle('open',open);panel.inert=!open;panel.setAttribute('aria-hidden',String(!open));button('audio').setAttribute('aria-expanded',String(open));if(open){setSetup(false);closeLayer();drawAudio();}colors();report();}
 const audioStrips=new Map();
 // One overlay outside the scrolling strips keeps two-line tooltips unclipped.
